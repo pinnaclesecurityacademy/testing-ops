@@ -1042,7 +1042,7 @@ const DAY_SHIFT_TASKS = [
       { id: 'internal-doors', name: 'Internal Doors', instruction: 'Confirm all internal doors are secured', checks: ['All internal doors secured'], photoMandatory: false },
       { id: 'lighting', name: 'Lighting', instruction: 'Verify all lighting is operational throughout the level', checks: ['Lighting operational'], photoMandatory: false },
       { id: 'revolving-doors', name: 'Revolving Doors', instruction: 'Check revolving doors are operational and undamaged', checks: ['Operational', 'No damage'], photoMandatory: false },
-      { id: 'leaf-lobby', name: 'Leaf Lobby Areas', instruction: 'Check areas are clear, no damage to port readers', checks: ['Areas clear', 'No damage to port readers'], photoMandatory: false },
+      { id: 'lift-lobby', name: 'Lift Lobby Areas', instruction: 'Check areas are clear, no damage to port readers', checks: ['Areas clear', 'No damage to port readers'], photoMandatory: false },
       { id: 'amenities', name: 'Amenities', instruction: 'Confirm amenities area is all clear', checks: ['All clear'], photoMandatory: false },
       { id: 'seating-area', name: 'Seating Area', instruction: 'Inspect seating area for missing items or damage', checks: ['No missing items', 'No visible damage'], photoMandatory: true },
     ]
@@ -1202,6 +1202,11 @@ const AUDIT_TYPES = [
 ];
 
 // ═══════════════════════════════════════
+// OBSERVATION PROMPTS
+// ═══════════════════════════════════════
+const OBS_PROMPTS = ['Anything unusual observed?', 'Any hazards?', 'Any maintenance issues?', 'Any suspicious activity?', 'Any lighting issues?'];
+
+// ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
 const STATE = {
@@ -1209,11 +1214,12 @@ const STATE = {
   // Flexible task session
   activeTaskDef: null,
   activeRoomId: null,
-  roomResults: {}, // { roomId: { checks, photos, photos2, notes, hasIssue } }
+  roomResults: {}, // { roomId: { checks, obsChecks, photos, photos2, notes, hasIssue } }
   taskStartTime: null,
   taskStartedAt: null,
   taskPhotos: [],
   taskPhotos2: [],
+  _currentRoomObsPrompts: [],
   // Plant room session
   activePlantTaskId: null,
   plantLevelResults: {}, // { levelId: { roomId: {...} } }
@@ -1489,10 +1495,11 @@ function renderRoomActive(room) {
   if (photoHint) photoHint.textContent = room.photoHint || 'Tap to open camera';
   if (photo2Group) photo2Group.classList.toggle('hidden', !room.requiresTwoPhotos);
 
-  // Checklist
+  // Checklist + observation prompts
   const checkArea = document.getElementById('room-checklist-area');
-  if (checkArea && room.checks && room.checks.length) {
-    checkArea.innerHTML = `<div class="obs-prompts"><div class="obs-prompt-title">CONFIRM CHECKS</div>${room.checks.map((c,i) => `
+  const shuffled = [...OBS_PROMPTS].sort(() => Math.random() - 0.5);
+  STATE._currentRoomObsPrompts = shuffled.slice(0, 3);
+  const checksHtml = (room.checks && room.checks.length) ? `<div class="obs-prompts"><div class="obs-prompt-title">CONFIRM CHECKS</div>${room.checks.map((c,i) => `
       <div class="check-item" id="rchk-item-${i}">
         <div class="check-item-label">${c}</div>
         <div class="check-item-actions">
@@ -1513,8 +1520,30 @@ function renderRoomActive(room) {
             <option value="high">Priority: High — Urgent</option>
           </select>
         </div>
+      </div>`).join('')}</div>` : '';
+  const obsHtml = `<div class="obs-prompts" style="margin-top:10px"><div class="obs-prompt-title">OBSERVATIONS</div>${STATE._currentRoomObsPrompts.map((p,i) => `
+      <div class="check-item" id="obs-item-${i}">
+        <div class="check-item-label">${p}</div>
+        <div class="check-item-actions">
+          <button class="ci-btn ntr" id="obs-ntr-${i}" onclick="setRoomObs(${i},'ntr')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            NOTHING TO REPORT
+          </button>
+          <button class="ci-btn rep" id="obs-rep-${i}" onclick="setRoomObs(${i},'rep')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M4 4h16v10H4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            REPORTABLE
+          </button>
+        </div>
+        <div class="ci-report-detail hidden" id="obs-detail-${i}">
+          <textarea class="field-textarea ci-textarea" id="obs-text-${i}" placeholder="Describe the observation..."></textarea>
+          <select class="field-select" id="obs-priority-${i}" style="margin-top:6px">
+            <option value="low">Priority: Low</option>
+            <option value="medium">Priority: Medium</option>
+            <option value="high">Priority: High — Urgent</option>
+          </select>
+        </div>
       </div>`).join('')}</div>`;
-  } else if (checkArea) { checkArea.innerHTML = ''; }
+  if (checkArea) checkArea.innerHTML = checksHtml + obsHtml;
 }
 
 function setRoomCheck(idx, mode) {
@@ -1522,6 +1551,19 @@ function setRoomCheck(idx, mode) {
   const rep = document.getElementById(`rchk-rep-${idx}`);
   const det = document.getElementById(`rchk-detail-${idx}`);
   const item = document.getElementById(`rchk-item-${idx}`);
+  if (ntr) ntr.classList.remove('selected');
+  if (rep) rep.classList.remove('selected');
+  if (det) det.classList.add('hidden');
+  if (item) item.classList.remove('ntr-done','rep-done');
+  if (mode === 'ntr') { if (ntr) ntr.classList.add('selected'); if (item) item.classList.add('ntr-done'); }
+  else { if (rep) rep.classList.add('selected'); if (det) det.classList.remove('hidden'); if (item) item.classList.add('rep-done'); }
+}
+
+function setRoomObs(idx, mode) {
+  const ntr = document.getElementById(`obs-ntr-${idx}`);
+  const rep = document.getElementById(`obs-rep-${idx}`);
+  const det = document.getElementById(`obs-detail-${idx}`);
+  const item = document.getElementById(`obs-item-${idx}`);
   if (ntr) ntr.classList.remove('selected');
   if (rep) rep.classList.remove('selected');
   if (det) det.classList.add('hidden');
@@ -1551,17 +1593,27 @@ function confirmRoom() {
     });
   }
 
+  const obsChecks = (STATE._currentRoomObsPrompts || []).map((p, i) => {
+    const ntrSel = document.getElementById(`obs-ntr-${i}`) && document.getElementById(`obs-ntr-${i}`).classList.contains('selected');
+    const repSel = document.getElementById(`obs-rep-${i}`) && document.getElementById(`obs-rep-${i}`).classList.contains('selected');
+    const repText = document.getElementById(`obs-text-${i}`) ? document.getElementById(`obs-text-${i}`).value.trim() : '';
+    const repPri = document.getElementById(`obs-priority-${i}`) ? document.getElementById(`obs-priority-${i}`).value : 'low';
+    if (repSel && repText) hasReportable = true;
+    return { label: p, status: repSel ? 'reportable' : (ntrSel ? 'ntr' : 'pending'), reportText: repText, priority: repPri };
+  });
+
   const result = {
     roomName: room.name,
     timestamp: nowTime(),
     notes: document.getElementById('room-notes').value.trim(),
     checks,
+    obsChecks,
     photos: [...STATE.taskPhotos],
     photos2: [...STATE.taskPhotos2],
     hasIssue: hasReportable,
   };
 
-  checks.filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
+  [...checks, ...obsChecks].filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
     STATE.escalations.unshift({ text: c.reportText, location: room.name, task: task.label, time: result.timestamp, priority: c.priority });
     addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
     syncToSheets({ type:'escalation', location:room.name, task:task.label, priority:c.priority, text:c.reportText, officer:'', site:SITE.name });
@@ -1602,13 +1654,17 @@ function completeFlexibleTask() {
   navigateTo('task-complete');
 }
 
-function saveContinueTask() {
-  // Sync to sheets with whatever officer name is entered (can be blank)
+async function saveContinueTask() {
   const record = STATE._completedTaskRecord;
   if (record) {
     const officerName = document.getElementById('task-officer-name').value.trim() || 'Officer';
     record.officer = officerName;
     syncToSheets({ type:'patrol', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
+    try {
+      const { doc, filename } = await buildTaskPDFDoc(record, officerName);
+      const pdfBase64 = doc.output('datauristring');
+      syncPDFToSheets(officerName, record.taskLabel, filename, pdfBase64);
+    } catch(e) {}
   }
   navigateTo('dayshift');
 }
@@ -1631,10 +1687,19 @@ function renderTaskSummary(record) {
   const card = document.getElementById('task-summary-card');
   if (!card) return;
   card.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:12px 0 14px;border-bottom:1px solid var(--border);margin-bottom:4px">
+      <div style="text-align:center">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-muted)">START TIME</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--text-primary);letter-spacing:1px">${record.startTime}</div>
+      </div>
+      <div style="font-size:18px;color:var(--text-muted)">→</div>
+      <div style="text-align:center">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-muted)">FINISH TIME</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:500;color:var(--text-primary);letter-spacing:1px">${record.completedAt}</div>
+      </div>
+    </div>
     <div class="summary-row"><span class="summary-label">TASK</span><span class="summary-value">${record.taskLabel}</span></div>
     ${record.timeHint ? `<div class="summary-row"><span class="summary-label">RUN</span><span class="summary-value">${record.timeHint}</span></div>` : ''}
-    <div class="summary-row"><span class="summary-label">STARTED</span><span class="summary-value">${record.startTime}</span></div>
-    <div class="summary-row"><span class="summary-label">COMPLETED</span><span class="summary-value">${record.completedAt}</span></div>
     <div class="summary-row"><span class="summary-label">DURATION</span><span class="summary-value">${record.duration}</span></div>
     <div class="summary-row"><span class="summary-label">ROOMS</span><span class="summary-value good">${record.roomCount} completed</span></div>
     <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${record.issues > 0 ? 'bad' : 'good'}">${record.issues} flagged</span></div>
@@ -1985,22 +2050,11 @@ async function addPhotoToPDF(doc, photo, x, y, maxW, maxH) {
 // ═══════════════════════════════════════
 // TASK PDF
 // ═══════════════════════════════════════
-async function generateTaskPDF() {
-  const officerName = document.getElementById('task-officer-name').value.trim();
-  if (!officerName) { showToast('Please enter your name first'); document.getElementById('task-officer-name').focus(); return; }
-  showToast('Generating PDF...');
-
-  const record = STATE._completedTaskRecord;
-  if (!record) { showToast('No record found'); return; }
-  record.officer = officerName;
-  // Update officer name in sheets sync
-  syncToSheets({ type:'patrol', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
-
+async function buildTaskPDFDoc(record, officerName) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   const W = 210, M = 16;
 
-  // Header
   doc.setFillColor(15,15,25); doc.rect(0,0,W,40,'F');
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
   doc.text('SECURITY OPERATIONS', M, 17);
@@ -2012,7 +2066,6 @@ async function generateTaskPDF() {
   doc.text('TESTING PLATFORM', W-M, 26, {align:'right'});
 
   let y = 48;
-  // Info block
   doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,30,3,3,'F');
   const items = [['OFFICER',officerName],['TASK',record.taskLabel],['RUN',record.timeHint||'—'],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})],['STARTED',record.startTime],['COMPLETED',record.completedAt]];
   const cw = (W-M*2)/3;
@@ -2031,11 +2084,8 @@ async function generateTaskPDF() {
   doc.text(`STATUS: ${record.roomCount} ROOMS · ${issues} ISSUE(S) · DURATION: ${record.duration}`,M+4,y+6.5);
   y += 15;
 
-  // Room results
   const allRooms = record.roomResults || {};
-  const roomEntries = Object.entries(allRooms);
-
-  for (const [roomId, rd] of roomEntries) {
+  for (const [roomId, rd] of Object.entries(allRooms)) {
     if (y > 245) { doc.addPage(); y = 20; }
     doc.setFillColor(22,22,32);doc.roundedRect(M,y,W-M*2,8,2,2,'F');
     doc.setTextColor(124,92,252);doc.setFontSize(7);doc.setFont('helvetica','bold');
@@ -2043,21 +2093,20 @@ async function generateTaskPDF() {
     doc.setTextColor(100,100,130);doc.text(rd.timestamp||'',W-M-4,y+5.5,{align:'right'});
     y += 11;
 
-    if (rd.checks && rd.checks.length) {
-      for (const c of rd.checks) {
-        if (y>265){doc.addPage();y=20;}
-        const isNtr=c.status==='ntr',isRep=c.status==='reportable';
-        doc.setTextColor(isNtr?34:isRep?239:150,isNtr?197:isRep?68:150,isNtr?94:isRep?68:170);
-        doc.setFontSize(7.5);doc.setFont('helvetica','normal');
-        doc.text(`${isNtr?'✓':isRep?'⚠':'○'} ${c.label}${isNtr?' — Nothing to Report':isRep?' — REPORTABLE':''}`,M+4,y);
-        y+=5;
-        if (isRep&&c.reportText){doc.setTextColor(239,68,68);doc.setFontSize(7);doc.text(`   [${c.priority.toUpperCase()}]: ${c.reportText}`,M+4,y);y+=5;}
-      }
-      y+=2;
+    const allChecks = [...(rd.checks || []), ...(rd.obsChecks || [])];
+    for (const c of allChecks) {
+      if (y>265){doc.addPage();y=20;}
+      const isNtr=c.status==='ntr',isRep=c.status==='reportable';
+      doc.setTextColor(isNtr?34:isRep?239:150,isNtr?197:isRep?68:150,isNtr?94:isRep?68:170);
+      doc.setFontSize(7.5);doc.setFont('helvetica','normal');
+      doc.text(`${isNtr?'✓':isRep?'⚠':'○'} ${c.label}${isNtr?' — Nothing to Report':isRep?' — REPORTABLE':''}`,M+4,y);
+      y+=5;
+      if (isRep&&c.reportText){doc.setTextColor(239,68,68);doc.setFontSize(7);doc.text(`   [${c.priority.toUpperCase()}]: ${c.reportText}`,M+4,y);y+=5;}
     }
+    if (allChecks.length) y+=2;
+
     if (rd.notes){doc.setTextColor(180,180,200);doc.setFontSize(7.5);const l=doc.splitTextToSize(`Notes: ${rd.notes}`,W-M*2-8);doc.text(l,M+4,y);y+=l.length*4+3;}
 
-    // Photos — correct orientation
     if (rd.photos && rd.photos.length) {
       for (const photo of rd.photos.slice(0,3)) {
         if (y>235){doc.addPage();y=20;}
@@ -2076,7 +2125,26 @@ async function generateTaskPDF() {
   }
 
   addFooter(doc, W, M);
-  doc.save(`${record.taskLabel.replace(/\s+/g,'_').toLowerCase()}_${dateSlug()}.pdf`);
+  const filename = `${record.taskLabel.replace(/\s+/g,'_').toLowerCase()}_${dateSlug()}.pdf`;
+  return { doc, filename };
+}
+
+async function generateTaskPDF() {
+  const officerName = document.getElementById('task-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name first'); document.getElementById('task-officer-name').focus(); return; }
+  showToast('Generating PDF...');
+
+  const record = STATE._completedTaskRecord;
+  if (!record) { showToast('No record found'); return; }
+  record.officer = officerName;
+  syncToSheets({ type:'patrol', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
+
+  const { doc, filename } = await buildTaskPDFDoc(record, officerName);
+  doc.save(filename);
+  try {
+    const pdfBase64 = doc.output('datauristring');
+    syncPDFToSheets(officerName, record.taskLabel, filename, pdfBase64);
+  } catch(e) {}
   showToast('PDF downloaded');
 }
 
