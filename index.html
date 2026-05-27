@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#0a0a0f"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="TESTING"/>
+  <title>TESTING — Security Operations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+/* ═══════════════════════════════════════════════════
+   TESTING — SECURITY OPERATIONS PLATFORM
+═══════════════════════════════════════════════════ */
+
+:root {
+  --bg-base: #0a0a0f;
+  --bg-surface: #111118;
+  --bg-card: #16161f;
+  --bg-card-hover: #1c1c28;
+  --bg-elevated: #1e1e2a;
+  --border: rgba(255,255,255,0.08);
+  --border-accent: rgba(124,92,252,0.35);
+  --purple: #7c5cfc;
+  --purple-dim: rgba(124,92,252,0.15);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b8;
+  --text-muted: #555568;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --nav-h: 56px;
+  --bnav-h: 64px;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --transition: 200ms cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+}
+
+.hidden { display: none !important; }
+
+/* ── SPLASH ─────────────────────────────── */
+.splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg-base);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+.splash.fade-out { opacity: 0; visibility: hidden; }
+.splash-inner { display: flex; flex-direction: column; align-items: center; gap: 48px; }
+.splash-wordmark { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.splash-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 42px; font-weight: 800; letter-spacing: 8px;
+  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.splash-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 4px; color: var(--text-muted);
+}
+.splash-loader { width: 160px; height: 2px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
+.splash-bar {
+  height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 99px; width: 0%;
+  animation: splashLoad 1.2s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+@keyframes splashLoad { 0%{width:0%} 60%{width:80%} 100%{width:100%} }
+
+/* ── MAIN LAYOUT ────────────────────────── */
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── TOP NAV ────────────────────────────── */
+.topnav {
+  height: var(--nav-h);
+  min-height: var(--nav-h);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 12px;
+  flex-shrink: 0; z-index: 100;
+}
+.topnav-left { flex: 1; }
+.topnav-center { flex: 0 0 auto; }
+.topnav-right { flex: 1; display: flex; justify-content: flex-end; }
+.nav-wordmark {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800; letter-spacing: 3px; color: var(--text-secondary);
+}
+#nav-site-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--purple); text-transform: uppercase;
+}
+.nav-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 500; color: var(--text-secondary); letter-spacing: 1px;
+}
+
+/* ── PAGE CONTAINER ─────────────────────── */
+#page-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+}
+
+.page {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(16px);
+  transition: opacity var(--transition), transform var(--transition), visibility var(--transition);
+  pointer-events: none;
+}
+
+.page.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.page-scroll {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--bnav-h) + 24px);
+}
+
+/* ── BOTTOM NAV ─────────────────────────── */
+.bottomnav {
+  height: var(--bnav-h);
+  min-height: var(--bnav-h);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  z-index: 100;
+}
+.bnav-btn {
+  flex: 1; background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: var(--text-muted);
+  font-family: 'Barlow', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  transition: color var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.bnav-btn.active { color: var(--purple); }
+.bnav-btn span { font-size: 10px; }
+
+/* ── STATUS BAND ────────────────────────── */
+.status-band {
+  display: flex; align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-surface); border-bottom: 1px solid var(--border);
+  gap: 12px; flex-shrink: 0;
+}
+.status-item {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-secondary);
+}
+.status-divider { width: 1px; height: 14px; background: var(--border); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; }
+.status-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* ── DASH STATS ─────────────────────────── */
+.dash-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent;
+}
+.stat-card:active { background: var(--bg-card-hover); }
+.stat-card.primary { border-color: var(--border-accent); }
+.stat-card.secondary { border-color: rgba(59,130,246,0.2); }
+.stat-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 6px;
+}
+.stat-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px; font-weight: 800; line-height: 1; color: var(--text-primary); margin-bottom: 4px;
+}
+.stat-value span { font-size: 18px; color: var(--text-muted); font-weight: 500; }
+.stat-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+.stat-progress { height: 3px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
+.stat-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.stat-icon { position: absolute; right: 12px; top: 12px; color: rgba(255,255,255,0.06); }
+
+/* ── SECTION HEADERS ────────────────────── */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 8px;
+}
+.section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted);
+}
+.section-badge {
+  background: var(--purple-dim); color: var(--purple);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border-accent);
+}
+
+/* ── ESCALATIONS ────────────────────────── */
+.escalation-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.escalation-item {
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+}
+.esc-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.esc-meta { font-size: 11px; color: var(--text-secondary); }
+.esc-priority {
+  display: inline-block; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 2px 8px; border-radius: 99px; margin-top: 2px;
+}
+.esc-priority.high { background: rgba(239,68,68,0.2); color: var(--red); }
+.esc-priority.medium { background: rgba(245,158,11,0.2); color: var(--amber); }
+.esc-priority.low { background: rgba(34,197,94,0.1); color: var(--green); }
+
+/* ── ACTIVITY FEED ──────────────────────── */
+.activity-feed { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; }
+.activity-item {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; gap: 12px;
+}
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.activity-dot.patrol { background: var(--purple); }
+.activity-dot.audit { background: var(--blue); }
+.activity-dot.escalation { background: var(--red); }
+.activity-content { flex: 1; min-width: 0; }
+.activity-title { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.activity-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; gap: 8px; }
+.empty-icon { font-size: 22px; color: var(--text-muted); }
+.empty-text { font-size: 13px; color: var(--text-muted); }
+
+/* ── QUICK START ────────────────────────── */
+.quick-start-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 0 16px; }
+.qs-btn {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  cursor: pointer; transition: border-color var(--transition), background var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.qs-btn:active { background: var(--bg-card-hover); }
+.qs-btn.patrol { border-color: var(--border-accent); }
+.qs-btn.audit { border-color: rgba(59,130,246,0.2); }
+.qs-icon { font-size: 22px; }
+.qs-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary); text-align: center; line-height: 1.3;
+}
+
+/* ── PAGE HEADERS ───────────────────────── */
+.page-header { padding: 20px 16px 12px; border-bottom: 1px solid var(--border); }
+.page-header-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px; font-weight: 800; letter-spacing: 2px; color: var(--text-primary);
+}
+.page-header-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ── SHIFT PROGRESS ─────────────────────── */
+.shift-progress-bar { height: 4px; background: var(--bg-elevated); overflow: hidden; flex-shrink: 0; }
+.shift-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.shift-task-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.shift-task-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: border-color var(--transition), background var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.shift-task-card:active { background: var(--bg-card-hover); }
+.shift-task-card.done { opacity: 0.55; border-color: rgba(34,197,94,0.15); }
+.stc-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.stc-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); flex-shrink: 0; width: 20px; }
+.stc-icon { font-size: 20px; flex-shrink: 0; }
+.stc-info { min-width: 0; }
+.stc-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stc-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.stc-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.stc-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; padding: 3px 7px; border-radius: 99px;
+}
+.stc-tag.tag-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.stc-tag.tag-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+.stc-done-check {
+  width: 22px; height: 22px; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: var(--green); font-size: 12px; font-weight: 700;
+}
+.stc-arrow { color: var(--text-muted); }
+
+/* ── FLEXIBLE ROOM SELECTOR ─────────────── */
+.room-selector-page { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.room-selector-intro {
+  background: var(--bg-elevated); border-radius: var(--radius-sm);
+  padding: 12px 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.5;
+}
+.room-item {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.room-item.completed { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
+.room-item-check {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 13px; transition: all var(--transition);
+}
+.room-item.completed .room-item-check { background: rgba(34,197,94,0.2); border-color: var(--green); color: var(--green); }
+.room-item-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 700; color: var(--text-primary); flex: 1;
+}
+.room-item.completed .room-item-name { color: var(--text-secondary); }
+.room-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.room-item-arrow { color: var(--text-muted); }
+
+/* Level group */
+.level-group { display: flex; flex-direction: column; gap: 4px; }
+.level-group-header {
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.level-group-header.done { border-color: rgba(34,197,94,0.3); }
+.level-group-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-primary);
+}
+.level-group-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.level-group-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 8px; border-radius: 99px;
+}
+.level-group-badge.done { background: rgba(34,197,94,0.15); color: var(--green); }
+.level-group-badge.pending { background: var(--bg-card); color: var(--text-muted); }
+.level-group-rooms { padding: 4px 0 0 12px; display: flex; flex-direction: column; gap: 4px; }
+
+/* ── PATROL ACTIVE HEADER ───────────────── */
+.patrol-active-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px; background: none; border: none;
+  color: var(--text-secondary); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1.5px; cursor: pointer; padding: 0; margin-bottom: 8px; -webkit-tap-highlight-color: transparent;
+}
+.patrol-active-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 800; letter-spacing: 1px; color: var(--text-primary);
+}
+.patrol-active-meta {
+  font-size: 12px; color: var(--text-secondary);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 600; letter-spacing: 1.5px;
+}
+
+/* ── CHECKPOINT PROGRESS ────────────────── */
+.checkpoint-progress { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.cp-progress-track { height: 4px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
+.cp-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.cp-progress-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted);
+}
+
+/* ── CHECKPOINT / ROOM CARD ─────────────── */
+.checkpoint-card {
+  margin: 16px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 18px;
+}
+.cp-location {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px; font-weight: 800; letter-spacing: 0.5px; color: var(--text-primary); line-height: 1.1;
+}
+.cp-instruction { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+/* ── PER-ITEM CHECK TOGGLES ─────────────── */
+.obs-prompts {
+  background: var(--bg-elevated); border-radius: var(--radius-sm);
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.obs-prompt-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 4px;
+}
+.check-item { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.check-item:last-child { border-bottom: none; }
+.check-item-label { font-size: 14px; font-weight: 500; color: var(--text-primary); line-height: 1.4; }
+.check-item.ntr-done .check-item-label { color: var(--text-muted); text-decoration: line-through; }
+.check-item.rep-done .check-item-label { color: var(--red); }
+.check-item-actions { display: flex; gap: 8px; }
+.ci-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 10px 6px; border-radius: var(--radius-sm); border: 1.5px solid;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.ci-btn.ntr { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.2); color: var(--text-muted); }
+.ci-btn.ntr.selected { background: rgba(34,197,94,0.15); border-color: var(--green); color: var(--green); }
+.ci-btn.rep { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); color: var(--text-muted); }
+.ci-btn.rep.selected { background: rgba(239,68,68,0.15); border-color: var(--red); color: var(--red); }
+.ci-report-detail {
+  background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15);
+  border-radius: var(--radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 6px;
+}
+.ci-textarea { min-height: 60px; font-size: 13px; }
+
+/* ── FIELD GROUPS ───────────────────────── */
+.field-group { display: flex; flex-direction: column; gap: 8px; }
+.field-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted);
+}
+.field-textarea {
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 15px;
+  padding: 12px 14px; resize: none; min-height: 80px; outline: none;
+  transition: border-color var(--transition); width: 100%;
+}
+.field-textarea:focus { border-color: var(--border-accent); }
+.field-textarea::placeholder { color: var(--text-muted); }
+.field-input {
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 500;
+  padding: 14px 16px; outline: none; transition: border-color var(--transition); width: 100%;
+}
+.field-input:focus { border-color: var(--border-accent); }
+.field-input::placeholder { color: var(--text-muted); }
+.field-select {
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 14px;
+  padding: 12px 14px; outline: none; width: 100%; cursor: pointer;
+}
+
+/* ── PHOTO CAPTURE ──────────────────────── */
+label.photo-capture-area, .photo-capture-area {
+  display: block;
+  background: var(--bg-elevated); border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm); padding: 18px; cursor: pointer;
+  transition: border-color var(--transition); -webkit-tap-highlight-color: transparent;
+}
+label.photo-capture-area:active, .photo-capture-area:active { border-color: var(--purple); }
+.photo-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; }
+.photo-preview-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
+.photo-thumb { aspect-ratio: 1; border-radius: var(--radius-sm); object-fit: cover; width: 100%; border: 1px solid var(--border); }
+
+/* ── AUDIT QUESTION CARD ────────────────── */
+.audit-question-card {
+  margin: 16px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 18px;
+}
+.aq-number { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--blue); }
+.aq-question {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1.2;
+}
+.yn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.yn-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; padding: 18px;
+  border-radius: var(--radius); border: 2px solid;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: 2px;
+  cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.yn-btn.yes { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.2); color: var(--green); }
+.yn-btn.yes.selected { background: rgba(34,197,94,0.2); border-color: var(--green); }
+.yn-btn.no { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: var(--red); }
+.yn-btn.no.selected { background: rgba(239,68,68,0.2); border-color: var(--red); }
+
+/* ── ASSET LIST ─────────────────────────── */
+.asset-list { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.asset-item {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.asset-item:active { background: var(--bg-card-hover); border-color: var(--blue); }
+.asset-item-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.asset-item-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.asset-item-arrow { color: var(--text-muted); }
+
+/* ── AUDIT TYPE GRID ────────────────────── */
+.audit-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+.audit-type-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.audit-type-card:active { background: var(--bg-card-hover); }
+.audit-type-card.available { border-color: rgba(59,130,246,0.2); }
+.audit-type-card.coming-soon { opacity: 0.5; cursor: not-allowed; }
+.atc-icon { width: 38px; height: 38px; background: var(--blue-dim); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.atc-name { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.atc-tag { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 2px 8px; border-radius: 99px; }
+.atc-tag.ready { background: var(--blue-dim); color: var(--blue); }
+.atc-tag.soon { background: var(--bg-elevated); color: var(--text-muted); }
+
+/* ── BUTTONS ────────────────────────────── */
+.btn-primary {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  border: none; border-radius: var(--radius); color: #fff;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 2px;
+  padding: 16px 24px; cursor: pointer; transition: opacity var(--transition), transform var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+.btn-secondary {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text-secondary); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: 2px; padding: 16px 24px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.btn-full { width: 100%; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row .btn-primary, .btn-row .btn-secondary { flex: 1; font-size: 13px; padding: 14px 8px; letter-spacing: 1px; }
+
+/* ── COMPLETE SCREEN ────────────────────── */
+.complete-hero { display: flex; flex-direction: column; align-items: center; padding: 32px 16px 20px; gap: 12px; }
+.complete-icon { width: 72px; height: 72px; background: var(--purple-dim); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.complete-title { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: 1px; color: var(--text-primary); }
+.complete-meta { font-size: 13px; color: var(--text-secondary); text-align: center; }
+
+/* ── SUMMARY CARD ───────────────────────── */
+.summary-card {
+  margin: 0 16px 20px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px;
+}
+.summary-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.summary-row:last-child { border-bottom: none; padding-bottom: 0; }
+.summary-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted); flex-shrink: 0; }
+.summary-value { font-size: 13px; font-weight: 500; color: var(--text-primary); text-align: right; }
+.summary-value.good { color: var(--green); }
+.summary-value.bad { color: var(--red); }
+
+/* ── LOBBY STATIC ───────────────────────── */
+.lobby-static-card { margin: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.lobby-instruction { font-size: 14px; color: var(--text-secondary); line-height: 1.6; text-align: center; }
+.lobby-timer-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 4px; }
+.lobby-timer-value { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 500; color: var(--text-primary); letter-spacing: 2px; }
+.lobby-timer-display { text-align: center; margin-bottom: 16px; }
+.lobby-status-pill {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 99px;
+  padding: 8px 16px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px; color: var(--green); margin-bottom: 4px;
+}
+.lobby-times-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 8px; }
+.lobby-time-block { text-align: center; }
+.lobby-time-sep { font-size: 20px; color: var(--text-muted); margin-top: 8px; }
+
+/* ── EOD BANNER ─────────────────────────── */
+.eod-banner {
+  margin: 16px; background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(59,130,246,0.15));
+  border: 1px solid var(--border-accent); border-radius: var(--radius); padding: 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+}
+.eod-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 1px; color: var(--text-primary); }
+.eod-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+/* ── TOAST ──────────────────────────────── */
+.toast {
+  position: fixed; bottom: calc(var(--bnav-h) + 16px); left: 50%; transform: translateX(-50%);
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--text-primary);
+  z-index: 9999; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.25s ease, toastOut 0.25s ease 2.5s forwards;
+}
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+@keyframes toastOut { from{opacity:1} to{opacity:0} }
+
+.bottom-spacer { height: 32px; }
+
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SPLASH -->
+<div id="splash" class="splash">
+  <div class="splash-inner">
+    <div class="splash-wordmark"><span class="splash-title">TESTING</span><span class="splash-sub">SECURITY OPERATIONS PLATFORM</span></div>
+    <div class="splash-loader"><div class="splash-bar"></div></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main" class="main hidden">
+
+<nav class="topnav">
+  <div class="topnav-left"><span class="nav-wordmark">TESTING</span></div>
+  <div class="topnav-center"><span id="nav-site-name">Tower 3 ITS</span></div>
+  <div class="topnav-right"><div class="nav-time" id="nav-time"></div></div>
+</nav>
+
+<div id="page-container">
+
+<!-- ═══════ DASHBOARD ═══════ -->
+<div id="page-dashboard" class="page active">
+  <div class="page-scroll">
+    <div class="status-band">
+      <div class="status-item"><span class="status-dot green"></span><span>SITE ACTIVE</span></div>
+      <div class="status-divider"></div>
+      <div class="status-item" id="dash-date"></div>
+      <div class="status-divider"></div>
+      <div class="status-item">SHIFT: DAY</div>
+    </div>
+    <div class="dash-stats">
+      <div class="stat-card primary" onclick="navigateTo('dayshift')">
+        <div class="stat-label">DAY SHIFT</div>
+        <div class="stat-value" id="stat-dayshift">0<span>/11</span></div>
+        <div class="stat-sub">Tasks completed</div>
+        <div class="stat-progress"><div class="stat-progress-fill" id="dayshift-progress" style="width:0%"></div></div>
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" width="32" height="32"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="stat-card secondary" onclick="navigateTo('audits')">
+        <div class="stat-label">AUDITS TODAY</div>
+        <div class="stat-value" id="stat-audits">0<span>/4</span></div>
+        <div class="stat-sub">Tap to start audit</div>
+        <div class="stat-progress"><div class="stat-progress-fill" id="audit-progress" style="width:0%"></div></div>
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" width="32" height="32"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      </div>
+    </div>
+    <div class="section-header"><span class="section-title">ACTIVE ESCALATIONS</span><span class="section-badge" id="esc-count">0</span></div>
+    <div id="escalations-list" class="escalation-list"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No active escalations</div></div></div>
+    <div class="section-header"><span class="section-title">RECENT ACTIVITY</span></div>
+    <div id="activity-feed" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div></div>
+    <div class="section-header"><span class="section-title">QUICK START</span></div>
+    <div class="quick-start-grid">
+      <button class="qs-btn patrol" onclick="startQuickPatrol('White Level Inspection')"><div class="qs-icon">⬜</div><div class="qs-label">White Level</div></button>
+      <button class="qs-btn patrol" onclick="startQuickPatrol('External Patrol')"><div class="qs-icon">🔦</div><div class="qs-label">External Patrol</div></button>
+      <button class="qs-btn patrol" onclick="startRoverTask('plant-room-morning')"><div class="qs-icon">⚙️</div><div class="qs-label">Plant Room</div></button>
+      <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')"><div class="qs-icon">🛗</div><div class="qs-label">Lift Audit</div></button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ DAY SHIFT ═══════ -->
+<div id="page-dayshift" class="page">
+  <div class="page-scroll">
+    <div class="page-header"><div class="page-header-title">DAY SHIFT ROVER</div><div class="page-header-sub" id="dayshift-sub">Complete tasks in order</div></div>
+    <div class="shift-progress-bar"><div class="shift-progress-fill" id="shift-progress-fill" style="width:0%"></div></div>
+    <div class="shift-task-list" id="shift-task-list"></div>
+    <div id="eod-section" style="display:none">
+      <div class="eod-banner">
+        <div class="eod-title">🎉 SHIFT COMPLETE</div>
+        <div class="eod-sub">All tasks done. Generate your full day shift report.</div>
+        <div class="field-group" style="width:100%">
+          <label class="field-label">OFFICER NAME</label>
+          <input type="text" class="field-input" id="eod-officer-name" placeholder="Enter your full name..."/>
+        </div>
+        <button class="btn-primary btn-full" onclick="generateEODPDF()">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          GENERATE FULL DAY REPORT
+        </button>
+      </div>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ NIGHT SHIFT ═══════ -->
+<div id="page-nightshift" class="page">
+  <div class="page-scroll">
+    <div class="page-header"><div class="page-header-title">NIGHT SHIFT ROVER</div><div class="page-header-sub">Coming soon</div></div>
+    <div style="padding:48px 16px;text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">🌙</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary);letter-spacing:1px">NIGHT SHIFT WORKFLOW</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:8px">Will be configured once night shift patrol data is provided.</div>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ AUDITS ═══════ -->
+<div id="page-audits" class="page">
+  <div class="page-scroll">
+    <div class="page-header"><div class="page-header-title">AUDITS & INSPECTIONS</div><div class="page-header-sub">Select audit type to begin</div></div>
+    <div class="audit-type-grid" id="audit-type-list"></div>
+    <div class="section-header" style="margin-top:24px"><span class="section-title">TODAY'S AUDIT LOG</span></div>
+    <div id="audit-history" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No audits completed today</div></div></div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ FLEXIBLE ROOMS LIST ═══════ -->
+<div id="page-flexible-rooms" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('dayshift')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="flex-rooms-title">White Level Inspection</div>
+      <div class="patrol-active-meta" id="flex-rooms-meta"></div>
+    </div>
+    <div class="room-selector-page">
+      <div class="room-selector-intro">Complete rooms in any order. Tap a room to begin inspection.</div>
+      <div id="flex-rooms-list"></div>
+      <button class="btn-primary btn-full hidden" id="flex-complete-btn" onclick="completeFlexibleTask()">COMPLETE TASK ›</button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ ROOM ACTIVE ═══════ -->
+<div id="page-room-active" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('flexible-rooms')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="room-active-title">Entry</div>
+      <div class="patrol-active-meta" id="room-active-task"></div>
+    </div>
+    <div class="checkpoint-card" style="margin-top:16px">
+      <div class="cp-instruction" id="room-instruction"></div>
+      <div id="room-checklist-area"></div>
+      <div class="field-group">
+        <label class="field-label">NOTES / OBSERVATIONS</label>
+        <textarea class="field-textarea" id="room-notes" placeholder="Describe anything observed..."></textarea>
+      </div>
+      <div class="field-group" id="room-photo-group">
+        <label class="field-label" id="room-photo-label">PHOTO EVIDENCE</label>
+        <label class="photo-capture-area" for="room-photo">
+          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span id="room-photo-hint">Tap to open camera</span></div>
+          <div id="room-photo-preview" class="photo-preview-grid"></div>
+        </label>
+        <input type="file" id="room-photo" accept="image/*" capture="environment" class="hidden" onchange="handleRoomPhoto(this)" multiple/>
+      </div>
+      <div class="field-group hidden" id="room-photo2-group">
+        <label class="field-label">PHOTO EVIDENCE — PANEL 2</label>
+        <label class="photo-capture-area" for="room-photo2">
+          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tap to capture Panel 2</span></div>
+          <div id="room-photo2-preview" class="photo-preview-grid"></div>
+        </label>
+        <input type="file" id="room-photo2" accept="image/*" capture="environment" class="hidden" onchange="handleRoomPhoto2(this)" multiple/>
+      </div>
+      <button class="btn-primary btn-full" onclick="confirmRoom()">CONFIRM ROOM ›</button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ PLANT LEVELS ═══════ -->
+<div id="page-plant-levels" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('dayshift')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="plant-levels-title">Plant Room Patrol</div>
+      <div class="patrol-active-meta" id="plant-levels-meta"></div>
+    </div>
+    <div class="room-selector-page">
+      <div class="room-selector-intro">Select a level to begin. Complete rooms in any order. All photos mandatory.</div>
+      <div id="plant-levels-list"></div>
+      <button class="btn-primary btn-full hidden" id="plant-complete-btn" onclick="completePlantPatrol()">COMPLETE PATROL ›</button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ PLANT ROOM ACTIVE ═══════ -->
+<div id="page-plant-room-active" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('plant-levels')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="plant-room-title">Level 15 — Generator Room</div>
+      <div class="patrol-active-meta" id="plant-room-meta">PLANT ROOM PATROL</div>
+    </div>
+    <div class="checkpoint-card" style="margin-top:16px">
+      <div class="cp-instruction" id="plant-room-instruction"></div>
+      <div id="plant-checklist-area"></div>
+      <div class="field-group">
+        <label class="field-label">NOTES / OBSERVATIONS</label>
+        <textarea class="field-textarea" id="plant-room-notes" placeholder="Describe anything observed..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" id="plant-photo-label">PHOTO EVIDENCE — MANDATORY</label>
+        <label class="photo-capture-area" for="plant-photo">
+          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span id="plant-photo-hint">Tap to open camera</span></div>
+          <div id="plant-photo-preview" class="photo-preview-grid"></div>
+        </label>
+        <input type="file" id="plant-photo" accept="image/*" capture="environment" class="hidden" onchange="handlePlantPhoto(this)" multiple/>
+      </div>
+      <button class="btn-primary btn-full" onclick="confirmPlantRoom()">CONFIRM ROOM ›</button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ TASK COMPLETE ═══════ -->
+<div id="page-task-complete" class="page">
+  <div class="page-scroll">
+    <div class="complete-hero">
+      <div class="complete-icon"><svg viewBox="0 0 60 60" fill="none" width="60" height="60"><circle cx="30" cy="30" r="28" stroke="url(#cg1)" stroke-width="2"/><path d="M18 30L26 38L42 22" stroke="#7c5cfc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="cg1" x1="2" y1="2" x2="58" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7c5cfc"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs></svg></div>
+      <div class="complete-title" id="task-complete-title">Task Complete</div>
+      <div class="complete-meta" id="task-complete-meta"></div>
+    </div>
+    <div class="summary-card" id="task-summary-card"></div>
+    <div class="field-group" style="padding:0 16px">
+      <label class="field-label">OFFICER NAME (FOR REPORT)</label>
+      <input type="text" class="field-input" id="task-officer-name" placeholder="Enter your full name..."/>
+    </div>
+    <div style="padding:0 16px;margin-top:12px">
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="navigateTo('dayshift')">SAVE &amp; CONTINUE</button>
+        <button class="btn-primary" onclick="generateTaskPDF()">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          GENERATE PDF
+        </button>
+      </div>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ LOBBY STATIC ═══════ -->
+<div id="page-lobby-static" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('dayshift')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="lobby-title">Lobby Static</div>
+      <div class="patrol-active-meta" id="lobby-window">08:00 – 09:00</div>
+    </div>
+    <div class="lobby-static-card">
+      <div id="lobby-state-start">
+        <div class="lobby-instruction">Proceed to lobby area and begin your static observation. Tap START when you arrive.</div>
+        <button class="btn-primary btn-full" onclick="lobbyStart()" style="margin-top:20px">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M10 8l6 4-6 4V8z" fill="currentColor"/></svg>
+          START STATIC
+        </button>
+      </div>
+      <div id="lobby-state-active" class="hidden">
+        <div class="lobby-timer-display"><div class="lobby-timer-label">STARTED</div><div class="lobby-timer-value" id="lobby-start-time">--:--</div></div>
+        <div class="lobby-status-pill"><span class="status-dot green"></span> STATIC IN PROGRESS</div>
+        <div class="field-group" style="margin-top:20px">
+          <label class="field-label">OBSERVATIONS DURING STATIC</label>
+          <textarea class="field-textarea" id="lobby-notes" placeholder="Note anything observed — foot traffic, incidents, persons of interest, maintenance issues..." style="min-height:120px"></textarea>
+        </div>
+        <button class="btn-primary btn-full" onclick="lobbyFinish()" style="margin-top:16px">
+          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+          FINISH STATIC
+        </button>
+      </div>
+      <div id="lobby-state-done" class="hidden">
+        <div class="lobby-times-row">
+          <div class="lobby-time-block"><div class="lobby-timer-label">STARTED</div><div class="lobby-timer-value" id="lobby-done-start">--:--</div></div>
+          <div class="lobby-time-sep">→</div>
+          <div class="lobby-time-block"><div class="lobby-timer-label">FINISHED</div><div class="lobby-timer-value" id="lobby-done-end">--:--</div></div>
+        </div>
+        <div class="complete-meta" style="margin-top:8px" id="lobby-duration-text"></div>
+        <div class="field-group" style="margin-top:16px">
+          <label class="field-label">OFFICER NAME (FOR REPORT)</label>
+          <input type="text" class="field-input" id="lobby-officer-name" placeholder="Enter your full name..."/>
+        </div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn-secondary" onclick="navigateTo('dayshift')">SAVE &amp; CONTINUE</button>
+          <button class="btn-primary" onclick="generateLobbyPDF()">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            GENERATE PDF
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ AUDIT SELECT ═══════ -->
+<div id="page-audit-select" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('audits')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="audit-select-title">Lift Audit</div>
+      <div class="patrol-active-meta">SELECT ASSET TO INSPECT</div>
+    </div>
+    <div class="asset-list" id="asset-select-list"></div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ AUDIT ACTIVE ═══════ -->
+<div id="page-audit-active" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('audit-select')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="audit-active-title">Lift A</div>
+      <div class="patrol-active-meta" id="audit-active-meta">Lift Audit</div>
+    </div>
+    <div class="checkpoint-progress">
+      <div class="cp-progress-track"><div class="cp-progress-fill" id="audit-progress-fill"></div></div>
+      <div class="cp-progress-label" id="audit-progress-label">Question 1 of 4</div>
+    </div>
+    <div class="audit-question-card">
+      <div class="aq-number" id="aq-number">01</div>
+      <div class="aq-question" id="aq-question">Is the intercom functioning?</div>
+      <div class="yn-row">
+        <button class="yn-btn yes" id="yn-yes" onclick="setAuditAnswer('yes')"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>YES</button>
+        <button class="yn-btn no" id="yn-no" onclick="setAuditAnswer('no')"><svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>NO</button>
+      </div>
+      <div class="field-group">
+        <label class="field-label">COMMENTS (OPTIONAL)</label>
+        <textarea class="field-textarea" id="aq-comments" placeholder="Add any relevant comments..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label" id="aq-photo-label">PHOTO EVIDENCE</label>
+        <label class="photo-capture-area" for="aq-photo">
+          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tap to open camera</span></div>
+          <div id="aq-photo-preview" class="photo-preview-grid"></div>
+        </label>
+        <input type="file" id="aq-photo" accept="image/*" capture="environment" class="hidden" onchange="handleAuditPhoto(this)" multiple/>
+      </div>
+      <button class="btn-primary btn-full" id="audit-next-btn" onclick="advanceAuditQuestion()">NEXT QUESTION ›</button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ AUDIT COMPLETE ═══════ -->
+<div id="page-audit-complete" class="page">
+  <div class="page-scroll">
+    <div class="complete-hero">
+      <div class="complete-icon"><svg viewBox="0 0 60 60" fill="none" width="60" height="60"><circle cx="30" cy="30" r="28" stroke="url(#cg2)" stroke-width="2"/><path d="M18 30L26 38L42 22" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="cg2" x1="2" y1="2" x2="58" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#7c5cfc"/></linearGradient></defs></svg></div>
+      <div class="complete-title" id="complete-audit-title">Audit Complete</div>
+      <div class="complete-meta" id="complete-audit-meta"></div>
+    </div>
+    <div class="summary-card" id="audit-summary-card"></div>
+    <div class="field-group" style="padding:0 16px">
+      <label class="field-label">OFFICER NAME (FOR REPORT)</label>
+      <input type="text" class="field-input" id="audit-officer-name" placeholder="Enter your full name..."/>
+    </div>
+    <div style="padding:0 16px;margin-top:12px">
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="navigateTo('audits')">SAVE &amp; CONTINUE</button>
+        <button class="btn-primary" onclick="generateAuditPDF()">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          GENERATE PDF
+        </button>
+      </div>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+</div><!-- /page-container -->
+
+<nav class="bottomnav">
+  <button class="bnav-btn active" id="bnav-dashboard" onclick="navigateTo('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    <span>Dashboard</span>
+  </button>
+  <button class="bnav-btn" id="bnav-dayshift" onclick="navigateTo('dayshift')">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>Day Shift</span>
+  </button>
+  <button class="bnav-btn" id="bnav-nightshift" onclick="navigateTo('nightshift')">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Night Shift</span>
+  </button>
+  <button class="bnav-btn" id="bnav-audits" onclick="navigateTo('audits')">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>Audits</span>
+  </button>
+</nav>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+'use strict';
+
+const SITE = { name: 'Tower 3 ITS', auditsTarget: 4 };
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxGIMlKhiedkYFA-s7gUmot-LUaymmMbzAiZ2HxZbTiIwySFsdtC2y4NyH5sjyEsHSeTw/exec';
+
+// ═══════════════════════════════════════
+// DAY SHIFT TASK DEFINITIONS
+// ═══════════════════════════════════════
+const DAY_SHIFT_TASKS = [
+  {
+    id: 'white-level', label: 'White Level Inspection', icon: '⬜', type: 'flexible',
+    tag: 'INSPECTION', tagColor: 'blue',
+    rooms: [
+      { id: 'entry', name: 'Entry', instruction: 'Check for any suspicious items at entry points', checks: ['Suspicious items check'], photoMandatory: false },
+      { id: 'internal-doors', name: 'Internal Doors', instruction: 'Confirm all internal doors are secured', checks: ['All internal doors secured'], photoMandatory: false },
+      { id: 'lighting', name: 'Lighting', instruction: 'Verify all lighting is operational throughout the level', checks: ['Lighting operational'], photoMandatory: false },
+      { id: 'revolving-doors', name: 'Revolving Doors', instruction: 'Check revolving doors are operational and undamaged', checks: ['Operational', 'No damage'], photoMandatory: false },
+      { id: 'leaf-lobby', name: 'Leaf Lobby Areas', instruction: 'Check areas are clear, no damage to port readers', checks: ['Areas clear', 'No damage to port readers'], photoMandatory: false },
+      { id: 'amenities', name: 'Amenities', instruction: 'Confirm amenities area is all clear', checks: ['All clear'], photoMandatory: false },
+      { id: 'seating-area', name: 'Seating Area', instruction: 'Inspect seating area for missing items or damage', checks: ['No missing items', 'No visible damage'], photoMandatory: true },
+    ]
+  },
+  {
+    id: 'external-patrol', label: 'External Patrol', icon: '🔦', type: 'flexible',
+    tag: 'PATROL', tagColor: 'blue',
+    rooms: [
+      { id: 'north', name: 'North Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 'east', name: 'East Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 'south', name: 'South Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 'west', name: 'West Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+    ]
+  },
+  {
+    id: 'b1-patrol', label: 'B1 Patrol', icon: '🅿️', type: 'flexible',
+    tag: 'PATROL', tagColor: 'blue',
+    rooms: [
+      { id: 'fire-pump', name: 'Fire Relay Pump Room', instruction: 'Photograph the fire relay pump. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of fire relay pump — MANDATORY' },
+      { id: 'grease', name: 'Retail Grease Arrestor Room', instruction: 'Photograph the grease arrestor. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of grease arrestor — MANDATORY' },
+      { id: 'node1', name: 'Node Room 1', instruction: 'Photograph the node room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of node room — MANDATORY' },
+      { id: 'node2', name: 'Node Room 2', instruction: 'Photograph the node room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of node room — MANDATORY' },
+      { id: 'common', name: 'Common Areas — B1', instruction: 'Photograph the common area. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of common area — MANDATORY' },
+      { id: 'heat', name: 'Heat Exchange Room', instruction: 'Photograph the heat exchange room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of heat exchange room — MANDATORY' },
+      { id: 'switch', name: 'Retail Main Switch Room', instruction: 'Photograph the switchboard. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switchboard — MANDATORY' },
+      { id: 'fire-control', name: 'Fire Control Room', instruction: 'Photograph both fire control panels. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of Panel 1 — MANDATORY', requiresTwoPhotos: true },
+    ]
+  },
+  {
+    id: 'plant-room-morning', label: 'Plant Room Patrol', icon: '⚙️', type: 'plant',
+    tag: 'CRITICAL', tagColor: 'red', timeHint: 'Morning',
+  },
+  {
+    id: 'lobby-static-morning', label: 'Lobby Static', icon: '🏛️', type: 'lobby',
+    tag: 'STATIC', tagColor: 'blue', timeHint: '08:00 – 09:00', window: '08:00 – 09:00',
+  },
+  {
+    id: 'plant-room-midday', label: 'Plant Room Patrol', icon: '⚙️', type: 'plant',
+    tag: 'CRITICAL', tagColor: 'red', timeHint: 'Midday',
+  },
+  {
+    id: 'lobby-static-midday', label: 'Lobby Static', icon: '🏛️', type: 'lobby',
+    tag: 'STATIC', tagColor: 'blue', timeHint: '13:00 – 14:00', window: '13:00 – 14:00',
+  },
+  {
+    id: 'plant-room-afternoon', label: 'Plant Room Patrol', icon: '⚙️', type: 'plant',
+    tag: 'CRITICAL', tagColor: 'red', timeHint: 'Afternoon',
+  },
+  {
+    id: 'lobby-static-afternoon', label: 'Lobby Static', icon: '🏛️', type: 'lobby',
+    tag: 'STATIC', tagColor: 'blue', timeHint: '17:00 – 18:00', window: '17:00 – 18:00',
+  },
+  {
+    id: 'precinct-patrol-1', label: 'Precinct Patrol', icon: '🏙️', type: 'flexible',
+    tag: 'PATROL', tagColor: 'blue', timeHint: 'Run 1 of 2',
+    rooms: [
+      { id: 't1', name: 'Tower 1 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 't2', name: 'Tower 2 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 't3', name: 'Tower 3 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 'retail', name: 'Retail Areas', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 'walkways', name: 'Common Walkways', instruction: 'Check for graffiti, suspicious packages, all clear', checks: ['No graffiti', 'No suspicious packages', 'All clear'], photoMandatory: false },
+    ]
+  },
+  {
+    id: 'precinct-patrol-2', label: 'Precinct Patrol', icon: '🏙️', type: 'flexible',
+    tag: 'PATROL', tagColor: 'blue', timeHint: 'Run 2 of 2', stepsRef: 'precinct-patrol-1',
+  },
+];
+
+// Plant room level definitions
+const PLANT_LEVELS = [
+  {
+    id: 'l15', name: 'Level 15', rooms: [
+      { id: 'gen', name: 'Generator Room', instruction: 'Photograph generator screen. Confirm all clear.', checks: ['Generator operational', 'No alarms'], photoMandatory: true, photoHint: 'Photo of generator screen — MANDATORY' },
+      { id: 'risers', name: 'Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'], photoMandatory: true, photoHint: 'Photo of electrical risers — MANDATORY' },
+      { id: 'sub', name: 'Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'], photoMandatory: true, photoHint: 'Photo of substation — MANDATORY' },
+      { id: 'sw', name: 'Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switch room — MANDATORY' },
+      { id: 'lamp', name: 'Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'], photoMandatory: true, photoHint: 'Photo of lamp board — MANDATORY' },
+      { id: 'balcony', name: 'External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'], photoMandatory: true, photoHint: 'Photo of balcony — MANDATORY' },
+    ]
+  },
+  {
+    id: 'l27', name: 'Level 27', rooms: [
+      { id: 'gen', name: 'Generator Room', instruction: 'Photograph generator screen. Confirm all clear.', checks: ['Generator operational', 'No alarms'], photoMandatory: true, photoHint: 'Photo of generator screen — MANDATORY' },
+      { id: 'risers', name: 'Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'], photoMandatory: true, photoHint: 'Photo of electrical risers — MANDATORY' },
+      { id: 'sub', name: 'Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'], photoMandatory: true, photoHint: 'Photo of substation — MANDATORY' },
+      { id: 'sw', name: 'Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switch room — MANDATORY' },
+      { id: 'lamp', name: 'Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'], photoMandatory: true, photoHint: 'Photo of lamp board — MANDATORY' },
+      { id: 'balcony', name: 'External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'], photoMandatory: true, photoHint: 'Photo of balcony — MANDATORY' },
+    ]
+  },
+  {
+    id: 'l39', name: 'Level 39', rooms: [
+      { id: 'gen', name: 'Generator Room', instruction: 'Photograph generator screen. Confirm all clear.', checks: ['Generator operational', 'No alarms'], photoMandatory: true, photoHint: 'Photo of generator screen — MANDATORY' },
+      { id: 'risers', name: 'Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'], photoMandatory: true, photoHint: 'Photo of electrical risers — MANDATORY' },
+      { id: 'sub', name: 'Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'], photoMandatory: true, photoHint: 'Photo of substation — MANDATORY' },
+      { id: 'sw', name: 'Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switch room — MANDATORY' },
+      { id: 'lamp', name: 'Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'], photoMandatory: true, photoHint: 'Photo of lamp board — MANDATORY' },
+      { id: 'balcony', name: 'External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'], photoMandatory: true, photoHint: 'Photo of balcony — MANDATORY' },
+    ]
+  },
+  {
+    id: 'l40', name: 'Level 40', rooms: [
+      { id: 'solar', name: 'Solar Panels', instruction: 'Check solar panels are clean, nothing loose, all doors secured.', checks: ['Panels clean', 'Nothing loose', 'Doors secured'], photoMandatory: true, photoHint: 'Photo of solar panels — MANDATORY' },
+    ]
+  },
+  {
+    id: 'l41', name: 'Level 41 — Rooftop', rooms: [
+      { id: 'roof', name: 'Rooftop', instruction: 'Check solar panels are clean, nothing loose, all doors secured.', checks: ['Panels clean', 'Nothing loose', 'Doors secured'], photoMandatory: true, photoHint: 'Photo of rooftop — MANDATORY' },
+    ]
+  },
+];
+
+// Audit types
+const AUDIT_TYPES = [
+  {
+    id: 'lift', name: 'Lift Audit', icon: '🛗', available: true,
+    assetGroups: [
+      { group: 'Commercial Podium', assets: ['Lift A (24)', 'Lift B (25)'] },
+      { group: 'Carpark', assets: ['Carpark Lift A', 'Carpark Lift B'] },
+      { group: 'Low Rise', assets: ['Low Rise A', 'Low Rise B', 'Low Rise C', 'Low Rise D', 'Low Rise F', 'Low Rise G', 'Low Rise H'] },
+      { group: 'Mid Rise', assets: ['Mid Rise A', 'Mid Rise B', 'Mid Rise C', 'Mid Rise E', 'Mid Rise F', 'Mid Rise G', 'Mid Rise H'] },
+      { group: 'High Rise', assets: ['High Rise A', 'High Rise B', 'High Rise C', 'High Rise D', 'High Rise E', 'High Rise F', 'High Rise G', 'High Rise H'] },
+    ],
+    questions: [
+      'Is the intercom functioning?',
+      'Is the lift port reader operational?',
+      'Visual inspection of PDI (Position Destination Indicator) — any issues?',
+      'Is the lighting operational?',
+    ],
+    photoMandatory: true,
+  },
+  {
+    id: 'bathroom', name: 'Bathroom Audit', icon: '🚻', available: true,
+    assetGroups: [
+      { group: 'Level 1', assets: ['L1 Male', 'L1 Female', 'L1 Accessible'] },
+      { group: 'Level 2', assets: ['L2 Male', 'L2 Female'] },
+      { group: 'Level 3', assets: ['L3 Male', 'L3 Female'] },
+      { group: 'Basement', assets: ['Basement Amenities'] },
+    ],
+    questions: [
+      'Is the bathroom clean and presentable?',
+      'Are all fixtures operational (taps, flush, hand dryer)?',
+      'Are consumables stocked (soap, paper towels, toilet paper)?',
+      'Is there any visible damage or vandalism?',
+      'Are there any maintenance issues (leaks, blocked drains)?',
+      'Are there any safety hazards present?',
+    ],
+    photoMandatory: false,
+  },
+  { id: 'cctv', name: 'CCTV Audit', icon: '📷', available: false },
+  { id: 'access', name: 'Access Card Audit', icon: '💳', available: false },
+  { id: 'radio', name: 'Radio Audit', icon: '📻', available: false },
+  { id: 'emergency', name: 'Emergency Exit Audit', icon: '🚪', available: false },
+  { id: 'firedoor', name: 'Fire Door Audit', icon: '🔥', available: false },
+  { id: 'carpark', name: 'Carpark Audit', icon: '🚗', available: false },
+];
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const STATE = {
+  currentPage: 'dashboard',
+  // Flexible task session
+  activeTaskDef: null,
+  activeRoomId: null,
+  roomResults: {}, // { roomId: { checks, photos, photos2, notes, hasIssue } }
+  taskStartTime: null,
+  taskStartedAt: null,
+  taskPhotos: [],
+  taskPhotos2: [],
+  // Plant room session
+  activePlantTaskId: null,
+  plantLevelResults: {}, // { levelId: { roomId: {...} } }
+  activePlantLevel: null,
+  activePlantRoomId: null,
+  plantRoomPhotos: [],
+  plantRoomPhotos2: [],
+  // Lobby
+  activeLobby: null,
+  lobbyStartTime: null,
+  lobbyStartedAt: null,
+  // Audit
+  activeAudit: null,
+  activeAuditAsset: null,
+  currentQuestion: 0,
+  auditAnswers: [],
+  aqPhotos: [],
+  _currentAuditAnswer: null,
+  _completedAuditRecord: null,
+  // Records
+  completedTaskIds: [],
+  taskRecords: [],
+  auditRecords: [],
+  escalations: [],
+  activity: [],
+  _completedTaskRecord: null,
+  _completedLobbyRecord: null,
+};
+
+// ═══════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════
+function loadState() {
+  try {
+    const today = new Date().toDateString();
+    if (localStorage.getItem('t_date') !== today) {
+      ['t_completed','t_tasks','t_audits','t_escs','t_activity','t_lobby'].forEach(k => localStorage.removeItem(k));
+      localStorage.setItem('t_date', today);
+      return;
+    }
+    const load = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e){ return def; } };
+    STATE.completedTaskIds = load('t_completed', []);
+    STATE.taskRecords = load('t_tasks', []);
+    STATE.auditRecords = load('t_audits', []);
+    STATE.escalations = load('t_escs', []);
+    STATE.activity = load('t_activity', []);
+    // Restore in-progress lobby
+    const lobby = load('t_lobby', null);
+    if (lobby && lobby.taskId) {
+      STATE.activeLobby = DAY_SHIFT_TASKS.find(t => t.id === lobby.taskId);
+      STATE.lobbyStartTime = lobby.startTime;
+      STATE.lobbyStartedAt = lobby.startedAt ? new Date(lobby.startedAt) : null;
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('t_completed', JSON.stringify(STATE.completedTaskIds));
+    localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
+    localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
+    localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
+    localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
+    localStorage.setItem('t_date', new Date().toDateString());
+  } catch(e) {}
+}
+
+function saveLobbyState() {
+  try {
+    if (STATE.activeLobby && STATE.lobbyStartTime) {
+      localStorage.setItem('t_lobby', JSON.stringify({
+        taskId: STATE.activeLobby.id,
+        startTime: STATE.lobbyStartTime,
+        startedAt: STATE.lobbyStartedAt ? STATE.lobbyStartedAt.toISOString() : null,
+      }));
+    } else {
+      localStorage.removeItem('t_lobby');
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+const ALL_PAGES = ['dashboard','dayshift','nightshift','audits','flexible-rooms','room-active','room-complete','plant-levels','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
+const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'nightshift','audits':'audits','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
+
+function navigateTo(page) {
+  ALL_PAGES.forEach(p => { const el = document.getElementById(`page-${p}`); if (el) el.classList.remove('active'); });
+  const target = document.getElementById(`page-${page}`);
+  if (target) { target.classList.add('active'); const s = target.querySelector('.page-scroll'); if (s) s.scrollTop = 0; }
+  STATE.currentPage = page;
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  const nb = document.getElementById(`bnav-${BNAV_MAP[page] || page}`);
+  if (nb) nb.classList.add('active');
+  if (page === 'dashboard') refreshDashboard();
+  if (page === 'dayshift') refreshDayShift();
+  if (page === 'audits') refreshAuditList();
+}
+
+// ═══════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const t = document.getElementById('nav-time');
+  const d = document.getElementById('dash-date');
+  if (t) t.textContent = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12:false });
+  if (d) d.textContent = now.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function refreshDashboard() {
+  const total = DAY_SHIFT_TASKS.length;
+  const done = STATE.completedTaskIds.length;
+  const el = document.getElementById('stat-dayshift');
+  const prog = document.getElementById('dayshift-progress');
+  if (el) el.innerHTML = `${done}<span>/${total}</span>`;
+  if (prog) prog.style.width = `${Math.min(100,(done/total)*100)}%`;
+  const ac = STATE.auditRecords.length;
+  const ae = document.getElementById('stat-audits');
+  const ap = document.getElementById('audit-progress');
+  if (ae) ae.innerHTML = `${ac}<span>/4</span>`;
+  if (ap) ap.style.width = `${Math.min(100,(ac/4)*100)}%`;
+  refreshEscalations();
+  refreshActivity();
+}
+
+function refreshEscalations() {
+  const list = document.getElementById('escalations-list');
+  const badge = document.getElementById('esc-count');
+  if (!list) return;
+  if (badge) badge.textContent = STATE.escalations.length;
+  if (!STATE.escalations.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No active escalations</div></div>'; return; }
+  list.innerHTML = STATE.escalations.slice(0,5).map(e => `<div class="escalation-item"><div class="esc-title">${esc(e.text)}</div><div class="esc-meta">${esc(e.location)} · ${esc(e.task)} · ${esc(e.time)}</div><span class="esc-priority ${e.priority}">${e.priority.toUpperCase()}</span></div>`).join('');
+}
+
+function refreshActivity() {
+  const feed = document.getElementById('activity-feed');
+  if (!feed) return;
+  if (!STATE.activity.length) { feed.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div>'; return; }
+  feed.innerHTML = STATE.activity.slice(0,10).map(a => `<div class="activity-item"><div class="activity-dot ${a.type}"></div><div class="activity-content"><div class="activity-title">${esc(a.title)}</div><div class="activity-time">${esc(a.time)}</div></div></div>`).join('');
+}
+
+function addActivity(title, type='patrol') {
+  STATE.activity.unshift({ title, type, time: nowTime() });
+  if (STATE.activity.length > 30) STATE.activity.pop();
+  saveState();
+}
+
+// ═══════════════════════════════════════
+// DAY SHIFT LIST
+// ═══════════════════════════════════════
+function refreshDayShift() {
+  const list = document.getElementById('shift-task-list');
+  if (!list) return;
+  const total = DAY_SHIFT_TASKS.length;
+  const done = STATE.completedTaskIds.length;
+  const pct = Math.round((done/total)*100);
+  const fill = document.getElementById('shift-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  const sub = document.getElementById('dayshift-sub');
+  if (sub) sub.textContent = `${done} of ${total} tasks complete · ${pct}%`;
+
+  // EOD banner if all done
+  const eod = document.getElementById('eod-section');
+  if (eod) eod.style.display = done >= total ? 'block' : 'none';
+
+  list.innerHTML = DAY_SHIFT_TASKS.map((task, idx) => {
+    const isDone = STATE.completedTaskIds.includes(task.id);
+    return `<div class="shift-task-card ${isDone ? 'done' : ''}" onclick="startRoverTask('${task.id}')">
+      <div class="stc-left">
+        <div class="stc-num">${String(idx+1).padStart(2,'0')}</div>
+        <div class="stc-icon">${task.icon}</div>
+        <div class="stc-info">
+          <div class="stc-name">${task.label}</div>
+          <div class="stc-meta">${task.timeHint || task.window || ''}</div>
+        </div>
+      </div>
+      <div class="stc-right">
+        <span class="stc-tag tag-${task.tagColor || 'blue'}">${task.tag}</span>
+        ${isDone ? '<div class="stc-done-check">✓</div>' : '<div class="stc-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// START ROVER TASK
+// ═══════════════════════════════════════
+function startRoverTask(taskId) {
+  const task = DAY_SHIFT_TASKS.find(t => t.id === taskId);
+  if (!task) return;
+
+  if (task.type === 'lobby') { startLobby(task); return; }
+  if (task.type === 'plant') { startPlantPatrol(task); return; }
+
+  // Flexible type
+  let rooms = task.rooms;
+  if (!rooms && task.stepsRef) {
+    const ref = DAY_SHIFT_TASKS.find(t => t.id === task.stepsRef);
+    if (ref) rooms = ref.rooms;
+  }
+
+  STATE.activeTaskDef = { ...task, rooms };
+  STATE.roomResults = {};
+  STATE.taskStartTime = nowTime();
+  STATE.taskStartedAt = new Date();
+
+  renderFlexibleRooms();
+  navigateTo('flexible-rooms');
+}
+
+function startQuickPatrol(name) { const t = DAY_SHIFT_TASKS.find(t => t.label === name); if (t) startRoverTask(t.id); }
+function startQuickAudit(name) { const t = AUDIT_TYPES.find(a => a.name === name); if (t && t.available) startAudit(t.id); }
+
+// ═══════════════════════════════════════
+// FLEXIBLE ROOM LIST
+// ═══════════════════════════════════════
+function renderFlexibleRooms() {
+  const task = STATE.activeTaskDef;
+  const titleEl = document.getElementById('flex-rooms-title');
+  const metaEl = document.getElementById('flex-rooms-meta');
+  const listEl = document.getElementById('flex-rooms-list');
+  const completeBtn = document.getElementById('flex-complete-btn');
+  if (titleEl) titleEl.textContent = task.label;
+  if (metaEl) metaEl.textContent = (task.timeHint || '') + ' — tap any room to begin';
+
+  const allDone = task.rooms.every(r => STATE.roomResults[r.id]);
+  if (completeBtn) completeBtn.classList.toggle('hidden', !allDone);
+
+  if (!listEl) return;
+  listEl.innerHTML = task.rooms.map(room => {
+    const result = STATE.roomResults[room.id];
+    const isDone = !!result;
+    return `<div class="room-item ${isDone ? 'completed' : ''}" onclick="startRoom('${room.id}')">
+      <div class="room-item-check">${isDone ? '✓' : ''}</div>
+      <div style="flex:1">
+        <div class="room-item-name">${room.name}</div>
+        <div class="room-item-meta">${room.photoMandatory ? '📷 Photo required' : '📷 Photo optional'}${isDone ? ' · Done' : ''}</div>
+      </div>
+      <div class="room-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+    </div>`;
+  }).join('');
+}
+
+function startRoom(roomId) {
+  const task = STATE.activeTaskDef;
+  const room = task.rooms.find(r => r.id === roomId);
+  if (!room) return;
+  STATE.activeRoomId = roomId;
+  STATE.taskPhotos = [];
+  STATE.taskPhotos2 = [];
+  renderRoomActive(room);
+  navigateTo('room-active');
+}
+
+function renderRoomActive(room) {
+  document.getElementById('room-active-title').textContent = room.name;
+  document.getElementById('room-active-task').textContent = STATE.activeTaskDef.label.toUpperCase();
+  document.getElementById('room-instruction').textContent = room.instruction;
+  document.getElementById('room-notes').value = '';
+  document.getElementById('room-photo-preview').innerHTML = '';
+  document.getElementById('room-photo2-preview').innerHTML = '';
+  STATE.taskPhotos = []; STATE.taskPhotos2 = [];
+
+  const photoLabel = document.getElementById('room-photo-label');
+  const photoHint = document.getElementById('room-photo-hint');
+  const photo2Group = document.getElementById('room-photo2-group');
+  if (photoLabel) photoLabel.textContent = room.photoMandatory ? 'PHOTO EVIDENCE — MANDATORY' : 'PHOTO EVIDENCE (OPTIONAL)';
+  if (photoHint) photoHint.textContent = room.photoHint || 'Tap to open camera';
+  if (photo2Group) photo2Group.classList.toggle('hidden', !room.requiresTwoPhotos);
+
+  // Checklist
+  const checkArea = document.getElementById('room-checklist-area');
+  if (checkArea && room.checks && room.checks.length) {
+    checkArea.innerHTML = `<div class="obs-prompts"><div class="obs-prompt-title">CONFIRM CHECKS</div>${room.checks.map((c,i) => `
+      <div class="check-item" id="rchk-item-${i}">
+        <div class="check-item-label">${c}</div>
+        <div class="check-item-actions">
+          <button class="ci-btn ntr" id="rchk-ntr-${i}" onclick="setRoomCheck(${i},'ntr')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            NOTHING TO REPORT
+          </button>
+          <button class="ci-btn rep" id="rchk-rep-${i}" onclick="setRoomCheck(${i},'rep')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M4 4h16v10H4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            REPORTABLE
+          </button>
+        </div>
+        <div class="ci-report-detail hidden" id="rchk-detail-${i}">
+          <textarea class="field-textarea ci-textarea" id="rchk-text-${i}" placeholder="Describe the issue..."></textarea>
+          <select class="field-select" id="rchk-priority-${i}" style="margin-top:6px">
+            <option value="low">Priority: Low</option>
+            <option value="medium">Priority: Medium</option>
+            <option value="high">Priority: High — Urgent</option>
+          </select>
+        </div>
+      </div>`).join('')}</div>`;
+  } else if (checkArea) { checkArea.innerHTML = ''; }
+}
+
+function setRoomCheck(idx, mode) {
+  const ntr = document.getElementById(`rchk-ntr-${idx}`);
+  const rep = document.getElementById(`rchk-rep-${idx}`);
+  const det = document.getElementById(`rchk-detail-${idx}`);
+  const item = document.getElementById(`rchk-item-${idx}`);
+  if (ntr) ntr.classList.remove('selected');
+  if (rep) rep.classList.remove('selected');
+  if (det) det.classList.add('hidden');
+  if (item) item.classList.remove('ntr-done','rep-done');
+  if (mode === 'ntr') { if (ntr) ntr.classList.add('selected'); if (item) item.classList.add('ntr-done'); }
+  else { if (rep) rep.classList.add('selected'); if (det) det.classList.remove('hidden'); if (item) item.classList.add('rep-done'); }
+}
+
+function confirmRoom() {
+  const task = STATE.activeTaskDef;
+  const room = task.rooms.find(r => r.id === STATE.activeRoomId);
+  if (!room) return;
+
+  if (room.photoMandatory && STATE.taskPhotos.length === 0) { showToast('Photo is mandatory for this room'); return; }
+  if (room.requiresTwoPhotos && STATE.taskPhotos2.length === 0) { showToast('Photo of Panel 2 is required'); return; }
+
+  const checks = [];
+  let hasReportable = false;
+  if (room.checks) {
+    room.checks.forEach((c, i) => {
+      const ntrSel = document.getElementById(`rchk-ntr-${i}`) && document.getElementById(`rchk-ntr-${i}`).classList.contains('selected');
+      const repSel = document.getElementById(`rchk-rep-${i}`) && document.getElementById(`rchk-rep-${i}`).classList.contains('selected');
+      const repText = document.getElementById(`rchk-text-${i}`) ? document.getElementById(`rchk-text-${i}`).value.trim() : '';
+      const repPri = document.getElementById(`rchk-priority-${i}`) ? document.getElementById(`rchk-priority-${i}`).value : 'low';
+      if (repSel) hasReportable = true;
+      checks.push({ label: c, status: repSel ? 'reportable' : (ntrSel ? 'ntr' : 'pending'), reportText: repText, priority: repPri });
+    });
+  }
+
+  const result = {
+    roomName: room.name,
+    timestamp: nowTime(),
+    notes: document.getElementById('room-notes').value.trim(),
+    checks,
+    photos: [...STATE.taskPhotos],
+    photos2: [...STATE.taskPhotos2],
+    hasIssue: hasReportable,
+  };
+
+  checks.filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
+    STATE.escalations.unshift({ text: c.reportText, location: room.name, task: task.label, time: result.timestamp, priority: c.priority });
+    addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
+    syncToSheets({ type:'escalation', location:room.name, task:task.label, priority:c.priority, text:c.reportText, officer:'', site:SITE.name });
+    syncActivityToSheets(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
+  });
+
+  STATE.roomResults[STATE.activeRoomId] = result;
+  navigateTo('flexible-rooms');
+  renderFlexibleRooms();
+}
+
+function completeFlexibleTask() {
+  const task = STATE.activeTaskDef;
+  const issues = Object.values(STATE.roomResults).filter(r => r.hasIssue).length;
+  const endTime = nowTime();
+  const duration = getDuration(STATE.taskStartedAt);
+
+  const record = {
+    taskId: task.id, taskLabel: task.label, timeHint: task.timeHint || '',
+    startTime: STATE.taskStartTime, completedAt: endTime, duration,
+    roomCount: task.rooms.length, issues, roomResults: STATE.roomResults, officer: '',
+  };
+
+  STATE._completedTaskRecord = record;
+  if (!STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
+  STATE.taskRecords.push(record);
+  addActivity(`${task.label}${task.timeHint ? ' — '+task.timeHint : ''} completed`, 'patrol');
+  saveState();
+  syncToSheets({ type:'patrol', officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:task.rooms.length, issues });
+  syncActivityToSheets(`${task.label}${task.timeHint ? ' — '+task.timeHint : ''} completed`, 'patrol');
+
+  document.getElementById('task-complete-title').textContent = `${task.label} Complete`;
+  document.getElementById('task-complete-meta').textContent = `${task.rooms.length} rooms · ${issues} issue(s) · ${duration}`;
+  renderTaskSummary(record);
+  document.getElementById('task-officer-name').value = '';
+  navigateTo('task-complete');
+}
+
+function renderTaskSummary(record) {
+  const card = document.getElementById('task-summary-card');
+  if (!card) return;
+  card.innerHTML = `
+    <div class="summary-row"><span class="summary-label">TASK</span><span class="summary-value">${record.taskLabel}</span></div>
+    ${record.timeHint ? `<div class="summary-row"><span class="summary-label">RUN</span><span class="summary-value">${record.timeHint}</span></div>` : ''}
+    <div class="summary-row"><span class="summary-label">STARTED</span><span class="summary-value">${record.startTime}</span></div>
+    <div class="summary-row"><span class="summary-label">COMPLETED</span><span class="summary-value">${record.completedAt}</span></div>
+    <div class="summary-row"><span class="summary-label">DURATION</span><span class="summary-value">${record.duration}</span></div>
+    <div class="summary-row"><span class="summary-label">ROOMS</span><span class="summary-value good">${record.roomCount} completed</span></div>
+    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${record.issues > 0 ? 'bad' : 'good'}">${record.issues} flagged</span></div>
+    <div class="summary-row"><span class="summary-label">SITE</span><span class="summary-value">${SITE.name}</span></div>`;
+}
+
+// ═══════════════════════════════════════
+// PLANT ROOM PATROL
+// ═══════════════════════════════════════
+function startPlantPatrol(task) {
+  STATE.activePlantTaskId = task.id;
+  STATE.plantLevelResults = {};
+  STATE.taskStartTime = nowTime();
+  STATE.taskStartedAt = new Date();
+  renderPlantLevels();
+  navigateTo('plant-levels');
+}
+
+function renderPlantLevels() {
+  const task = DAY_SHIFT_TASKS.find(t => t.id === STATE.activePlantTaskId);
+  const titleEl = document.getElementById('plant-levels-title');
+  const metaEl = document.getElementById('plant-levels-meta');
+  const listEl = document.getElementById('plant-levels-list');
+  const completeBtn = document.getElementById('plant-complete-btn');
+  if (titleEl) titleEl.textContent = task ? task.label : 'Plant Room Patrol';
+  if (metaEl) metaEl.textContent = (task && task.timeHint ? task.timeHint : '') + ' — select a level to begin';
+
+  const allDone = PLANT_LEVELS.every(l => STATE.plantLevelResults[l.id] && Object.keys(STATE.plantLevelResults[l.id]).length === l.rooms.length);
+  if (completeBtn) completeBtn.classList.toggle('hidden', !allDone);
+
+  if (!listEl) return;
+  listEl.innerHTML = PLANT_LEVELS.map(level => {
+    const levelResult = STATE.plantLevelResults[level.id] || {};
+    const doneCount = Object.keys(levelResult).length;
+    const totalCount = level.rooms.length;
+    const levelDone = doneCount === totalCount;
+    return `<div class="level-group">
+      <div class="level-group-header ${levelDone ? 'done' : ''}" onclick="startPlantLevel('${level.id}')">
+        <div>
+          <div class="level-group-title">${level.name}</div>
+          <div class="level-group-meta">${totalCount} room${totalCount > 1 ? 's' : ''} · ${doneCount}/${totalCount} complete</div>
+        </div>
+        <span class="level-group-badge ${levelDone ? 'done' : 'pending'}">${levelDone ? 'DONE' : 'PENDING'}</span>
+      </div>
+      ${doneCount > 0 && !levelDone ? `<div class="level-group-rooms">${level.rooms.map(r => {
+        const done = !!levelResult[r.id];
+        return `<div class="room-item ${done ? 'completed' : ''}" onclick="startPlantLevel('${level.id}','${r.id}')">
+          <div class="room-item-check">${done ? '✓' : ''}</div>
+          <div style="flex:1"><div class="room-item-name">${r.name}</div></div>
+        </div>`;
+      }).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function startPlantLevel(levelId, roomId) {
+  STATE.activePlantLevel = levelId;
+  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  if (!level) return;
+  if (!STATE.plantLevelResults[levelId]) STATE.plantLevelResults[levelId] = {};
+  // Find first incomplete room or specific room
+  const targetRoom = roomId ? level.rooms.find(r => r.id === roomId) : level.rooms.find(r => !STATE.plantLevelResults[levelId][r.id]);
+  if (!targetRoom) { renderPlantLevels(); return; }
+  STATE.activePlantRoomId = targetRoom.id;
+  STATE.plantRoomPhotos = []; STATE.plantRoomPhotos2 = [];
+  renderPlantRoomActive(level, targetRoom);
+  navigateTo('plant-room-active');
+}
+
+function renderPlantRoomActive(level, room) {
+  document.getElementById('plant-room-title').textContent = `${level.name} — ${room.name}`;
+  document.getElementById('plant-room-meta').textContent = 'PLANT ROOM PATROL';
+  document.getElementById('plant-room-instruction').textContent = room.instruction;
+  document.getElementById('plant-room-notes').value = '';
+  document.getElementById('plant-photo-preview').innerHTML = '';
+  STATE.plantRoomPhotos = [];
+
+  const photoLabel = document.getElementById('plant-photo-label');
+  const photoHint = document.getElementById('plant-photo-hint');
+  if (photoLabel) photoLabel.textContent = 'PHOTO EVIDENCE — MANDATORY';
+  if (photoHint) photoHint.textContent = room.photoHint || 'Tap to open camera';
+
+  const checkArea = document.getElementById('plant-checklist-area');
+  if (checkArea && room.checks) {
+    checkArea.innerHTML = `<div class="obs-prompts"><div class="obs-prompt-title">CONFIRM CHECKS</div>${room.checks.map((c,i) => `
+      <div class="check-item" id="pchk-item-${i}">
+        <div class="check-item-label">${c}</div>
+        <div class="check-item-actions">
+          <button class="ci-btn ntr" id="pchk-ntr-${i}" onclick="setPlantCheck(${i},'ntr')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            NOTHING TO REPORT
+          </button>
+          <button class="ci-btn rep" id="pchk-rep-${i}" onclick="setPlantCheck(${i},'rep')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M4 4h16v10H4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            REPORTABLE
+          </button>
+        </div>
+        <div class="ci-report-detail hidden" id="pchk-detail-${i}">
+          <textarea class="field-textarea ci-textarea" id="pchk-text-${i}" placeholder="Describe the issue..."></textarea>
+          <select class="field-select" id="pchk-priority-${i}" style="margin-top:6px">
+            <option value="low">Priority: Low</option><option value="medium">Priority: Medium</option><option value="high">Priority: High — Urgent</option>
+          </select>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+}
+
+function setPlantCheck(idx, mode) {
+  const ntr = document.getElementById(`pchk-ntr-${idx}`);
+  const rep = document.getElementById(`pchk-rep-${idx}`);
+  const det = document.getElementById(`pchk-detail-${idx}`);
+  const item = document.getElementById(`pchk-item-${idx}`);
+  if (ntr) ntr.classList.remove('selected'); if (rep) rep.classList.remove('selected');
+  if (det) det.classList.add('hidden'); if (item) item.classList.remove('ntr-done','rep-done');
+  if (mode === 'ntr') { if (ntr) ntr.classList.add('selected'); if (item) item.classList.add('ntr-done'); }
+  else { if (rep) rep.classList.add('selected'); if (det) det.classList.remove('hidden'); if (item) item.classList.add('rep-done'); }
+}
+
+function confirmPlantRoom() {
+  const level = PLANT_LEVELS.find(l => l.id === STATE.activePlantLevel);
+  const room = level && level.rooms.find(r => r.id === STATE.activePlantRoomId);
+  if (!room) return;
+
+  if (STATE.plantRoomPhotos.length === 0) { showToast('Photo is mandatory for this room'); return; }
+
+  const task = DAY_SHIFT_TASKS.find(t => t.id === STATE.activePlantTaskId);
+  const checks = [];
+  let hasReportable = false;
+  if (room.checks) {
+    room.checks.forEach((c, i) => {
+      const ntrSel = document.getElementById(`pchk-ntr-${i}`) && document.getElementById(`pchk-ntr-${i}`).classList.contains('selected');
+      const repSel = document.getElementById(`pchk-rep-${i}`) && document.getElementById(`pchk-rep-${i}`).classList.contains('selected');
+      const repText = document.getElementById(`pchk-text-${i}`) ? document.getElementById(`pchk-text-${i}`).value.trim() : '';
+      const repPri = document.getElementById(`pchk-priority-${i}`) ? document.getElementById(`pchk-priority-${i}`).value : 'low';
+      if (repSel) hasReportable = true;
+      checks.push({ label: c, status: repSel ? 'reportable' : (ntrSel ? 'ntr' : 'pending'), reportText: repText, priority: repPri });
+    });
+  }
+
+  checks.filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
+    STATE.escalations.unshift({ text: c.reportText, location: `${level.name} — ${room.name}`, task: task ? task.label : 'Plant Room Patrol', time: nowTime(), priority: c.priority });
+    addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
+  });
+
+  if (!STATE.plantLevelResults[STATE.activePlantLevel]) STATE.plantLevelResults[STATE.activePlantLevel] = {};
+  STATE.plantLevelResults[STATE.activePlantLevel][STATE.activePlantRoomId] = {
+    roomName: room.name, timestamp: nowTime(),
+    notes: document.getElementById('plant-room-notes').value.trim(),
+    checks, photos: [...STATE.plantRoomPhotos], hasIssue: hasReportable,
+  };
+
+  // Check if level complete — go back to level list
+  const levelDone = level.rooms.every(r => STATE.plantLevelResults[STATE.activePlantLevel][r.id]);
+  if (levelDone) { showToast(`${level.name} complete`); }
+  renderPlantLevels();
+  navigateTo('plant-levels');
+}
+
+function completePlantPatrol() {
+  const task = DAY_SHIFT_TASKS.find(t => t.id === STATE.activePlantTaskId);
+  const issues = Object.values(STATE.plantLevelResults).reduce((acc, lr) => acc + Object.values(lr).filter(r => r.hasIssue).length, 0);
+  const endTime = nowTime();
+  const duration = getDuration(STATE.taskStartedAt);
+  const totalRooms = PLANT_LEVELS.reduce((acc, l) => acc + l.rooms.length, 0);
+
+  const record = {
+    taskId: task.id, taskLabel: task.label, timeHint: task.timeHint || '',
+    startTime: STATE.taskStartTime, completedAt: endTime, duration,
+    roomCount: totalRooms, issues, levelResults: STATE.plantLevelResults, officer: '',
+  };
+
+  STATE._completedTaskRecord = record;
+  if (!STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
+  STATE.taskRecords.push(record);
+  addActivity(`${task.label} — ${task.timeHint} completed`, 'patrol');
+  saveState();
+  syncToSheets({ type:'patrol', officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:totalRooms, issues });
+  syncActivityToSheets(`${task.label} — ${task.timeHint} completed`, 'patrol');
+
+  document.getElementById('task-complete-title').textContent = `${task.label} Complete`;
+  document.getElementById('task-complete-meta').textContent = `${task.timeHint} · ${totalRooms} rooms · ${issues} issue(s) · ${duration}`;
+  renderTaskSummary({ ...record, roomCount: totalRooms });
+  document.getElementById('task-officer-name').value = '';
+  navigateTo('task-complete');
+}
+
+// ═══════════════════════════════════════
+// LOBBY STATIC
+// ═══════════════════════════════════════
+function startLobby(task) {
+  STATE.activeLobby = task;
+  document.getElementById('lobby-title').textContent = task.label;
+  document.getElementById('lobby-window').textContent = task.window;
+
+  // Check if lobby was in progress
+  if (STATE.lobbyStartTime && STATE.activeLobby && STATE.activeLobby.id === task.id) {
+    document.getElementById('lobby-start-time').textContent = STATE.lobbyStartTime;
+    document.getElementById('lobby-state-start').classList.add('hidden');
+    document.getElementById('lobby-state-active').classList.remove('hidden');
+    document.getElementById('lobby-state-done').classList.add('hidden');
+  } else {
+    document.getElementById('lobby-state-start').classList.remove('hidden');
+    document.getElementById('lobby-state-active').classList.add('hidden');
+    document.getElementById('lobby-state-done').classList.add('hidden');
+    STATE.lobbyStartTime = null;
+    STATE.lobbyStartedAt = null;
+  }
+  navigateTo('lobby-static');
+}
+
+function lobbyStart() {
+  STATE.lobbyStartTime = nowTime();
+  STATE.lobbyStartedAt = new Date();
+  document.getElementById('lobby-start-time').textContent = STATE.lobbyStartTime;
+  document.getElementById('lobby-state-start').classList.add('hidden');
+  document.getElementById('lobby-state-active').classList.remove('hidden');
+  saveLobbyState();
+}
+
+function lobbyFinish() {
+  const endTime = nowTime();
+  const duration = getDuration(STATE.lobbyStartedAt);
+  document.getElementById('lobby-done-start').textContent = STATE.lobbyStartTime;
+  document.getElementById('lobby-done-end').textContent = endTime;
+  document.getElementById('lobby-duration-text').textContent = `Duration: ${duration}`;
+  document.getElementById('lobby-state-active').classList.add('hidden');
+  document.getElementById('lobby-state-done').classList.remove('hidden');
+
+  const task = STATE.activeLobby;
+  if (task && !STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
+  addActivity(`Lobby Static ${task ? task.window : ''} completed`, 'patrol');
+  syncToSheets({ type:'patrol', officer:'', taskLabel:'Lobby Static', timeHint:task?task.window:'', site:SITE.name, startTime:STATE.lobbyStartTime, completedAt:endTime, duration, roomCount:1, issues:0 });
+  syncActivityToSheets(`Lobby Static ${task ? task.window : ''} completed`, 'patrol');
+  STATE._completedLobbyRecord = {
+    taskId: task ? task.id : 'lobby', window: task ? task.window : '',
+    startTime: STATE.lobbyStartTime, endTime, duration,
+    notes: document.getElementById('lobby-notes') ? document.getElementById('lobby-notes').value.trim() : '',
+  };
+  STATE.lobbyStartTime = null; STATE.lobbyStartedAt = null;
+  localStorage.removeItem('t_lobby');
+  saveState();
+}
+
+// ═══════════════════════════════════════
+// PHOTO HANDLING
+// ═══════════════════════════════════════
+function handleRoomPhoto(input) { capturePhotos(input, 'room-photo-preview', STATE.taskPhotos); }
+function handleRoomPhoto2(input) { capturePhotos(input, 'room-photo2-preview', STATE.taskPhotos2); }
+function handlePlantPhoto(input) { capturePhotos(input, 'plant-photo-preview', STATE.plantRoomPhotos); }
+function handleAuditPhoto(input) { capturePhotos(input, 'aq-photo-preview', STATE.aqPhotos); }
+
+function capturePhotos(input, previewId, arr) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const preview = document.getElementById(previewId);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      arr.push(e.target.result);
+      if (preview) {
+        const img = document.createElement('img');
+        img.src = e.target.result; img.className = 'photo-thumb';
+        preview.appendChild(img);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+// ═══════════════════════════════════════
+// PDF — fix photo orientation using canvas
+// ═══════════════════════════════════════
+function fixImageOrientation(base64) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => resolve(base64);
+    img.src = base64;
+  });
+}
+
+async function addPhotoToPDF(doc, photo, x, y, maxW, maxH) {
+  try {
+    const fixed = await fixImageOrientation(photo);
+    const img = new Image();
+    await new Promise(r => { img.onload = r; img.onerror = r; img.src = fixed; });
+    const ratio = img.naturalWidth / img.naturalHeight;
+    let w = maxW, h = maxW / ratio;
+    if (h > maxH) { h = maxH; w = maxH * ratio; }
+    doc.addImage(fixed, 'JPEG', x, y, w, h);
+    return h + 4;
+  } catch(e) { return 0; }
+}
+
+// ═══════════════════════════════════════
+// TASK PDF
+// ═══════════════════════════════════════
+async function generateTaskPDF() {
+  const officerName = document.getElementById('task-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name first'); document.getElementById('task-officer-name').focus(); return; }
+  showToast('Generating PDF...');
+
+  const record = STATE._completedTaskRecord;
+  if (!record) { showToast('No record found'); return; }
+  record.officer = officerName;
+  // Update officer name in sheets sync
+  syncToSheets({ type:'patrol', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, M = 16;
+
+  // Header
+  doc.setFillColor(15,15,25); doc.rect(0,0,W,40,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('SECURITY OPERATIONS', M, 17);
+  doc.setFontSize(10); doc.setTextColor(150,150,180);
+  doc.text('PATROL / INSPECTION REPORT', M, 26);
+  doc.setTextColor(124,92,252); doc.setFontSize(9);
+  doc.text(SITE.name.toUpperCase(), W-M, 17, {align:'right'});
+  doc.setTextColor(150,150,180); doc.setFontSize(8);
+  doc.text('TESTING PLATFORM', W-M, 26, {align:'right'});
+
+  let y = 48;
+  // Info block
+  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,30,3,3,'F');
+  const items = [['OFFICER',officerName],['TASK',record.taskLabel],['RUN',record.timeHint||'—'],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})],['STARTED',record.startTime],['COMPLETED',record.completedAt]];
+  const cw = (W-M*2)/3;
+  items.forEach((item,i) => {
+    const col=i%3,row=Math.floor(i/3),x=M+col*cw+6,iy=y+7+row*13;
+    doc.setTextColor(100,100,130);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(item[0],x,iy);
+    doc.setTextColor(220,220,240);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text(String(item[1]),x,iy+4.5);
+    doc.setFont('helvetica','normal');
+  });
+  y += 38;
+
+  const issues = record.issues;
+  doc.setFillColor(issues>0?60:20,issues>0?20:60,20);
+  doc.roundedRect(M,y,W-M*2,9,2,2,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.text(`STATUS: ${record.roomCount} ROOMS · ${issues} ISSUE(S) · DURATION: ${record.duration}`,M+4,y+6.5);
+  y += 15;
+
+  // Room results
+  const allRooms = record.roomResults || {};
+  const roomEntries = Object.entries(allRooms);
+
+  for (const [roomId, rd] of roomEntries) {
+    if (y > 245) { doc.addPage(); y = 20; }
+    doc.setFillColor(22,22,32);doc.roundedRect(M,y,W-M*2,8,2,2,'F');
+    doc.setTextColor(124,92,252);doc.setFontSize(7);doc.setFont('helvetica','bold');
+    doc.text(rd.roomName ? rd.roomName.toUpperCase() : roomId.toUpperCase(),M+4,y+5.5);
+    doc.setTextColor(100,100,130);doc.text(rd.timestamp||'',W-M-4,y+5.5,{align:'right'});
+    y += 11;
+
+    if (rd.checks && rd.checks.length) {
+      for (const c of rd.checks) {
+        if (y>265){doc.addPage();y=20;}
+        const isNtr=c.status==='ntr',isRep=c.status==='reportable';
+        doc.setTextColor(isNtr?34:isRep?239:150,isNtr?197:isRep?68:150,isNtr?94:isRep?68:170);
+        doc.setFontSize(7.5);doc.setFont('helvetica','normal');
+        doc.text(`${isNtr?'✓':isRep?'⚠':'○'} ${c.label}${isNtr?' — Nothing to Report':isRep?' — REPORTABLE':''}`,M+4,y);
+        y+=5;
+        if (isRep&&c.reportText){doc.setTextColor(239,68,68);doc.setFontSize(7);doc.text(`   [${c.priority.toUpperCase()}]: ${c.reportText}`,M+4,y);y+=5;}
+      }
+      y+=2;
+    }
+    if (rd.notes){doc.setTextColor(180,180,200);doc.setFontSize(7.5);const l=doc.splitTextToSize(`Notes: ${rd.notes}`,W-M*2-8);doc.text(l,M+4,y);y+=l.length*4+3;}
+
+    // Photos — correct orientation
+    if (rd.photos && rd.photos.length) {
+      for (const photo of rd.photos.slice(0,3)) {
+        if (y>235){doc.addPage();y=20;}
+        const added = await addPhotoToPDF(doc, photo, M+4, y, 55, 45);
+        if (added) y += added + 2;
+      }
+    }
+    if (rd.photos2 && rd.photos2.length) {
+      for (const photo of rd.photos2.slice(0,1)) {
+        if (y>235){doc.addPage();y=20;}
+        const added = await addPhotoToPDF(doc, photo, M+4, y, 55, 45);
+        if (added) y += added + 2;
+      }
+    }
+    y += 4;
+  }
+
+  addFooter(doc, W, M);
+  doc.save(`${record.taskLabel.replace(/\s+/g,'_').toLowerCase()}_${dateSlug()}.pdf`);
+  showToast('PDF downloaded');
+}
+
+// ═══════════════════════════════════════
+// END OF DAY PDF
+// ═══════════════════════════════════════
+async function generateEODPDF() {
+  const officerName = document.getElementById('eod-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name'); document.getElementById('eod-officer-name').focus(); return; }
+  showToast('Generating full day report...');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, M = 16;
+
+  doc.setFillColor(15,15,25); doc.rect(0,0,W,40,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('SECURITY OPERATIONS', M, 17);
+  doc.setFontSize(10); doc.setTextColor(150,150,180);
+  doc.text('END OF DAY SHIFT REPORT', M, 26);
+  doc.setTextColor(124,92,252); doc.setFontSize(9);
+  doc.text(SITE.name.toUpperCase(), W-M, 17, {align:'right'});
+  doc.setTextColor(150,150,180); doc.setFontSize(8);
+  doc.text(new Date().toLocaleDateString('en-AU',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}), W-M, 26, {align:'right'});
+
+  let y = 48;
+  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,18,3,3,'F');
+  doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text('OFFICER', M+6, y+7);
+  doc.setTextColor(220,220,240); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(officerName, M+6, y+13.5);
+  doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text('TASKS COMPLETED', M+80, y+7);
+  doc.setTextColor(220,220,240); doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(`${STATE.completedTaskIds.length} of ${DAY_SHIFT_TASKS.length}`, M+80, y+13.5);
+  doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
+  doc.text('ESCALATIONS', M+145, y+7);
+  doc.setTextColor(STATE.escalations.length > 0 ? 239 : 34, STATE.escalations.length > 0 ? 68 : 197, STATE.escalations.length > 0 ? 68 : 94);
+  doc.setFontSize(11); doc.setFont('helvetica','bold');
+  doc.text(String(STATE.escalations.length), M+145, y+13.5);
+  y += 24;
+
+  // Each task
+  for (const record of STATE.taskRecords) {
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
+    doc.setTextColor(124,92,252); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text(`${record.taskLabel.toUpperCase()}${record.timeHint ? ' — '+record.timeHint.toUpperCase() : ''}`, M+4, y+5.5);
+    doc.setTextColor(100,100,130); doc.setFont('helvetica','normal');
+    doc.text(`${record.completedAt || ''} · ${record.roomCount||0} rooms · ${record.issues||0} issues`, W-M-4, y+5.5, {align:'right'});
+    y += 11;
+    if (record.issues > 0) {
+      const rooms = record.roomResults || {};
+      Object.values(rooms).forEach(rd => {
+        if (rd.hasIssue && rd.checks) {
+          rd.checks.filter(c=>c.status==='reportable'&&c.reportText).forEach(c => {
+            if (y>265){doc.addPage();y=20;}
+            doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,9,2,2,'F');
+            doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
+            doc.text(`⚠ ${rd.roomName}: ${c.reportText}`, M+6, y+6); y+=12;
+          });
+        }
+      });
+    }
+    y += 3;
+  }
+
+  // Escalations summary
+  if (STATE.escalations.length > 0) {
+    if (y>220){doc.addPage();y=20;}
+    y += 4;
+    doc.setTextColor(239,68,68); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text('ESCALATIONS LOG', M, y); y += 8;
+    STATE.escalations.forEach(e => {
+      if(y>265){doc.addPage();y=20;}
+      doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,10,2,2,'F');
+      doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text(`[${e.priority.toUpperCase()}] ${e.location}: ${e.text.slice(0,80)}`, M+4, y+7); y+=13;
+    });
+  }
+
+  addFooter(doc, W, M);
+  doc.save(`day_shift_report_${dateSlug()}.pdf`);
+  showToast('Full day report downloaded');
+}
+
+// ═══════════════════════════════════════
+// AUDITS
+// ═══════════════════════════════════════
+function refreshAuditList() {
+  const list = document.getElementById('audit-type-list');
+  if (!list) return;
+  list.innerHTML = AUDIT_TYPES.map(at => {
+    const cls = at.available ? 'available' : 'coming-soon';
+    const act = at.available ? 'startAudit(\'' + at.id + '\')' : 'showToast(\'Coming soon\')';
+    const tag = at.available ? 'READY' : 'SOON';
+    const tcls = at.available ? 'ready' : 'soon';
+    return `<div class="audit-type-card ${cls}" onclick="${act}"><div class="atc-icon">${at.icon}</div><div class="atc-name">${at.name}</div><span class="atc-tag ${tcls}">${tag}</span></div>`;
+  }).join('');
+
+  const history = document.getElementById('audit-history');
+  if (!STATE.auditRecords.length) {
+    history.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No audits completed today</div></div>';
+  } else {
+    history.innerHTML = STATE.auditRecords.map(r => `
+      <div class="activity-item">
+        <div class="activity-dot audit"></div>
+        <div class="activity-content">
+          <div class="activity-title">${esc(r.auditTypeName)} — ${esc(r.asset)}</div>
+          <div class="activity-time">${esc(r.completedAt)} · ${r.noCount} issue(s)</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function startAudit(typeId) {
+  const type = AUDIT_TYPES.find(a => a.id === typeId);
+  if (!type || !type.available) return;
+  STATE.activeAudit = type;
+  STATE.activeAuditAsset = null;
+  STATE.currentQuestion = 0;
+  STATE.auditAnswers = [];
+  STATE.aqPhotos = [];
+  document.getElementById('audit-select-title').textContent = type.name;
+
+  const list = document.getElementById('asset-select-list');
+  // Group display
+  list.innerHTML = type.assetGroups.map(g => `
+    <div style="margin-bottom:12px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-muted);padding:4px 0 8px 0">${g.group.toUpperCase()}</div>
+      ${g.assets.map(asset => `
+        <div class="asset-item" onclick="selectAuditAsset('${asset.replace(/'/g,"\\'")}')">
+          <div><div class="asset-item-name">${asset}</div><div class="asset-item-sub">${g.group}</div></div>
+          <div class="asset-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        </div>`).join('')}
+    </div>`).join('');
+  navigateTo('audit-select');
+}
+
+function selectAuditAsset(assetName) {
+  STATE.activeAuditAsset = assetName;
+  STATE.currentQuestion = 0;
+  STATE.auditAnswers = [];
+  STATE.aqPhotos = [];
+  renderAuditQuestion();
+  navigateTo('audit-active');
+}
+
+function renderAuditQuestion() {
+  const type = STATE.activeAudit;
+  const idx = STATE.currentQuestion;
+  document.getElementById('audit-active-title').textContent = STATE.activeAuditAsset;
+  document.getElementById('audit-active-meta').textContent = type.name.toUpperCase();
+  const pct = (idx/type.questions.length)*100;
+  document.getElementById('audit-progress-fill').style.width = pct+'%';
+  document.getElementById('audit-progress-label').textContent = `Question ${idx+1} of ${type.questions.length}`;
+  document.getElementById('aq-number').textContent = String(idx+1).padStart(2,'0');
+  document.getElementById('aq-question').textContent = type.questions[idx];
+  document.getElementById('yn-yes').classList.remove('selected');
+  document.getElementById('yn-no').classList.remove('selected');
+  document.getElementById('aq-comments').value = '';
+  document.getElementById('aq-photo-preview').innerHTML = '';
+  STATE.aqPhotos = [];
+  STATE._currentAuditAnswer = null;
+  const btn = document.getElementById('audit-next-btn');
+  if (btn) btn.textContent = idx===type.questions.length-1?'COMPLETE AUDIT ›':'NEXT QUESTION ›';
+  const photoLabel = document.getElementById('aq-photo-label');
+  if (photoLabel) photoLabel.textContent = type.photoMandatory ? 'PHOTO EVIDENCE — MANDATORY' : 'PHOTO EVIDENCE (OPTIONAL)';
+}
+
+function setAuditAnswer(answer) {
+  STATE._currentAuditAnswer = answer;
+  document.getElementById('yn-yes').classList.toggle('selected', answer==='yes');
+  document.getElementById('yn-no').classList.toggle('selected', answer==='no');
+}
+
+function advanceAuditQuestion() {
+  if (!STATE._currentAuditAnswer) { showToast('Please select YES or NO'); return; }
+  if (STATE.activeAudit.photoMandatory && STATE.aqPhotos.length === 0) { showToast('Photo is mandatory'); return; }
+  const type = STATE.activeAudit;
+  const idx = STATE.currentQuestion;
+  STATE.auditAnswers.push({ question: type.questions[idx], answer: STATE._currentAuditAnswer, comments: document.getElementById('aq-comments').value.trim(), photos: [...STATE.aqPhotos], timestamp: nowTime() });
+  STATE.currentQuestion++;
+  if (STATE.currentQuestion >= type.questions.length) completeAudit();
+  else renderAuditQuestion();
+}
+
+function completeAudit() {
+  const type = STATE.activeAudit;
+  const asset = STATE.activeAuditAsset;
+  const noCount = STATE.auditAnswers.filter(a=>a.answer==='no').length;
+  const endTime = nowTime();
+  const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, noCount, officer:'' };
+  STATE._completedAuditRecord = record;
+  STATE.auditRecords.push(record);
+  addActivity(`${type.name} — ${asset} completed`, 'audit');
+  saveState();
+  syncToSheets({ type:'audit', officer:'', auditTypeName:type.name, asset, site:SITE.name, completedAt:endTime, answers:STATE.auditAnswers.length, noCount });
+  syncActivityToSheets(`${type.name} — ${asset} completed`, 'audit');
+
+  document.getElementById('complete-audit-title').textContent = `${type.name} Complete`;
+  document.getElementById('complete-audit-meta').textContent = `${asset} · ${STATE.auditAnswers.length} questions · ${noCount} issue(s)`;
+
+  const card = document.getElementById('audit-summary-card');
+  card.innerHTML = `
+    <div class="summary-row"><span class="summary-label">AUDIT TYPE</span><span class="summary-value">${type.name}</span></div>
+    <div class="summary-row"><span class="summary-label">ASSET</span><span class="summary-value">${asset}</span></div>
+    <div class="summary-row"><span class="summary-label">COMPLETED</span><span class="summary-value">${endTime}</span></div>
+    <div class="summary-row"><span class="summary-label">QUESTIONS</span><span class="summary-value good">${STATE.auditAnswers.length} completed</span></div>
+    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${noCount>0?'bad':'good'}">${noCount} identified</span></div>`;
+
+  document.getElementById('audit-officer-name').value = '';
+  navigateTo('audit-complete');
+}
+
+async function generateAuditPDF() {
+  const officerName = document.getElementById('audit-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name first'); return; }
+  showToast('Generating PDF...');
+  const record = STATE._completedAuditRecord;
+  if (!record) return;
+  record.officer = officerName;
+  syncToSheets({ type:'audit', officer:officerName, auditTypeName:record.auditTypeName, asset:record.asset, site:SITE.name, completedAt:record.completedAt, answers:record.answers.length, noCount:record.noCount });
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W=210, M=16;
+
+  doc.setFillColor(15,15,25);doc.rect(0,0,W,40,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text('SECURITY OPERATIONS',M,17);
+  doc.setFontSize(10);doc.setTextColor(150,150,180);doc.text('AUDIT & INSPECTION REPORT',M,26);
+  doc.setTextColor(59,130,246);doc.setFontSize(9);doc.text(SITE.name.toUpperCase(),W-M,17,{align:'right'});
+  doc.setTextColor(150,150,180);doc.setFontSize(8);doc.text('TESTING PLATFORM',W-M,26,{align:'right'});
+
+  let y=48;
+  doc.setFillColor(22,22,32);doc.roundedRect(M,y,W-M*2,30,3,3,'F');
+  const items=[['OFFICER',officerName],['AUDIT TYPE',record.auditTypeName],['ASSET',record.asset],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})],['COMPLETED',record.completedAt],['SITE',SITE.name]];
+  const cw=(W-M*2)/3;
+  items.forEach((item,i)=>{const col=i%3,row=Math.floor(i/3),x=M+col*cw+6,iy=y+7+row*13;doc.setTextColor(100,100,130);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(item[0],x,iy);doc.setTextColor(220,220,240);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text(String(item[1]),x,iy+4.5);doc.setFont('helvetica','normal');});
+  y+=38;
+
+  const nc=record.noCount;
+  doc.setFillColor(nc>0?60:20,nc>0?20:60,20);doc.roundedRect(M,y,W-M*2,9,2,2,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.text(`STATUS: ${record.answers.length} QUESTIONS · ${nc} ISSUE(S) IDENTIFIED`,M+4,y+6.5);y+=15;
+
+  for(const [i,ans] of record.answers.entries()){
+    if(y>248){doc.addPage();y=20;}
+    const isNo=ans.answer==='no';
+    doc.setFillColor(isNo?50:22,isNo?20:22,isNo?20:32);doc.roundedRect(M,y,W-M*2,9,2,2,'F');
+    doc.setTextColor(isNo?239:59,isNo?68:130,isNo?68:246);doc.setFontSize(7);doc.setFont('helvetica','bold');
+    doc.text(`Q${String(i+1).padStart(2,'0')}  ${ans.answer.toUpperCase()}`,M+4,y+6.5);
+    doc.setTextColor(200,200,220);doc.setFont('helvetica','normal');doc.setFontSize(8);
+    const qLines=doc.splitTextToSize(ans.question,W-M*2-30);doc.text(qLines,M+22,y+6.5);
+    y+=qLines.length>1?12+(qLines.length-1)*4:13;
+    if(ans.comments){doc.setTextColor(150,150,170);doc.setFontSize(7.5);const cl=doc.splitTextToSize(`Comment: ${ans.comments}`,W-M*2-8);doc.text(cl,M+4,y);y+=cl.length*4+3;}
+    for(const photo of (ans.photos||[]).slice(0,2)){
+      if(y>235){doc.addPage();y=20;}
+      const added = await addPhotoToPDF(doc, photo, M+4, y, 55, 45);
+      if(added) y+=added+2;
+    }
+    y+=2;
+  }
+
+  addFooter(doc,W,M);
+  const auditFn = `audit_${record.auditTypeName.replace(/\s+/g,'_').toLowerCase()}_${record.asset.replace(/[\s()]/g,'_').toLowerCase()}_${dateSlug()}.pdf`;
+  doc.save(auditFn);
+  try {
+    const pdfBase64 = doc.output('datauristring');
+    syncPDFToSheets(officerName, `${record.auditTypeName} — ${record.asset}`, auditFn, pdfBase64);
+  } catch(e) {}
+  showToast('PDF downloaded');
+}
+
+function addFooter(doc, W, M) {
+  const n=doc.internal.getNumberOfPages();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);doc.setFillColor(15,15,25);doc.rect(0,285,W,12,'F');
+    doc.setTextColor(80,80,100);doc.setFontSize(7);doc.setFont('helvetica','normal');
+    doc.text(`TESTING SECURITY PLATFORM · ${SITE.name} · Generated ${new Date().toLocaleString('en-AU')} · Page ${i} of ${n}`,W/2,292,{align:'center'});
+  }
+}
+
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+function nowTime(){return new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',hour12:true});}
+function getDuration(startDate){if(!startDate)return'—';const ms=new Date()-startDate,mins=Math.floor(ms/60000);if(mins<1)return'< 1 min';if(mins<60)return`${mins} min`;return`${Math.floor(mins/60)}h ${mins%60}m`;}
+function dateSlug(){const d=new Date();return`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;}
+function esc(str){if(!str)return'';return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(msg){const e=document.querySelector('.toast');if(e)e.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2800);}
+
+// ═══════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════
+function syncToSheets(data) {
+  if (!SHEETS_URL) return;
+  try {
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(() => {});
+  } catch(e) {}
+}
+
+function syncPDFToSheets(officer, reportType, filename, pdfBase64) {
+  if (!SHEETS_URL) return;
+  try {
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'pdf',
+        officer,
+        reportType,
+        filename,
+        pdfData: pdfBase64,
+      }),
+    }).catch(() => {});
+  } catch(e) {}
+}
+
+function syncActivityToSheets(title, activityType) {
+  syncToSheets({
+    type: 'activity',
+    activityType,
+    title,
+    site: SITE.name,
+  });
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  loadState();
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  const splash = document.getElementById('splash');
+  const main = document.getElementById('main');
+
+  // Show main immediately
+  if (main) main.classList.remove('hidden');
+
+  // Refresh all pages
+  refreshDashboard();
+  refreshDayShift();
+  refreshAuditList();
+
+  // Fade splash after short delay
+  setTimeout(()=>{
+    if (splash) splash.classList.add('fade-out');
+    setTimeout(()=>{ if(splash) splash.style.display='none'; }, 600);
+  }, 800);
+
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+
+// Lobby PDF
+async function generateLobbyPDF() {
+  const officerName = document.getElementById('lobby-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name first'); return; }
+  const rec = STATE._completedLobbyRecord;
+  if (!rec) { showToast('No lobby record found'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W=210, M=16;
+
+  doc.setFillColor(15,15,25);doc.rect(0,0,W,40,'F');
+  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text('SECURITY OPERATIONS',M,17);
+  doc.setFontSize(10);doc.setTextColor(150,150,180);doc.text('LOBBY STATIC REPORT',M,26);
+  doc.setTextColor(124,92,252);doc.setFontSize(9);doc.text(SITE.name.toUpperCase(),W-M,17,{align:'right'});
+
+  let y=48;
+  doc.setFillColor(22,22,32);doc.roundedRect(M,y,W-M*2,28,3,3,'F');
+  const items=[['OFFICER',officerName],['WINDOW',rec.window],['STARTED',rec.startTime],['FINISHED',rec.endTime],['DURATION',rec.duration],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})]];
+  const cw=(W-M*2)/3;
+  items.forEach((item,i)=>{const col=i%3,row=Math.floor(i/3),x=M+col*cw+6,iy=y+7+row*13;doc.setTextColor(100,100,130);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(item[0],x,iy);doc.setTextColor(220,220,240);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text(String(item[1]),x,iy+4.5);doc.setFont('helvetica','normal');});
+  y+=36;
+
+  if(rec.notes){
+    doc.setTextColor(100,100,140);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text('OBSERVATIONS',M,y);y+=8;
+    doc.setTextColor(180,180,200);doc.setFontSize(9);doc.setFont('helvetica','normal');
+    const lines=doc.splitTextToSize(rec.notes,W-M*2);doc.text(lines,M,y);y+=lines.length*5+8;
+  }
+
+  addFooter(doc,W,M);
+  const lobbyFn = `lobby_static_${rec.window.replace(/[^0-9]/g,'_')}_${dateSlug()}.pdf`;
+  doc.save(lobbyFn);
+  try {
+    const pdfBase64 = doc.output('datauristring');
+    syncPDFToSheets(officerName, `Lobby Static ${rec.window}`, lobbyFn, pdfBase64);
+  } catch(e) {}
+  showToast('PDF downloaded');
+}
+
+</script>
+</body>
+</html>
