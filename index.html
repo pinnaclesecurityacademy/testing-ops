@@ -860,7 +860,7 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
     </div>
     <div style="padding:0 16px;margin-top:12px">
       <div class="btn-row">
-        <button class="btn-secondary" onclick="navigateTo('dayshift')">SAVE &amp; CONTINUE</button>
+        <button class="btn-secondary" onclick="saveContinueTask()">SAVE &amp; CONTINUE</button>
         <button class="btn-primary" onclick="generateTaskPDF()">
           <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           GENERATE PDF
@@ -911,7 +911,7 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
           <input type="text" class="field-input" id="lobby-officer-name" placeholder="Enter your full name..."/>
         </div>
         <div class="btn-row" style="margin-top:12px">
-          <button class="btn-secondary" onclick="navigateTo('dayshift')">SAVE &amp; CONTINUE</button>
+          <button class="btn-secondary" onclick="saveContinueLobby()">SAVE &amp; CONTINUE</button>
           <button class="btn-primary" onclick="generateLobbyPDF()">
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             GENERATE PDF
@@ -988,7 +988,7 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
     </div>
     <div style="padding:0 16px;margin-top:12px">
       <div class="btn-row">
-        <button class="btn-secondary" onclick="navigateTo('audits')">SAVE &amp; CONTINUE</button>
+        <button class="btn-secondary" onclick="saveContinueAudit()">SAVE &amp; CONTINUE</button>
         <button class="btn-primary" onclick="generateAuditPDF()">
           <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           GENERATE PDF
@@ -1597,7 +1597,34 @@ function completeFlexibleTask() {
   document.getElementById('task-complete-meta').textContent = `${task.rooms.length} rooms · ${issues} issue(s) · ${duration}`;
   renderTaskSummary(record);
   document.getElementById('task-officer-name').value = '';
+  // Auto-sync a lightweight record to sheets immediately (no PDF yet)
+  // Full PDF sync happens when officer taps Generate PDF
   navigateTo('task-complete');
+}
+
+function saveContinueTask() {
+  // Sync to sheets with whatever officer name is entered (can be blank)
+  const record = STATE._completedTaskRecord;
+  if (record) {
+    const officerName = document.getElementById('task-officer-name').value.trim() || 'Officer';
+    record.officer = officerName;
+    syncToSheets({ type:'patrol', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
+  }
+  navigateTo('dayshift');
+}
+
+function saveContinueLobby() {
+  navigateTo('dayshift');
+}
+
+function saveContinueAudit() {
+  const record = STATE._completedAuditRecord;
+  if (record) {
+    const officerName = document.getElementById('audit-officer-name').value.trim() || 'Officer';
+    record.officer = officerName;
+    syncToSheets({ type:'audit', officer:officerName, auditTypeName:record.auditTypeName, asset:record.asset, site:SITE.name, completedAt:record.completedAt, answers:record.answers.length, noCount:record.noCount });
+  }
+  navigateTo('audits');
 }
 
 function renderTaskSummary(record) {
