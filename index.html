@@ -799,11 +799,28 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   </div>
 </div>
 
+<!-- ═══════ PLANT LEVEL ROOMS ═══════ -->
+<div id="page-plant-level-rooms" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="navigateTo('plant-levels')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="plant-level-rooms-title">Level 15</div>
+      <div class="patrol-active-meta" id="plant-level-rooms-meta">PLANT ROOM PATROL</div>
+    </div>
+    <div class="room-selector-page">
+      <div class="room-selector-intro">Complete rooms in any order. All photos mandatory.</div>
+      <div id="plant-level-rooms-list"></div>
+      <button class="btn-primary btn-full hidden" id="plant-level-complete-btn" onclick="finishPlantLevel()">LEVEL COMPLETE — SAVE &amp; CONTINUE ›</button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
 <!-- ═══════ PLANT ROOM ACTIVE ═══════ -->
 <div id="page-plant-room-active" class="page">
   <div class="page-scroll">
     <div class="patrol-active-header">
-      <button class="back-btn" onclick="navigateTo('plant-levels')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <button class="back-btn" onclick="navigateTo('plant-level-rooms')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
       <div class="patrol-active-title" id="plant-room-title">Level 15 — Generator Room</div>
       <div class="patrol-active-meta" id="plant-room-meta">PLANT ROOM PATROL</div>
     </div>
@@ -1281,8 +1298,8 @@ function saveLobbyState() {
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
-const ALL_PAGES = ['dashboard','dayshift','nightshift','audits','flexible-rooms','room-active','room-complete','plant-levels','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
-const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'nightshift','audits':'audits','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
+const ALL_PAGES = ['dashboard','dayshift','nightshift','audits','flexible-rooms','room-active','room-complete','plant-levels','plant-level-rooms','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
+const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'nightshift','audits':'audits','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-level-rooms':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
 
 function navigateTo(page) {
   ALL_PAGES.forEach(p => { const el = document.getElementById(`page-${p}`); if (el) el.classList.remove('active'); });
@@ -1646,17 +1663,55 @@ function renderPlantLevels() {
   }).join('');
 }
 
-function startPlantLevel(levelId, roomId) {
+function startPlantLevel(levelId) {
   STATE.activePlantLevel = levelId;
   const level = PLANT_LEVELS.find(l => l.id === levelId);
   if (!level) return;
   if (!STATE.plantLevelResults[levelId]) STATE.plantLevelResults[levelId] = {};
-  // Find first incomplete room or specific room
-  const targetRoom = roomId ? level.rooms.find(r => r.id === roomId) : level.rooms.find(r => !STATE.plantLevelResults[levelId][r.id]);
-  if (!targetRoom) { renderPlantLevels(); return; }
-  STATE.activePlantRoomId = targetRoom.id;
-  STATE.plantRoomPhotos = []; STATE.plantRoomPhotos2 = [];
-  renderPlantRoomActive(level, targetRoom);
+  renderPlantLevelRooms();
+  navigateTo('plant-level-rooms');
+}
+
+function renderPlantLevelRooms() {
+  const levelId = STATE.activePlantLevel;
+  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  if (!level) return;
+
+  const titleEl = document.getElementById('plant-level-rooms-title');
+  const metaEl = document.getElementById('plant-level-rooms-meta');
+  const listEl = document.getElementById('plant-level-rooms-list');
+  const completeBtn = document.getElementById('plant-level-complete-btn');
+
+  if (titleEl) titleEl.textContent = level.name;
+  if (metaEl) metaEl.textContent = 'PLANT ROOM PATROL — select room to inspect';
+
+  const levelResult = STATE.plantLevelResults[levelId] || {};
+  const allDone = level.rooms.every(r => levelResult[r.id]);
+  if (completeBtn) completeBtn.classList.toggle('hidden', !allDone);
+
+  if (!listEl) return;
+  listEl.innerHTML = level.rooms.map(room => {
+    const done = !!levelResult[room.id];
+    return `<div class="room-item ${done ? 'completed' : ''}" onclick="startPlantRoom('${room.id}')">
+      <div class="room-item-check">${done ? '✓' : ''}</div>
+      <div style="flex:1">
+        <div class="room-item-name">${room.name}</div>
+        <div class="room-item-meta">📷 Photo mandatory${done ? ' · Done' : ''}</div>
+      </div>
+      <div class="room-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+    </div>`;
+  }).join('');
+}
+
+function startPlantRoom(roomId) {
+  const levelId = STATE.activePlantLevel;
+  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  if (!level) return;
+  const room = level.rooms.find(r => r.id === roomId);
+  if (!room) return;
+  STATE.activePlantRoomId = roomId;
+  STATE.plantRoomPhotos = [];
+  renderPlantRoomActive(level, room);
   navigateTo('plant-room-active');
 }
 
@@ -1742,9 +1797,16 @@ function confirmPlantRoom() {
     checks, photos: [...STATE.plantRoomPhotos], hasIssue: hasReportable,
   };
 
-  // Check if level complete — go back to level list
-  const levelDone = level.rooms.every(r => STATE.plantLevelResults[STATE.activePlantLevel][r.id]);
-  if (levelDone) { showToast(`${level.name} complete`); }
+  // Go back to level rooms list
+  renderPlantLevelRooms();
+  navigateTo('plant-level-rooms');
+}
+
+function finishPlantLevel() {
+  // Mark level done, go back to levels list
+  const levelId = STATE.activePlantLevel;
+  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  if (level) showToast(`${level.name} complete`);
   renderPlantLevels();
   navigateTo('plant-levels');
 }
