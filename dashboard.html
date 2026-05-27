@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TESTING — Controller Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --card: #16161f;
+      --elevated: #1e1e2a;
+      --border: rgba(255,255,255,0.08);
+      --purple: #7c5cfc;
+      --purple-dim: rgba(124,92,252,0.15);
+      --blue: #3b82f6;
+      --blue-dim: rgba(59,130,246,0.12);
+      --green: #22c55e;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --text: #ffffff;
+      --text-sec: #a0a0b8;
+      --text-muted: #555568;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; min-height: 100vh; }
+
+    /* TOP BAR */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px; font-weight: 800; letter-spacing: 3px; color: var(--text-sec);
+    }
+    .topbar-site {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 14px; font-weight: 600; letter-spacing: 1px; color: var(--purple);
+    }
+    .topbar-right { display: flex; align-items: center; gap: 20px; }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 99px; padding: 4px 12px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--green);
+    }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .last-updated {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .clock {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; font-weight: 500; color: var(--text-sec); letter-spacing: 1px;
+    }
+
+    /* LAYOUT */
+    .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+    /* SHIFT HERO */
+    .shift-hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .shift-hero-stat { text-align: center; }
+    .shift-hero-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 52px; font-weight: 800; line-height: 1; color: var(--text);
+    }
+    .shift-hero-num span { font-size: 28px; color: var(--text-muted); }
+    .shift-hero-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-top: 4px;
+    }
+    .shift-hero-divider { width: 1px; height: 64px; background: var(--border); }
+    .shift-hero-progress { flex: 1; }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .progress-track { height: 8px; background: var(--elevated); border-radius: 99px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
+      border-radius: 99px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* GRID */
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .grid-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 24px; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr 1fr; } .grid-wide { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .main { padding: 16px; } }
+
+    /* CARD */
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    }
+    .card-header {
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted);
+    }
+    .card-badge {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+    }
+    .card-badge.purple { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(124,92,252,0.3); }
+    .card-badge.red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+    .card-badge.green { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .card-body { padding: 14px 18px; }
+
+    /* TASK LIST */
+    .task-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .task-row:last-child { border-bottom: none; }
+    .task-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--text-muted); width: 18px; flex-shrink: 0;
+    }
+    .task-icon { font-size: 16px; flex-shrink: 0; }
+    .task-info { flex: 1; min-width: 0; }
+    .task-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 15px; font-weight: 700; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .task-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .task-status {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .status-pill {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      padding: 3px 8px; border-radius: 99px;
+    }
+    .status-pill.done { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .status-pill.pending { background: var(--elevated); color: var(--text-muted); border: 1px solid var(--border); }
+    .status-pill.critical { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+    /* ESCALATION ITEMS */
+    .esc-row {
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .esc-row:last-child { border-bottom: none; }
+    .esc-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .esc-meta { font-size: 11px; color: var(--text-sec); }
+    .esc-pill {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      padding: 2px 8px; border-radius: 99px; display: inline-block; margin-top: 2px;
+    }
+    .esc-pill.high { background: rgba(239,68,68,0.2); color: var(--red); }
+    .esc-pill.medium { background: rgba(245,158,11,0.2); color: var(--amber); }
+    .esc-pill.low { background: rgba(34,197,94,0.1); color: var(--green); }
+
+    /* ACTIVITY */
+    .activity-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .activity-dot.patrol { background: var(--purple); }
+    .activity-dot.audit { background: var(--blue); }
+    .activity-dot.escalation { background: var(--red); }
+    .activity-text { flex: 1; font-size: 12px; color: var(--text-sec); }
+    .activity-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; color: var(--text-muted); flex-shrink: 0;
+    }
+
+    /* REPORTS TABLE */
+    .reports-table { width: 100%; border-collapse: collapse; }
+    .reports-table th {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted);
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border);
+    }
+    .reports-table td {
+      font-size: 12px; color: var(--text-sec);
+      padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle;
+    }
+    .reports-table tr:last-child td { border-bottom: none; }
+    .reports-table tr:hover td { background: var(--elevated); }
+    .dl-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--purple-dim); border: 1px solid rgba(124,92,252,0.3); border-radius: 6px;
+      color: var(--purple); font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      padding: 5px 10px; cursor: pointer; transition: all 0.15s;
+      text-decoration: none;
+    }
+    .dl-btn:hover { background: rgba(124,92,252,0.25); }
+    .dl-btn.loading { opacity: 0.6; cursor: wait; }
+
+    /* STAT CARDS */
+    .mini-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
+    .mini-stat {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+    .mini-stat-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 6px;
+    }
+    .mini-stat-value {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px; font-weight: 800; color: var(--text); line-height: 1;
+    }
+    .mini-stat-value.green { color: var(--green); }
+    .mini-stat-value.red { color: var(--red); }
+    .mini-stat-value.purple { color: var(--purple); }
+
+    /* EMPTY */
+    .empty { padding: 24px; text-align: center; font-size: 13px; color: var(--text-muted); }
+
+    /* LOADING */
+    .loading-overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; flex-direction: column; gap: 16px;
+    }
+    .loading-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px; font-weight: 700; letter-spacing: 2px; color: var(--text-sec);
+    }
+    .loading-bar-wrap { width: 200px; height: 3px; background: var(--elevated); border-radius: 99px; overflow: hidden; }
+    .loading-bar { height: 100%; background: linear-gradient(90deg,var(--purple),var(--blue)); border-radius: 99px; animation: loadAnim 1.2s ease infinite; }
+    @keyframes loadAnim { 0%{width:0%;margin-left:0} 50%{width:60%} 100%{width:0%;margin-left:100%} }
+
+    /* ERROR */
+    .error-banner {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px;
+      font-size: 13px; color: var(--red);
+    }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="loading-title">LOADING DASHBOARD</div>
+  <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
+</div>
+
+<div id="app" style="display:none">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">TESTING</div>
+      <div style="width:1px;height:20px;background:var(--border)"></div>
+      <div class="topbar-site">CONTROLLER DASHBOARD</div>
+      <div style="width:1px;height:20px;background:var(--border)"></div>
+      <div class="topbar-site" id="site-name">Tower 3 ITS</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <div class="last-updated" id="last-updated">Connecting...</div>
+      <div class="clock" id="clock"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="error-area"></div>
+
+    <!-- MINI STATS -->
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <div class="mini-stat-label">TASKS DONE</div>
+        <div class="mini-stat-value purple" id="ms-tasks">—</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-label">AUDITS DONE</div>
+        <div class="mini-stat-value purple" id="ms-audits">—</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-label">ESCALATIONS</div>
+        <div class="mini-stat-value red" id="ms-escs">—</div>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-label">REPORTS READY</div>
+        <div class="mini-stat-value green" id="ms-reports">—</div>
+      </div>
+    </div>
+
+    <!-- SHIFT PROGRESS -->
+    <div class="shift-hero">
+      <div class="shift-hero-stat">
+        <div class="shift-hero-num" id="hero-done">0<span>/11</span></div>
+        <div class="shift-hero-label">TASKS COMPLETE</div>
+      </div>
+      <div class="shift-hero-divider"></div>
+      <div class="shift-hero-progress">
+        <div class="progress-label">
+          <span>DAY SHIFT PROGRESS</span>
+          <span id="hero-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="hero-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASK LIST + ESCALATIONS -->
+    <div class="grid-wide">
+      <!-- Task list -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">DAY SHIFT TASKS</div>
+          <div class="card-badge purple" id="tasks-badge">0 / 11</div>
+        </div>
+        <div class="card-body" id="task-list-body">
+          <div class="empty">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Escalations -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">ACTIVE ESCALATIONS</div>
+          <div class="card-badge red" id="esc-badge">0</div>
+        </div>
+        <div class="card-body" id="esc-body">
+          <div class="empty">No escalations</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY + AUDITS -->
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">RECENT ACTIVITY</div>
+        </div>
+        <div class="card-body" id="activity-body">
+          <div class="empty">No activity yet</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">COMPLETED PATROLS</div>
+          <div class="card-badge purple" id="patrol-badge">0</div>
+        </div>
+        <div class="card-body" id="patrol-body">
+          <div class="empty">No patrols yet</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">COMPLETED AUDITS</div>
+          <div class="card-badge purple" id="audit-badge">0</div>
+        </div>
+        <div class="card-body" id="audit-body">
+          <div class="empty">No audits yet</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">DOWNLOADABLE REPORTS</div>
+        <div class="card-badge green" id="reports-badge">0 reports</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="reports-table" id="reports-table">
+          <thead>
+            <tr>
+              <th>TIME</th>
+              <th>OFFICER</th>
+              <th>REPORT TYPE</th>
+              <th>FILENAME</th>
+              <th>DOWNLOAD</th>
+            </tr>
+          </thead>
+          <tbody id="reports-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">No reports yet today</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxGIMlKhiedkYFA-s7gUmot-LUaymmMbzAiZ2HxZbTiIwySFsdtC2y4NyH5sjyEsHSeTw/exec';
+
+const DAY_TASKS = [
+  { id:'white-level', label:'White Level Inspection', icon:'⬜', tag:'INSPECTION' },
+  { id:'external-patrol', label:'External Patrol', icon:'🔦', tag:'PATROL' },
+  { id:'b1-patrol', label:'B1 Patrol', icon:'🅿️', tag:'PATROL' },
+  { id:'plant-room-morning', label:'Plant Room Patrol', icon:'⚙️', tag:'CRITICAL', hint:'Morning' },
+  { id:'lobby-static-morning', label:'Lobby Static', icon:'🏛️', tag:'STATIC', hint:'08:00–09:00' },
+  { id:'plant-room-midday', label:'Plant Room Patrol', icon:'⚙️', tag:'CRITICAL', hint:'Midday' },
+  { id:'lobby-static-midday', label:'Lobby Static', icon:'🏛️', tag:'STATIC', hint:'13:00–14:00' },
+  { id:'plant-room-afternoon', label:'Plant Room Patrol', icon:'⚙️', tag:'CRITICAL', hint:'Afternoon' },
+  { id:'lobby-static-afternoon', label:'Lobby Static', icon:'🏛️', tag:'STATIC', hint:'17:00–18:00' },
+  { id:'precinct-patrol-1', label:'Precinct Patrol', icon:'🏙️', tag:'PATROL', hint:'Run 1 of 2' },
+  { id:'precinct-patrol-2', label:'Precinct Patrol', icon:'🏙️', tag:'PATROL', hint:'Run 2 of 2' },
+];
+
+let dashData = null;
+let refreshTimer = null;
+
+// Clock
+function updateClock() {
+  const el = document.getElementById('clock');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Fetch dashboard data
+async function fetchDashboard() {
+  try {
+    const res = await fetch(`${SHEETS_URL}?action=getDashboard&t=${Date.now()}`);
+    const data = await res.json();
+    if (data.result === 'success') {
+      dashData = data;
+      renderDashboard(data);
+      document.getElementById('last-updated').textContent = `Updated ${data.lastUpdated}`;
+      document.getElementById('error-area').innerHTML = '';
+    } else {
+      throw new Error(data.error || 'Unknown error');
+    }
+  } catch(err) {
+    document.getElementById('error-area').innerHTML = `<div class="error-banner">⚠ Connection error — retrying. (${err.message})</div>`;
+  }
+}
+
+// Render everything
+function renderDashboard(data) {
+  const patrols = data.patrols || [];
+  const audits = data.audits || [];
+  const escalations = data.escalations || [];
+  const activity = data.activity || [];
+  const pdfs = data.pdfs || [];
+
+  // Work out which tasks are done based on patrol names
+  const completedLabels = patrols.map(p => (p[2]||'') + '|' + (p[3]||''));
+  const doneTaskIds = [];
+  DAY_TASKS.forEach(t => {
+    const key = t.label + '|' + (t.hint||'');
+    if (completedLabels.includes(key)) doneTaskIds.push(t.id);
+  });
+
+  const doneCount = doneTaskIds.length;
+  const totalCount = DAY_TASKS.length;
+  const pct = Math.round((doneCount/totalCount)*100);
+
+  // Hero
+  document.getElementById('hero-done').innerHTML = `${doneCount}<span>/${totalCount}</span>`;
+  document.getElementById('hero-pct').textContent = pct + '%';
+  document.getElementById('hero-bar').style.width = pct + '%';
+  document.getElementById('tasks-badge').textContent = `${doneCount} / ${totalCount}`;
+
+  // Mini stats
+  document.getElementById('ms-tasks').textContent = `${doneCount}/${totalCount}`;
+  document.getElementById('ms-audits').textContent = audits.length;
+  document.getElementById('ms-escs').textContent = escalations.length;
+  document.getElementById('ms-reports').textContent = pdfs.length;
+
+  // Task list
+  const taskBody = document.getElementById('task-list-body');
+  taskBody.innerHTML = DAY_TASKS.map((t, idx) => {
+    const done = doneTaskIds.includes(t.id);
+    const isCritical = t.tag === 'CRITICAL';
+    const patrol = done ? patrols.find(p => p[2] === t.label && (p[3]||'') === (t.hint||'')) : null;
+    return `<div class="task-row">
+      <div class="task-num">${String(idx+1).padStart(2,'0')}</div>
+      <div class="task-icon">${t.icon}</div>
+      <div class="task-info">
+        <div class="task-name">${t.label}${t.hint ? ' — '+t.hint : ''}</div>
+        <div class="task-meta">${done && patrol ? `${patrol[1]||'Officer'} · ${patrol[6]||''}` : t.tag}</div>
+      </div>
+      <div class="task-status">
+        <span class="status-pill ${done?'done':isCritical?'critical':'pending'}">${done?'DONE':isCritical?'CRITICAL':'PENDING'}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Escalations
+  const escBody = document.getElementById('esc-body');
+  document.getElementById('esc-badge').textContent = escalations.length;
+  if (!escalations.length) {
+    escBody.innerHTML = '<div class="empty">No active escalations ✓</div>';
+  } else {
+    escBody.innerHTML = escalations.map(e => `
+      <div class="esc-row">
+        <div class="esc-title">${esc(e[4]||'')}</div>
+        <div class="esc-meta">${esc(e[1]||'')} · ${esc(e[2]||'')} · ${esc(e[5]||'')}</div>
+        <span class="esc-pill ${e[3]||'low'}">${(e[3]||'low').toUpperCase()}</span>
+      </div>`).join('');
+  }
+
+  // Activity
+  const actBody = document.getElementById('activity-body');
+  if (!activity.length) {
+    actBody.innerHTML = '<div class="empty">No activity yet</div>';
+  } else {
+    actBody.innerHTML = activity.slice(0,12).map(a => `
+      <div class="activity-row">
+        <div class="activity-dot ${a[1]||'patrol'}"></div>
+        <div class="activity-text">${esc(a[2]||'')}</div>
+        <div class="activity-time">${formatTime(a[0])}</div>
+      </div>`).join('');
+  }
+
+  // Patrols
+  const patrolBody = document.getElementById('patrol-body');
+  document.getElementById('patrol-badge').textContent = patrols.length;
+  if (!patrols.length) {
+    patrolBody.innerHTML = '<div class="empty">No patrols yet</div>';
+  } else {
+    patrolBody.innerHTML = patrols.slice(0,8).map(p => `
+      <div class="activity-row">
+        <div class="activity-dot patrol"></div>
+        <div class="activity-text"><strong style="color:var(--text)">${esc(p[2]||'')}${p[3]?' — '+esc(p[3]):''}</strong><br><span style="color:var(--text-muted)">${esc(p[1]||'')} · ${p[9]||0} issue(s)</span></div>
+        <div class="activity-time">${esc(p[6]||'')}</div>
+      </div>`).join('');
+  }
+
+  // Audits
+  const auditBody = document.getElementById('audit-body');
+  document.getElementById('audit-badge').textContent = audits.length;
+  if (!audits.length) {
+    auditBody.innerHTML = '<div class="empty">No audits yet</div>';
+  } else {
+    auditBody.innerHTML = audits.slice(0,8).map(a => `
+      <div class="activity-row">
+        <div class="activity-dot audit"></div>
+        <div class="activity-text"><strong style="color:var(--text)">${esc(a[2]||'')} — ${esc(a[3]||'')}</strong><br><span style="color:var(--text-muted)">${esc(a[1]||'')} · ${a[7]||0} issue(s)</span></div>
+        <div class="activity-time">${esc(a[5]||'')}</div>
+      </div>`).join('');
+  }
+
+  // Reports
+  const reportsBody = document.getElementById('reports-body');
+  document.getElementById('reports-badge').textContent = `${pdfs.length} report${pdfs.length!==1?'s':''}`;
+  if (!pdfs.length) {
+    reportsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">No reports yet today</td></tr>';
+  } else {
+    reportsBody.innerHTML = pdfs.map(p => `
+      <tr>
+        <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${esc(p.timestamp||'')}</span></td>
+        <td>${esc(p.officer||'')}</td>
+        <td>${esc(p.reportType||'')}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)">${esc(p.filename||'')}</td>
+        <td>
+          <button class="dl-btn" onclick="downloadReport('${esc(p.filename||'')}', this)">
+            <svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            DOWNLOAD PDF
+          </button>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Show app
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// Download a PDF from Sheets
+async function downloadReport(filename, btn) {
+  if (!filename) return;
+  btn.classList.add('loading');
+  btn.textContent = 'Loading...';
+  try {
+    const res = await fetch(`${SHEETS_URL}?action=getPDF&filename=${encodeURIComponent(filename)}&t=${Date.now()}`);
+    const data = await res.json();
+    if (data.result === 'success' && data.pdfData) {
+      const link = document.createElement('a');
+      link.href = data.pdfData;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      btn.innerHTML = '✓ Downloaded';
+      btn.style.color = 'var(--green)';
+      setTimeout(() => {
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> DOWNLOAD PDF';
+        btn.style.color = '';
+        btn.classList.remove('loading');
+      }, 2000);
+    } else {
+      throw new Error('PDF not found');
+    }
+  } catch(err) {
+    btn.textContent = 'Error — retry';
+    btn.classList.remove('loading');
+    setTimeout(() => {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> DOWNLOAD PDF';
+    }, 2000);
+  }
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  try {
+    return new Date(ts).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',hour12:true});
+  } catch(e) { return String(ts).slice(11,16); }
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Auto refresh every 30 seconds
+function startRefresh() {
+  fetchDashboard();
+  refreshTimer = setInterval(fetchDashboard, 30000);
+}
+
+startRefresh();
+</script>
+</body>
+</html>
