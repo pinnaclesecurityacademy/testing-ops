@@ -444,22 +444,29 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// Fetch dashboard data
-async function fetchDashboard() {
-  try {
-    const res = await fetch(`${SHEETS_URL}?action=getDashboard&t=${Date.now()}`);
-    const data = await res.json();
-    if (data.result === 'success') {
-      dashData = data;
-      renderDashboard(data);
-      document.getElementById('last-updated').textContent = `Updated ${data.lastUpdated}`;
-      document.getElementById('error-area').innerHTML = '';
-    } else {
-      throw new Error(data.error || 'Unknown error');
-    }
-  } catch(err) {
-    document.getElementById('error-area').innerHTML = `<div class="error-banner">⚠ Connection error — retrying. (${err.message})</div>`;
+// JSONP callback — called by the script tag
+function handleDashboardData(data) {
+  if (data.result === 'success') {
+    dashData = data;
+    renderDashboard(data);
+    document.getElementById('last-updated').textContent = 'Updated ' + data.lastUpdated;
+    document.getElementById('error-area').innerHTML = '';
   }
+}
+
+// Fetch via script tag to avoid CORS
+function fetchDashboard() {
+  // Remove old script tag if present
+  var old = document.getElementById('sheets-script');
+  if (old) old.remove();
+
+  var script = document.createElement('script');
+  script.id = 'sheets-script';
+  script.onerror = function() {
+    document.getElementById('error-area').innerHTML = '<div class="error-banner">Connection error — retrying in 30s</div>';
+  };
+  script.src = SHEETS_URL + '?action=getDashboard&callback=handleDashboardData&t=' + Date.now();
+  document.body.appendChild(script);
 }
 
 // Render everything
@@ -594,38 +601,55 @@ function renderDashboard(data) {
   document.getElementById('app').style.display = 'block';
 }
 
-// Download a PDF from Sheets
-async function downloadReport(filename, btn) {
-  if (!filename) return;
-  btn.classList.add('loading');
-  btn.textContent = 'Loading...';
-  try {
-    const res = await fetch(`${SHEETS_URL}?action=getPDF&filename=${encodeURIComponent(filename)}&t=${Date.now()}`);
-    const data = await res.json();
-    if (data.result === 'success' && data.pdfData) {
-      const link = document.createElement('a');
-      link.href = data.pdfData;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      btn.innerHTML = '✓ Downloaded';
-      btn.style.color = 'var(--green)';
-      setTimeout(() => {
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> DOWNLOAD PDF';
-        btn.style.color = '';
-        btn.classList.remove('loading');
-      }, 2000);
-    } else {
-      throw new Error('PDF not found');
-    }
-  } catch(err) {
+// Download a PDF from Sheets via JSONP
+var pendingDownload = null;
+
+function handlePDFData(data) {
+  if (!pendingDownload) return;
+  var btn = pendingDownload.btn;
+  var filename = pendingDownload.filename;
+  pendingDownload = null;
+
+  if (data.result === 'success' && data.pdfData) {
+    var link = document.createElement('a');
+    link.href = data.pdfData;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    btn.innerHTML = '✓ Downloaded';
+    btn.style.color = 'var(--green)';
+    setTimeout(function() {
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> DOWNLOAD PDF';
+      btn.style.color = '';
+      btn.classList.remove('loading');
+    }, 2000);
+  } else {
     btn.textContent = 'Error — retry';
     btn.classList.remove('loading');
-    setTimeout(() => {
+    setTimeout(function() {
       btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> DOWNLOAD PDF';
     }, 2000);
   }
+}
+
+function downloadReport(filename, btn) {
+  if (!filename) return;
+  btn.classList.add('loading');
+  btn.textContent = 'Loading...';
+  pendingDownload = { filename: filename, btn: btn };
+
+  var old = document.getElementById('pdf-script');
+  if (old) old.remove();
+  var script = document.createElement('script');
+  script.id = 'pdf-script';
+  script.src = SHEETS_URL + '?action=getPDF&filename=' + encodeURIComponent(filename) + '&callback=handlePDFData&t=' + Date.now();
+  script.onerror = function() {
+    btn.textContent = 'Error — retry';
+    btn.classList.remove('loading');
+    pendingDownload = null;
+  };
+  document.body.appendChild(script);
 }
 
 function formatTime(ts) {
