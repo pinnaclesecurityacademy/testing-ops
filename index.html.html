@@ -1,0 +1,3035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TESTING" />
+  <title>TESTING — Security Operations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+/* ═══════════════════════════════════════════════════
+   TESTING — SECURITY OPERATIONS PLATFORM
+   Dark mode, mobile-first, operational aesthetic
+═══════════════════════════════════════════════════ */
+
+:root {
+  --bg-base: #0a0a0f;
+  --bg-surface: #111118;
+  --bg-card: #16161f;
+  --bg-card-hover: #1c1c28;
+  --bg-elevated: #1e1e2a;
+  --border: rgba(255,255,255,0.07);
+  --border-accent: rgba(124,92,252,0.3);
+
+  --purple: #7c5cfc;
+  --purple-dim: rgba(124,92,252,0.15);
+  --purple-glow: rgba(124,92,252,0.4);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.15);
+
+  --text-primary: #f0f0f8;
+  --text-secondary: #888899;
+  --text-muted: #444455;
+
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+
+  --nav-h: 56px;
+  --bnav-h: 64px;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --transition: 200ms cubic-bezier(0.4,0,0.2,1);
+
+  font-family: 'Barlow', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+.hidden { display: none !important; }
+
+/* ── SPLASH ─────────────────────────────── */
+.splash {
+  position: fixed; inset: 0;
+  background: var(--bg-base);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+.splash.fade-out { opacity: 0; visibility: hidden; }
+
+.splash-inner {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 48px;
+}
+
+.splash-wordmark {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+}
+
+.splash-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 42px; font-weight: 800;
+  letter-spacing: 8px;
+  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.splash-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 4px; color: var(--text-muted);
+}
+
+.splash-loader {
+  width: 160px; height: 2px;
+  background: var(--bg-elevated);
+  border-radius: 99px; overflow: hidden;
+}
+.splash-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 99px;
+  width: 0%;
+  animation: splashLoad 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+}
+@keyframes splashLoad {
+  0% { width: 0% }
+  60% { width: 80% }
+  100% { width: 100% }
+}
+
+/* ── MAIN LAYOUT ────────────────────────── */
+.main {
+  display: flex; flex-direction: column;
+  height: 100dvh; height: 100vh;
+  overflow: hidden;
+}
+
+/* ── TOP NAV ────────────────────────────── */
+.topnav {
+  height: var(--nav-h);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.topnav-left { flex: 1; }
+.topnav-center { flex: 0 0 auto; }
+.topnav-right { flex: 1; display: flex; justify-content: flex-end; }
+
+.nav-wordmark {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800;
+  letter-spacing: 3px;
+  color: var(--text-secondary);
+}
+
+#nav-site-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--purple);
+  text-transform: uppercase;
+}
+
+.nav-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+/* ── PAGE CONTAINER ─────────────────────── */
+#page-container {
+  flex: 1; overflow: hidden;
+  position: relative;
+}
+
+.page {
+  position: absolute; inset: 0;
+  overflow: hidden;
+  opacity: 0; visibility: hidden;
+  transform: translateX(20px);
+  transition: opacity var(--transition), transform var(--transition), visibility var(--transition);
+}
+.page.active {
+  opacity: 1; visibility: visible;
+  transform: translateX(0);
+}
+
+.page-scroll {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--bnav-h) + 16px);
+}
+
+/* ── BOTTOM NAV ─────────────────────────── */
+.bottomnav {
+  height: var(--bnav-h);
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.bnav-btn {
+  flex: 1; background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  color: var(--text-muted);
+  font-family: 'Barlow', sans-serif;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: color var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.bnav-btn.active { color: var(--purple); }
+.bnav-btn span { font-size: 10px; }
+
+/* ── STATUS BAND ────────────────────────── */
+.status-band {
+  display: flex; align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.status-item {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+}
+.status-divider {
+  width: 1px; height: 14px;
+  background: var(--border);
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+}
+.status-dot.green {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1 }
+  50% { opacity: 0.5 }
+}
+
+/* ── DASH STATS ─────────────────────────── */
+.dash-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; padding: 16px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  position: relative; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+.stat-card:active { background: var(--bg-card-hover); }
+.stat-card.primary { border-color: var(--border-accent); }
+.stat-card.secondary { border-color: rgba(59,130,246,0.2); }
+
+.stat-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px; font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.stat-value span { font-size: 18px; color: var(--text-muted); font-weight: 500; }
+.stat-sub {
+  font-size: 11px; color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.stat-progress {
+  height: 3px; background: var(--bg-elevated);
+  border-radius: 99px; overflow: hidden;
+  margin-bottom: 0;
+}
+.stat-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.stat-icon {
+  position: absolute; right: 12px; top: 12px;
+  color: rgba(255,255,255,0.06);
+}
+
+/* ── SECTION HEADERS ────────────────────── */
+.section-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 8px 16px;
+  margin-top: 4px;
+}
+.section-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+.section-badge {
+  background: var(--purple-dim);
+  color: var(--purple);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--border-accent);
+}
+
+/* ── ESCALATIONS ────────────────────────── */
+.escalation-list {
+  padding: 0 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.escalation-item {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.esc-title {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+}
+.esc-meta {
+  font-size: 11px; color: var(--text-secondary);
+}
+.esc-priority {
+  display: inline-block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-top: 2px;
+}
+.esc-priority.high { background: rgba(239,68,68,0.2); color: var(--red); }
+.esc-priority.medium { background: rgba(245,158,11,0.2); color: var(--amber); }
+.esc-priority.low { background: rgba(34,197,94,0.1); color: var(--green); }
+
+/* ── ACTIVITY FEED ──────────────────────── */
+.activity-feed {
+  padding: 0 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.activity-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.activity-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.activity-dot.patrol { background: var(--purple); }
+.activity-dot.audit { background: var(--blue); }
+.activity-dot.escalation { background: var(--red); }
+.activity-content { flex: 1; min-width: 0; }
+.activity-title {
+  font-size: 13px; font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.activity-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.empty-state {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px 16px;
+  gap: 8px;
+}
+.empty-icon { font-size: 22px; color: var(--text-muted); }
+.empty-text { font-size: 13px; color: var(--text-muted); }
+
+/* ── QUICK START ────────────────────────── */
+.quick-start-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 10px; padding: 0 16px;
+}
+.qs-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 8px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.qs-btn:active { background: var(--bg-card-hover); }
+.qs-btn.patrol { border-color: var(--border-accent); }
+.qs-btn.audit { border-color: rgba(59,130,246,0.2); }
+.qs-icon { font-size: 22px; }
+.qs-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── PAGE HEADERS ───────────────────────── */
+.page-header {
+  padding: 20px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.page-header-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px; font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+.page-header-sub {
+  font-size: 13px; color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* ── PATROL TYPE GRID ───────────────────── */
+.patrol-type-grid {
+  display: flex; flex-direction: column;
+  gap: 8px; padding: 16px;
+}
+.patrol-type-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.patrol-type-card:active { background: var(--bg-card-hover); border-color: var(--border-accent); }
+.ptc-left { display: flex; align-items: center; gap: 14px; }
+.ptc-icon {
+  width: 40px; height: 40px;
+  background: var(--purple-dim);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.ptc-info {}
+.ptc-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px; font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+.ptc-meta {
+  font-size: 12px; color: var(--text-secondary);
+  margin-top: 2px;
+}
+.ptc-arrow { color: var(--text-muted); }
+
+.ptc-badge {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: rgba(239,68,68,0.15);
+  color: var(--red);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+.ptc-badge.done {
+  background: rgba(34,197,94,0.1);
+  color: var(--green);
+  border-color: rgba(34,197,94,0.2);
+}
+
+/* ── AUDIT TYPE GRID ────────────────────── */
+.audit-type-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; padding: 16px;
+}
+.audit-type-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex; flex-direction: column;
+  align-items: flex-start; gap: 10px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.audit-type-card:active { background: var(--bg-card-hover); }
+.audit-type-card.available { border-color: rgba(59,130,246,0.2); }
+.audit-type-card.coming-soon { opacity: 0.5; cursor: not-allowed; }
+
+.atc-icon {
+  width: 38px; height: 38px;
+  background: var(--blue-dim);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.atc-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px; font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.atc-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.atc-tag.ready { background: var(--blue-dim); color: var(--blue); }
+.atc-tag.soon { background: var(--bg-elevated); color: var(--text-muted); }
+
+/* ── PATROL ACTIVE HEADER ───────────────── */
+.patrol-active-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none;
+  color: var(--text-secondary);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  padding: 0; margin-bottom: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.patrol-active-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+.patrol-active-meta {
+  font-size: 12px; color: var(--text-secondary);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600; letter-spacing: 1.5px;
+}
+
+/* ── CHECKPOINT PROGRESS ────────────────── */
+.checkpoint-progress {
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.cp-progress-track {
+  height: 4px; background: var(--bg-elevated);
+  border-radius: 99px; overflow: hidden;
+}
+.cp-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.cp-progress-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+/* ── CHECKPOINT CARD ────────────────────── */
+.checkpoint-card {
+  margin: 0 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.cp-number {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--purple);
+}
+.cp-location {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 24px; font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.cp-instruction {
+  font-size: 13px; color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── OBSERVATION PROMPTS ────────────────── */
+.obs-prompts {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.obs-prompt-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.obs-question {
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.obs-q-text {
+  font-size: 13px; color: var(--text-secondary);
+  flex: 1; line-height: 1.4;
+}
+.obs-check {
+  width: 22px; height: 22px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  color: transparent;
+  font-size: 13px;
+  -webkit-tap-highlight-color: transparent;
+}
+.obs-check.checked {
+  border-color: var(--purple);
+  background: var(--purple-dim);
+  color: var(--purple);
+}
+
+/* ── FIELD GROUPS ───────────────────────── */
+.field-group {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.field-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+.field-textarea {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  padding: 12px 14px;
+  resize: none;
+  min-height: 80px;
+  outline: none;
+  transition: border-color var(--transition);
+  width: 100%;
+}
+.field-textarea:focus { border-color: var(--border-accent); }
+.field-textarea::placeholder { color: var(--text-muted); }
+
+.field-input {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px; font-weight: 500;
+  padding: 14px 16px;
+  outline: none;
+  transition: border-color var(--transition);
+  width: 100%;
+}
+.field-input:focus { border-color: var(--border-accent); }
+.field-input::placeholder { color: var(--text-muted); }
+
+.field-select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  padding: 12px 14px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* ── PHOTO CAPTURE ──────────────────────── */
+.photo-capture-area {
+  background: var(--bg-elevated);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-capture-area:active { border-color: var(--purple); }
+
+.photo-placeholder {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.photo-preview-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; margin-top: 12px;
+}
+.photo-thumb {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  width: 100%;
+  border: 1px solid var(--border);
+}
+
+/* ── ISSUE FLAG ─────────────────────────── */
+.issue-flag-row {
+  display: flex;
+}
+.issue-flag-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--red);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.issue-flag-btn.active {
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.4);
+}
+.issue-detail {
+  background: rgba(239,68,68,0.05);
+  border: 1px solid rgba(239,68,68,0.15);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+/* ── AUDIT QUESTION CARD ────────────────── */
+.audit-question-card {
+  margin: 0 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.aq-number {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 3px; color: var(--blue);
+}
+.aq-question {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* ── YES/NO BUTTONS ─────────────────────── */
+.yn-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.yn-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 2px solid;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 800;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.yn-btn.yes {
+  background: rgba(34,197,94,0.08);
+  border-color: rgba(34,197,94,0.2);
+  color: var(--green);
+}
+.yn-btn.yes.selected, .yn-btn.yes:active {
+  background: rgba(34,197,94,0.2);
+  border-color: var(--green);
+}
+.yn-btn.no {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.2);
+  color: var(--red);
+}
+.yn-btn.no.selected, .yn-btn.no:active {
+  background: rgba(239,68,68,0.2);
+  border-color: var(--red);
+}
+
+/* ── ASSET LIST ─────────────────────────── */
+.asset-list {
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.asset-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.asset-item:active { background: var(--bg-card-hover); border-color: var(--blue); }
+.asset-item-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+}
+.asset-item-sub {
+  font-size: 12px; color: var(--text-secondary);
+  margin-top: 2px;
+}
+.asset-item-arrow { color: var(--text-muted); }
+
+/* ── BUTTONS ────────────────────────────── */
+.btn-primary {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  border: none; border-radius: var(--radius);
+  color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 800;
+  letter-spacing: 2px;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: opacity var(--transition), transform var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:active { opacity: 0.85; transform: scale(0.98); }
+
+.btn-secondary {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700;
+  letter-spacing: 2px;
+  padding: 16px 24px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-full { width: 100%; }
+
+/* ── COMPLETE SCREEN ────────────────────── */
+.complete-hero {
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 32px 16px 20px;
+  gap: 12px;
+}
+.complete-icon {
+  width: 72px; height: 72px;
+  background: var(--purple-dim);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.complete-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px; font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+.complete-meta {
+  font-size: 13px; color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ── SUMMARY CARD ───────────────────────── */
+.summary-card {
+  margin: 0 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.summary-row {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.summary-row:last-child { border-bottom: none; padding-bottom: 0; }
+.summary-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1.5px; color: var(--text-muted);
+  flex-shrink: 0;
+}
+.summary-value {
+  font-size: 13px; font-weight: 500;
+  color: var(--text-primary);
+  text-align: right;
+}
+.summary-value.good { color: var(--green); }
+.summary-value.bad { color: var(--red); }
+
+/* ── MISC ───────────────────────────────── */
+.bottom-spacer { height: 32px; }
+.hidden { display: none !important; }
+
+/* ── TOAST ──────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: calc(var(--bnav-h) + 16px);
+  left: 50%; transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 20px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-primary);
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.25s ease, toastOut 0.25s ease 2.5s forwards;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* ── RESPONSIVE ─────────────────────────── */
+@media (min-width: 480px) {
+  .patrol-type-grid { max-width: 480px; margin: 0 auto; }
+  .audit-type-grid { max-width: 480px; margin: 0 auto; }
+  .dash-stats { max-width: 480px; margin: 0 auto; }
+  .quick-start-grid { max-width: 480px; margin: 0 auto; }
+}
+
+/* ═══════════════════════════════════════
+   DAY SHIFT ADDITIONS
+═══════════════════════════════════════ */
+
+.shift-progress-bar {
+  height: 5px; background: var(--bg-elevated);
+  margin: 0 16px; border-radius: 99px; overflow: hidden;
+}
+.shift-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--blue));
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.shift-progress-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+  color: var(--text-muted);
+  padding: 8px 16px 4px;
+}
+.shift-task-list {
+  padding: 8px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.shift-task-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.shift-task-card:active:not(.locked):not(.done) { background: var(--bg-card-hover); border-color: var(--border-accent); }
+.shift-task-card.done { border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.04); }
+.shift-task-card.locked { opacity: 0.45; cursor: not-allowed; }
+
+.stc-left { display: flex; align-items: center; gap: 12px; }
+.stc-icon {
+  width: 38px; height: 38px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.shift-task-card.done .stc-icon { background: rgba(34,197,94,0.1); }
+.stc-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700;
+  letter-spacing: 0.3px; color: var(--text-primary);
+}
+.shift-task-card.done .stc-name { color: var(--text-secondary); }
+.stc-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.stc-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.stc-check { color: var(--green); }
+.stc-lock { font-size: 14px; }
+.stc-arrow { color: var(--text-muted); }
+
+/* ALL CLEAR ROW */
+.all-clear-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.ac-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 2px solid;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 800; letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.ac-btn.clear {
+  background: rgba(34,197,94,0.06);
+  border-color: rgba(34,197,94,0.2);
+  color: var(--green);
+}
+.ac-btn.clear.selected, .ac-btn.clear:active {
+  background: rgba(34,197,94,0.2);
+  border-color: var(--green);
+}
+.ac-btn.issue {
+  background: rgba(245,158,11,0.06);
+  border-color: rgba(245,158,11,0.2);
+  color: var(--amber);
+}
+.ac-btn.issue.selected, .ac-btn.issue:active {
+  background: rgba(245,158,11,0.2);
+  border-color: var(--amber);
+}
+
+/* PHOTO REQUIRED STYLING */
+.photo-capture-area.required {
+  border-color: rgba(124,92,252,0.4);
+  background: rgba(124,92,252,0.04);
+}
+
+/* LOBBY STATIC */
+.lobby-timer-display {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.lobby-timer-display.active { border-color: var(--border-accent); background: var(--purple-dim); }
+.ltimer-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  color: var(--text-muted);
+}
+.ltimer-time {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px; font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* COMING SOON BLOCK */
+.coming-soon-block {
+  margin: 40px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 12px; text-align: center;
+}
+.cs-icon { font-size: 40px; }
+.cs-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 800; letter-spacing: 2px;
+  color: var(--text-secondary);
+}
+.cs-sub { font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 280px; }
+
+/* ═══════════════════════════════════════
+   ROVER / SHIFT STYLES
+═══════════════════════════════════════ */
+
+/* Shift progress bar */
+.shift-progress-bar {
+  height: 4px;
+  background: var(--bg-elevated);
+  margin: 0;
+  overflow: hidden;
+}
+.shift-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple), var(--blue));
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Shift task list */
+.shift-task-list {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shift-task-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.shift-task-card:active { background: var(--bg-card-hover); }
+.shift-task-card.done {
+  opacity: 0.55;
+  border-color: rgba(34,197,94,0.15);
+}
+
+.stc-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.stc-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  width: 20px;
+}
+.stc-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.stc-info {
+  min-width: 0;
+}
+.stc-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stc-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.stc-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.stc-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 3px 7px;
+  border-radius: 99px;
+}
+.stc-tag.tag-red {
+  background: rgba(239,68,68,0.15);
+  color: var(--red);
+  border: 1px solid rgba(239,68,68,0.25);
+}
+.stc-tag.tag-blue {
+  background: var(--blue-dim);
+  color: var(--blue);
+  border: 1px solid rgba(59,130,246,0.2);
+}
+.stc-done-check {
+  width: 22px;
+  height: 22px;
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+}
+.stc-arrow {
+  color: var(--text-muted);
+}
+
+/* All clear button */
+.allclear-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.allclear-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.allclear-btn.active {
+  background: rgba(34,197,94,0.1);
+  border-color: rgba(34,197,94,0.4);
+  color: var(--green);
+}
+
+/* Lobby static card */
+.lobby-static-card {
+  margin: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.lobby-instruction {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-align: center;
+}
+.lobby-timer-display {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.lobby-timer-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.lobby-timer-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+}
+.lobby-status-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.2);
+  border-radius: 99px;
+  padding: 8px 16px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--green);
+  margin-bottom: 4px;
+}
+.lobby-times-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.lobby-time-block {
+  text-align: center;
+}
+.lobby-time-sep {
+  font-size: 20px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* ═══════════════════════════════════════
+   PER-ITEM CHECK TOGGLES
+═══════════════════════════════════════ */
+
+.check-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.check-item:last-child { border-bottom: none; }
+
+.check-item-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.check-item.ntr-done .check-item-label { color: var(--text-muted); text-decoration: line-through; }
+.check-item.rep-done .check-item-label { color: var(--red); }
+
+.check-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ci-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 6px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ci-btn.ntr {
+  background: rgba(34,197,94,0.06);
+  border-color: rgba(34,197,94,0.2);
+  color: var(--text-muted);
+}
+.ci-btn.ntr.selected {
+  background: rgba(34,197,94,0.15);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.ci-btn.rep {
+  background: rgba(239,68,68,0.06);
+  border-color: rgba(239,68,68,0.2);
+  color: var(--text-muted);
+}
+.ci-btn.rep.selected {
+  background: rgba(239,68,68,0.15);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.ci-report-detail {
+  background: rgba(239,68,68,0.05);
+  border: 1px solid rgba(239,68,68,0.15);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ci-textarea {
+  min-height: 60px;
+  font-size: 13px;
+}
+
+/* Fix photo-capture-area as label */
+label.photo-capture-area {
+  display: block;
+  cursor: pointer;
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SPLASH -->
+  <div id="splash" class="splash">
+    <div class="splash-inner">
+      <div class="splash-wordmark">
+        <span class="splash-title">TESTING</span>
+        <span class="splash-sub">SECURITY OPERATIONS PLATFORM</span>
+      </div>
+      <div class="splash-loader"><div class="splash-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main" class="main hidden">
+
+    <!-- TOP NAV -->
+    <nav class="topnav">
+      <div class="topnav-left"><span class="nav-wordmark">TESTING</span></div>
+      <div class="topnav-center"><span id="nav-site-name">Tower 3 ITS</span></div>
+      <div class="topnav-right"><div class="nav-time" id="nav-time"></div></div>
+    </nav>
+
+    <!-- PAGES -->
+    <div id="page-container">
+
+      <!-- ═══════════════ DASHBOARD ═══════════════ -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-scroll">
+          <div class="status-band">
+            <div class="status-item"><span class="status-dot green"></span><span>SITE ACTIVE</span></div>
+            <div class="status-divider"></div>
+            <div class="status-item" id="dash-date"></div>
+            <div class="status-divider"></div>
+            <div class="status-item">SHIFT: DAY</div>
+          </div>
+
+          <div class="dash-stats">
+            <div class="stat-card primary" onclick="navigateTo('dayshift')">
+              <div class="stat-label">DAY SHIFT</div>
+              <div class="stat-value" id="stat-dayshift">0<span>/9</span></div>
+              <div class="stat-sub">Tasks completed</div>
+              <div class="stat-progress"><div class="stat-progress-fill" id="dayshift-progress" style="width:0%"></div></div>
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+            <div class="stat-card secondary" onclick="navigateTo('audits')">
+              <div class="stat-label">AUDITS TODAY</div>
+              <div class="stat-value" id="stat-audits">0<span>/4</span></div>
+              <div class="stat-sub">Tap to start audit</div>
+              <div class="stat-progress"><div class="stat-progress-fill" id="audit-progress" style="width:0%"></div></div>
+              <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <span class="section-title">ACTIVE ESCALATIONS</span>
+            <span class="section-badge" id="esc-count">0</span>
+          </div>
+          <div id="escalations-list" class="escalation-list">
+            <div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No active escalations</div></div>
+          </div>
+
+          <div class="section-header"><span class="section-title">RECENT ACTIVITY</span></div>
+          <div id="activity-feed" class="activity-feed">
+            <div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div>
+          </div>
+
+          <div class="section-header"><span class="section-title">QUICK START</span></div>
+          <div class="quick-start-grid">
+            <button class="qs-btn patrol" onclick="startRoverTask('white-level')">
+              <div class="qs-icon">⬜</div><div class="qs-label">White Level<br>Inspect</div>
+            </button>
+            <button class="qs-btn patrol" onclick="startRoverTask('external-patrol')">
+              <div class="qs-icon">🔦</div><div class="qs-label">External<br>Patrol</div>
+            </button>
+            <button class="qs-btn patrol" onclick="startRoverTask('plant-room')">
+              <div class="qs-icon">⚙️</div><div class="qs-label">Plant Room<br>Patrol</div>
+            </button>
+            <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')">
+              <div class="qs-icon">🛗</div><div class="qs-label">Lift<br>Audit</div>
+            </button>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ DAY SHIFT ═══════════════ -->
+      <div id="page-dayshift" class="page">
+        <div class="page-scroll">
+          <div class="page-header">
+            <div class="page-header-title">DAY SHIFT ROVER</div>
+            <div class="page-header-sub" id="dayshift-sub">Complete tasks in order</div>
+          </div>
+
+          <div class="shift-progress-bar">
+            <div class="shift-progress-fill" id="shift-progress-fill" style="width:0%"></div>
+          </div>
+
+          <div class="shift-task-list" id="shift-task-list"></div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ NIGHT SHIFT ═══════════════ -->
+      <div id="page-nightshift" class="page">
+        <div class="page-scroll">
+          <div class="page-header">
+            <div class="page-header-title">NIGHT SHIFT ROVER</div>
+            <div class="page-header-sub">Coming soon</div>
+          </div>
+          <div style="padding:48px 16px;text-align:center">
+            <div style="font-size:48px;margin-bottom:16px">🌙</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary);letter-spacing:1px">NIGHT SHIFT WORKFLOW</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:8px">Will be configured once night shift<br>patrol data is provided.</div>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ AUDITS LIST ═══════════════ -->
+      <div id="page-audits" class="page">
+        <div class="page-scroll">
+          <div class="page-header">
+            <div class="page-header-title">AUDITS & INSPECTIONS</div>
+            <div class="page-header-sub">Select audit type to begin</div>
+          </div>
+          <div class="audit-type-grid" id="audit-type-list"></div>
+          <div class="section-header" style="margin-top:24px">
+            <span class="section-title">TODAY'S AUDIT LOG</span>
+          </div>
+          <div id="audit-history" class="activity-feed">
+            <div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No audits completed today</div></div>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ ROVER TASK ACTIVE ═══════════════ -->
+      <div id="page-task-active" class="page">
+        <div class="page-scroll">
+          <div class="patrol-active-header">
+            <button class="back-btn" onclick="navigateTo('dayshift')">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              BACK
+            </button>
+            <div class="patrol-active-title" id="task-active-title">White Level Inspection</div>
+            <div class="patrol-active-meta" id="task-active-meta"></div>
+          </div>
+
+          <div class="checkpoint-progress">
+            <div class="cp-progress-track"><div class="cp-progress-fill" id="task-progress-fill"></div></div>
+            <div class="cp-progress-label" id="task-progress-label">Step 1 of 6</div>
+          </div>
+
+          <div class="checkpoint-card" id="task-checkpoint-card">
+            <div class="cp-number" id="task-cp-number">01</div>
+            <div class="cp-location" id="task-cp-location">Loading...</div>
+            <div class="cp-instruction" id="task-cp-instruction"></div>
+
+            <!-- Dynamic checklist items -->
+            <div id="task-checklist-area"></div>
+
+            <div class="field-group">
+              <label class="field-label">NOTES / OBSERVATIONS</label>
+              <textarea class="field-textarea" id="task-notes" placeholder="Describe anything observed..."></textarea>
+            </div>
+
+            <div class="field-group" id="task-photo-group">
+              <label class="field-label" id="task-photo-label">PHOTO EVIDENCE</label>
+              <label class="photo-capture-area" for="task-photo">
+                <div class="photo-placeholder" id="task-photo-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span id="task-photo-hint">Tap to open camera</span>
+                </div>
+                <div id="task-photo-preview" class="photo-preview-grid"></div>
+              </label>
+              <input type="file" id="task-photo" accept="image/*" capture="environment" class="hidden" onchange="handleTaskPhoto(this)" multiple />
+            </div>
+
+            <!-- Second photo slot for Fire Control Room -->
+            <div class="field-group hidden" id="task-photo2-group">
+              <label class="field-label">PHOTO EVIDENCE — PANEL 2</label>
+              <label class="photo-capture-area" for="task-photo2">
+                <div class="photo-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span>Tap to capture Panel 2</span>
+                </div>
+                <div id="task-photo2-preview" class="photo-preview-grid"></div>
+              </label>
+              <input type="file" id="task-photo2" accept="image/*" capture="environment" class="hidden" onchange="handleTaskPhoto2(this)" multiple />
+            </div>
+
+            <button class="btn-primary btn-full" id="task-next-btn" onclick="advanceTaskStep()">CONFIRM ›</button>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ LOBBY STATIC ACTIVE ═══════════════ -->
+      <div id="page-lobby-static" class="page">
+        <div class="page-scroll">
+          <div class="patrol-active-header">
+            <button class="back-btn" onclick="navigateTo('dayshift')">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              BACK
+            </button>
+            <div class="patrol-active-title" id="lobby-title">Lobby Static</div>
+            <div class="patrol-active-meta" id="lobby-window">08:00 – 09:00</div>
+          </div>
+
+          <div class="lobby-static-card">
+            <div id="lobby-state-start">
+              <div class="lobby-instruction">Proceed to lobby area and begin your static observation. Tap START when you arrive.</div>
+              <button class="btn-primary btn-full" onclick="lobbyStart()" style="margin-top:20px">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M10 8l6 4-6 4V8z" fill="currentColor"/></svg>
+                START STATIC
+              </button>
+            </div>
+
+            <div id="lobby-state-active" class="hidden">
+              <div class="lobby-timer-display">
+                <div class="lobby-timer-label">STARTED</div>
+                <div class="lobby-timer-value" id="lobby-start-time">--:--</div>
+              </div>
+              <div class="lobby-status-pill">
+                <span class="status-dot green"></span> STATIC IN PROGRESS
+              </div>
+              <div class="field-group" style="margin-top:20px">
+                <label class="field-label">OBSERVATIONS DURING STATIC</label>
+                <textarea class="field-textarea" id="lobby-notes" placeholder="Note anything observed during this static period — foot traffic, incidents, persons of interest, maintenance issues..." style="min-height:120px"></textarea>
+              </div>
+              <button class="btn-primary btn-full" onclick="lobbyFinish()" style="margin-top:16px">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/></svg>
+                FINISH STATIC
+              </button>
+            </div>
+
+            <div id="lobby-state-done" class="hidden">
+              <div class="lobby-times-row">
+                <div class="lobby-time-block">
+                  <div class="lobby-timer-label">STARTED</div>
+                  <div class="lobby-timer-value" id="lobby-done-start">--:--</div>
+                </div>
+                <div class="lobby-time-sep">→</div>
+                <div class="lobby-time-block">
+                  <div class="lobby-timer-label">FINISHED</div>
+                  <div class="lobby-timer-value" id="lobby-done-end">--:--</div>
+                </div>
+              </div>
+              <div class="complete-meta" style="margin-top:8px" id="lobby-duration-text"></div>
+              <button class="btn-primary btn-full" onclick="generateLobbyPDF()" style="margin-top:20px">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                GENERATE & DOWNLOAD PDF
+              </button>
+              <div class="field-group" style="margin-top:12px">
+                <label class="field-label">OFFICER NAME (FOR REPORT)</label>
+                <input type="text" class="field-input" id="lobby-officer-name" placeholder="Enter your full name..." />
+              </div>
+              <button class="btn-secondary btn-full" onclick="navigateTo('dayshift')" style="margin-top:12px">BACK TO SHIFT</button>
+            </div>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ TASK COMPLETE ═══════════════ -->
+      <div id="page-task-complete" class="page">
+        <div class="page-scroll">
+          <div class="complete-hero">
+            <div class="complete-icon">
+              <svg viewBox="0 0 60 60" fill="none" width="60" height="60">
+                <circle cx="30" cy="30" r="28" stroke="url(#cg1)" stroke-width="2"/>
+                <path d="M18 30L26 38L42 22" stroke="#7c5cfc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="cg1" x1="2" y1="2" x2="58" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7c5cfc"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs>
+              </svg>
+            </div>
+            <div class="complete-title" id="task-complete-title">Task Complete</div>
+            <div class="complete-meta" id="task-complete-meta"></div>
+          </div>
+          <div class="summary-card" id="task-summary-card"></div>
+          <div class="field-group" style="padding:0 16px">
+            <label class="field-label">OFFICER NAME (FOR REPORT)</label>
+            <input type="text" class="field-input" id="task-officer-name" placeholder="Enter your full name..." />
+          </div>
+          <div style="padding:0 16px;display:flex;flex-direction:column;gap:12px">
+            <button class="btn-primary btn-full" onclick="generateTaskPDF()">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              GENERATE & DOWNLOAD PDF
+            </button>
+            <button class="btn-secondary btn-full" onclick="navigateTo('dayshift')">BACK TO SHIFT</button>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ AUDIT ASSET SELECT ═══════════════ -->
+      <div id="page-audit-select" class="page">
+        <div class="page-scroll">
+          <div class="patrol-active-header">
+            <button class="back-btn" onclick="navigateTo('audits')">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              BACK
+            </button>
+            <div class="patrol-active-title" id="audit-select-title">Lift Audit</div>
+            <div class="patrol-active-meta">SELECT ASSET TO INSPECT</div>
+          </div>
+          <div class="asset-list" id="asset-select-list"></div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ AUDIT ACTIVE ═══════════════ -->
+      <div id="page-audit-active" class="page">
+        <div class="page-scroll">
+          <div class="patrol-active-header">
+            <button class="back-btn" onclick="navigateTo('audit-select')">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              BACK
+            </button>
+            <div class="patrol-active-title" id="audit-active-title">Lift A</div>
+            <div class="patrol-active-meta" id="audit-active-meta">Lift Audit</div>
+          </div>
+          <div class="checkpoint-progress">
+            <div class="cp-progress-track"><div class="cp-progress-fill" id="audit-progress-fill"></div></div>
+            <div class="cp-progress-label" id="audit-progress-label">Question 1 of 7</div>
+          </div>
+          <div class="audit-question-card" id="audit-question-card">
+            <div class="aq-number" id="aq-number">01</div>
+            <div class="aq-question" id="aq-question">Is the lift operational?</div>
+            <div class="yn-row">
+              <button class="yn-btn yes" id="yn-yes" onclick="setAuditAnswer('yes')">
+                <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                YES
+              </button>
+              <button class="yn-btn no" id="yn-no" onclick="setAuditAnswer('no')">
+                <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                NO
+              </button>
+            </div>
+            <div class="field-group">
+              <label class="field-label">COMMENTS (OPTIONAL)</label>
+              <textarea class="field-textarea" id="aq-comments" placeholder="Add any relevant comments..."></textarea>
+            </div>
+            <div class="field-group">
+              <label class="field-label">PHOTO EVIDENCE</label>
+              <label class="photo-capture-area" for="aq-photo">
+                <div class="photo-placeholder">
+                  <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                  <span>Tap to capture photo</span>
+                </div>
+                <div id="aq-photo-preview" class="photo-preview-grid"></div>
+              </label>
+              <input type="file" id="aq-photo" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoCapture(this, 'aq-photo-preview')" multiple />
+            </div>
+            <button class="btn-primary btn-full" id="audit-next-btn" onclick="advanceAuditQuestion()">NEXT QUESTION ›</button>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════ AUDIT COMPLETE ═══════════════ -->
+      <div id="page-audit-complete" class="page">
+        <div class="page-scroll">
+          <div class="complete-hero">
+            <div class="complete-icon">
+              <svg viewBox="0 0 60 60" fill="none" width="60" height="60">
+                <circle cx="30" cy="30" r="28" stroke="url(#cg2)" stroke-width="2"/>
+                <path d="M18 30L26 38L42 22" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs><linearGradient id="cg2" x1="2" y1="2" x2="58" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#7c5cfc"/></linearGradient></defs>
+              </svg>
+            </div>
+            <div class="complete-title" id="complete-audit-title">Audit Complete</div>
+            <div class="complete-meta" id="complete-audit-meta"></div>
+          </div>
+          <div class="summary-card" id="audit-summary-card"></div>
+          <div class="field-group" style="padding:0 16px">
+            <label class="field-label">OFFICER NAME (FOR REPORT)</label>
+            <input type="text" class="field-input" id="audit-officer-name" placeholder="Enter your full name..." />
+          </div>
+          <div style="padding:0 16px;display:flex;flex-direction:column;gap:12px">
+            <button class="btn-primary btn-full" onclick="generateAuditPDF()">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              GENERATE & DOWNLOAD PDF
+            </button>
+            <button class="btn-secondary btn-full" onclick="navigateTo('audits')">BACK TO AUDITS</button>
+          </div>
+          <div class="bottom-spacer"></div>
+        </div>
+      </div>
+
+    </div><!-- /page-container -->
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottomnav">
+      <button class="bnav-btn active" id="bnav-dashboard" onclick="navigateTo('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="bnav-btn" id="bnav-dayshift" onclick="navigateTo('dayshift')">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Day Shift</span>
+      </button>
+      <button class="bnav-btn" id="bnav-nightshift" onclick="navigateTo('nightshift')">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Night Shift</span>
+      </button>
+      <button class="bnav-btn" id="bnav-audits" onclick="navigateTo('audits')">
+        <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Audits</span>
+      </button>
+    </nav>
+
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+'use strict';
+
+// ═══════════════════════════════════════
+// SITE CONFIG
+// ═══════════════════════════════════════
+const SITE = {
+  name: 'Tower 3 ITS',
+  auditsTarget: 4,
+};
+
+// ═══════════════════════════════════════
+// DAY SHIFT TASK DEFINITIONS
+// ═══════════════════════════════════════
+const DAY_SHIFT_TASKS = [
+  {
+    id: 'white-level',
+    label: 'White Level Inspection',
+    icon: '⬜',
+    type: 'checkpoint',
+    tag: 'INSPECTION',
+    photoMandatory: true,
+    steps: [
+      { location: 'White Level — Entry', instruction: 'Check for any suspicious items at entry points', checks: ['Suspicious items check'] },
+      { location: 'White Level — Internal Doors', instruction: 'Confirm all internal doors are secured', checks: ['All internal doors secured'] },
+      { location: 'White Level — Lighting', instruction: 'Verify all lighting is operational throughout the level', checks: ['Lighting operational'] },
+      { location: 'White Level — Lift Lobby', instruction: 'Confirm lift emergency stops have been released', checks: ['Lift emergency stops released'] },
+      { location: 'White Level — Amenities', instruction: 'Check for any leaks in amenity areas', checks: ['No leaks detected'] },
+      { location: 'White Level — Seating Area', instruction: 'Inspect seating area for missing items or damage', checks: ['No missing items', 'No visible damage'] },
+    ]
+  },
+  {
+    id: 'external-patrol',
+    label: 'External Patrol',
+    icon: '🔦',
+    type: 'checkpoint',
+    tag: 'PATROL',
+    photoMandatory: false,
+    repeatCount: 3,
+    steps: [
+      { location: 'North Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'East Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'South Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'West Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'External CCTV Points', instruction: 'Visually confirm external CCTV cameras appear operational and unobstructed', checks: ['CCTV cameras operational', 'No obstructions'] },
+    ]
+  },
+  {
+    id: 'b1-patrol',
+    label: 'B1 Patrol',
+    icon: '🅿️',
+    type: 'checkpoint',
+    tag: 'PATROL',
+    photoMandatory: true,
+    steps: [
+      { location: 'Fire Relay Pump Room', instruction: 'Photograph the fire relay pump. Confirm all clear.', photoHint: 'Photo of fire relay pump required', checks: ['All clear'], allClearRequired: true },
+      { location: 'Retail Grease Arrestor Room', instruction: 'Photograph the grease arrestor. Confirm all clear.', photoHint: 'Photo of grease arrestor required', checks: ['All clear'], allClearRequired: true },
+      { location: 'Node Room 1', instruction: 'Photograph the node room. Confirm all clear.', photoHint: 'Photo of node room required', checks: ['All clear'], allClearRequired: true },
+      { location: 'Node Room 2', instruction: 'Photograph the node room. Confirm all clear.', photoHint: 'Photo of node room required', checks: ['All clear'], allClearRequired: true },
+      { location: 'Common Areas — B1', instruction: 'Photograph the common area. Confirm all clear.', photoHint: 'Photo of common area required', checks: ['All clear'], allClearRequired: true },
+      { location: 'Heat Exchange Room', instruction: 'Photograph the heat exchange room. Confirm all clear.', photoHint: 'Photo of heat exchange room required', checks: ['All clear'], allClearRequired: true },
+      { location: 'Retail Main Switch Room', instruction: 'Photograph the switchboard. Confirm all clear.', photoHint: 'Photo of switchboard required', checks: ['All clear'], allClearRequired: true },
+      { location: 'Fire Control Room', instruction: 'Photograph both fire control panels. Confirm all clear.', photoHint: 'Photo of Panel 1 required', requiresTwoPhotos: true, checks: ['All clear'], allClearRequired: true },
+    ]
+  },
+  {
+    id: 'plant-room-morning',
+    label: 'Plant Room Patrol',
+    icon: '⚙️',
+    type: 'checkpoint',
+    tag: 'CRITICAL',
+    tagColor: 'red',
+    photoMandatory: true,
+    timeHint: 'Morning',
+    steps: [
+      { location: 'Level 15 — Generator Room', instruction: 'Photograph the generator screen. Confirm all clear.', photoHint: 'Mandatory photo of generator screen', checks: ['Generator operational', 'No alarms'] },
+      { location: 'Level 15 — Electrical Risers', instruction: 'Check electrical risers are secured. Confirm all clear.', checks: ['Risers secured', 'All clear'] },
+      { location: 'Level 15 — Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'] },
+      { location: 'Level 15 — Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'] },
+      { location: 'Level 15 — Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'] },
+      { location: 'Level 15 — External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'] },
+      { location: 'Level 27 — Generator Room', instruction: 'Photograph the generator screen. Confirm all clear.', photoHint: 'Mandatory photo of generator screen', checks: ['Generator operational', 'No alarms'] },
+      { location: 'Level 27 — Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'] },
+      { location: 'Level 27 — Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'] },
+      { location: 'Level 27 — Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'] },
+      { location: 'Level 27 — Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'] },
+      { location: 'Level 27 — External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'] },
+      { location: 'Level 39 — Generator Room', instruction: 'Photograph the generator screen. Confirm all clear.', photoHint: 'Mandatory photo of generator screen', checks: ['Generator operational', 'No alarms'] },
+      { location: 'Level 39 — Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'] },
+      { location: 'Level 39 — Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'] },
+      { location: 'Level 39 — Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'] },
+      { location: 'Level 39 — Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'] },
+      { location: 'Level 39 — External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'] },
+      { location: 'Level 40 — Solar Panels', instruction: 'Check solar panels are clean, nothing loose, all doors secured.', checks: ['Panels clean', 'Nothing loose', 'Doors secured'] },
+      { location: 'Level 41 — Rooftop', instruction: 'Check solar panels are clean, nothing loose, all doors secured.', checks: ['Panels clean', 'Nothing loose', 'Doors secured'] },
+    ]
+  },
+  {
+    id: 'lobby-static-morning',
+    label: 'Lobby Static',
+    icon: '🏛️',
+    type: 'lobby',
+    tag: 'STATIC',
+    timeHint: '08:00 – 09:00',
+    window: '08:00 – 09:00',
+  },
+  {
+    id: 'plant-room-midday',
+    label: 'Plant Room Patrol',
+    icon: '⚙️',
+    type: 'checkpoint',
+    tag: 'CRITICAL',
+    tagColor: 'red',
+    photoMandatory: true,
+    timeHint: 'Midday',
+    stepsRef: 'plant-room-morning',
+  },
+  {
+    id: 'lobby-static-midday',
+    label: 'Lobby Static',
+    icon: '🏛️',
+    type: 'lobby',
+    tag: 'STATIC',
+    timeHint: '13:00 – 14:00',
+    window: '13:00 – 14:00',
+  },
+  {
+    id: 'plant-room-afternoon',
+    label: 'Plant Room Patrol',
+    icon: '⚙️',
+    type: 'checkpoint',
+    tag: 'CRITICAL',
+    tagColor: 'red',
+    photoMandatory: true,
+    timeHint: 'Afternoon',
+    stepsRef: 'plant-room-morning',
+  },
+  {
+    id: 'lobby-static-afternoon',
+    label: 'Lobby Static',
+    icon: '🏛️',
+    type: 'lobby',
+    tag: 'STATIC',
+    timeHint: '17:00 – 18:00',
+    window: '17:00 – 18:00',
+  },
+  {
+    id: 'precinct-patrol-1',
+    label: 'Precinct Patrol',
+    icon: '🏙️',
+    type: 'checkpoint',
+    tag: 'PATROL',
+    photoMandatory: false,
+    timeHint: 'Run 1 of 2',
+    steps: [
+      { location: 'Precinct — Tower 1 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'Precinct — Tower 2 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'Precinct — Tower 3 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'Precinct — Retail Areas', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'] },
+      { location: 'Precinct — Common Walkways', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'All clear'] },
+    ]
+  },
+  {
+    id: 'precinct-patrol-2',
+    label: 'Precinct Patrol',
+    icon: '🏙️',
+    type: 'checkpoint',
+    tag: 'PATROL',
+    photoMandatory: false,
+    timeHint: 'Run 2 of 2',
+    stepsRef: 'precinct-patrol-1',
+  },
+];
+
+// ═══════════════════════════════════════
+// AUDIT DATA
+// ═══════════════════════════════════════
+const AUDIT_TYPES = [
+  {
+    id: 'lift', name: 'Lift Audit', icon: '🛗', available: true,
+    assets: ['Lift A', 'Lift B', 'Lift C', 'Lift D', 'Goods Lift 1', 'Goods Lift 2'],
+    assetSub: 'Passenger lift',
+    questions: [
+      'Is the lift operational?',
+      'Is the intercom functioning?',
+      'Is the card / port reader operational?',
+      'Is the lighting operational?',
+      'Is door timing normal (no delays or issues)?',
+      'Are there any visible defects or damage?',
+      'Is the lift interior clean and presentable?',
+    ]
+  },
+  {
+    id: 'bathroom', name: 'Bathroom Audit', icon: '🚻', available: true,
+    assets: ['L1 Male', 'L1 Female', 'L1 Accessible', 'L2 Male', 'L2 Female', 'L3 Male', 'L3 Female', 'Basement Amenities'],
+    assetSub: 'Bathroom / Amenities',
+    questions: [
+      'Is the bathroom clean and presentable?',
+      'Are all fixtures operational (taps, flush, hand dryer)?',
+      'Are consumables stocked (soap, paper towels, toilet paper)?',
+      'Is there any visible damage or vandalism?',
+      'Are there any maintenance issues (leaks, blocked drains)?',
+      'Are there any safety hazards present?',
+    ]
+  },
+  { id: 'cctv', name: 'CCTV Audit', icon: '📷', available: false },
+  { id: 'access', name: 'Access Card Audit', icon: '💳', available: false },
+  { id: 'radio', name: 'Radio Audit', icon: '📻', available: false },
+  { id: 'emergency', name: 'Emergency Exit Audit', icon: '🚪', available: false },
+  { id: 'firedoor', name: 'Fire Door Audit', icon: '🔥', available: false },
+  { id: 'carpark', name: 'Carpark Audit', icon: '🚗', available: false },
+];
+
+// ═══════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════
+const STATE = {
+  currentPage: 'dashboard',
+  // Task session
+  activeTask: null,
+  activeTaskDef: null,
+  currentStep: 0,
+  stepData: [],
+  taskPhotos: [],
+  taskPhotos2: [],
+  taskIssueActive: false,
+  // Lobby session
+  activeLobby: null,
+  lobbyStartTime: null,
+  lobbyStartDate: null,
+  // Audit session
+  activeAudit: null,
+  activeAuditAsset: null,
+  currentQuestion: 0,
+  auditAnswers: [],
+  aqPhotos: [],
+  _currentAuditAnswer: null,
+  _completedAuditRecord: null,
+  // Records
+  completedTaskIds: [],
+  taskRecords: [],
+  auditRecords: [],
+  escalations: [],
+  activity: [],
+};
+
+// ═══════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════
+function loadState() {
+  try {
+    const today = new Date().toDateString();
+    if (localStorage.getItem('t_date') !== today) {
+      ['t_tasks','t_audits','t_escs','t_activity','t_completed'].forEach(k => localStorage.removeItem(k));
+      localStorage.setItem('t_date', today);
+      return;
+    }
+    const c = localStorage.getItem('t_completed');
+    const tr = localStorage.getItem('t_tasks');
+    const ar = localStorage.getItem('t_audits');
+    const es = localStorage.getItem('t_escs');
+    const ac = localStorage.getItem('t_activity');
+    if (c) STATE.completedTaskIds = JSON.parse(c);
+    if (tr) STATE.taskRecords = JSON.parse(tr);
+    if (ar) STATE.auditRecords = JSON.parse(ar);
+    if (es) STATE.escalations = JSON.parse(es);
+    if (ac) STATE.activity = JSON.parse(ac);
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('t_completed', JSON.stringify(STATE.completedTaskIds));
+    localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
+    localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
+    localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
+    localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
+    localStorage.setItem('t_date', new Date().toDateString());
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+const ALL_PAGES = ['dashboard','dayshift','nightshift','audits','task-active','task-complete','lobby-static','audit-select','audit-active','audit-complete'];
+const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'nightshift','audits':'audits','task-active':'dayshift','task-complete':'dayshift','lobby-static':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
+
+function navigateTo(page) {
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById(`page-${p}`);
+    if (el) el.classList.remove('active');
+  });
+  const target = document.getElementById(`page-${page}`);
+  if (target) {
+    target.classList.add('active');
+    const scroll = target.querySelector('.page-scroll');
+    if (scroll) scroll.scrollTop = 0;
+  }
+  STATE.currentPage = page;
+  Object.keys(BNAV_MAP).forEach(p => {
+    const activeNav = BNAV_MAP[p];
+    const btn = document.getElementById(`bnav-${activeNav}`);
+    if (btn) btn.classList.toggle('active', BNAV_MAP[page] === activeNav && activeNav === BNAV_MAP[page]);
+  });
+  const navBtn = document.getElementById(`bnav-${BNAV_MAP[page]}`);
+  document.querySelectorAll('.bnav-btn').forEach(b => b.classList.remove('active'));
+  if (navBtn) navBtn.classList.add('active');
+
+  if (page === 'dashboard') refreshDashboard();
+  if (page === 'dayshift') refreshDayShift();
+  if (page === 'audits') refreshAuditList();
+}
+
+// ═══════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const t = document.getElementById('nav-time');
+  const d = document.getElementById('dash-date');
+  if (t) t.textContent = now.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit', hour12:false });
+  if (d) d.textContent = now.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+function refreshDashboard() {
+  const total = DAY_SHIFT_TASKS.length;
+  const done = STATE.completedTaskIds.length;
+  const el = document.getElementById('stat-dayshift');
+  const prog = document.getElementById('dayshift-progress');
+  if (el) el.innerHTML = `${done}<span>/${total}</span>`;
+  if (prog) prog.style.width = `${Math.min(100,(done/total)*100)}%`;
+
+  const ac = STATE.auditRecords.length;
+  const ae = document.getElementById('stat-audits');
+  const ap = document.getElementById('audit-progress');
+  if (ae) ae.innerHTML = `${ac}<span>/4</span>`;
+  if (ap) ap.style.width = `${Math.min(100,(ac/4)*100)}%`;
+
+  refreshEscalations();
+  refreshActivity();
+}
+
+function refreshEscalations() {
+  const list = document.getElementById('escalations-list');
+  const badge = document.getElementById('esc-count');
+  if (!list) return;
+  if (badge) badge.textContent = STATE.escalations.length;
+  if (!STATE.escalations.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No active escalations</div></div>';
+    return;
+  }
+  list.innerHTML = STATE.escalations.slice(0,5).map(e => `
+    <div class="escalation-item">
+      <div class="esc-title">${esc(e.text)}</div>
+      <div class="esc-meta">${esc(e.location)} · ${esc(e.task)} · ${esc(e.time)}</div>
+      <span class="esc-priority ${e.priority}">${e.priority.toUpperCase()}</span>
+    </div>`).join('');
+}
+
+function refreshActivity() {
+  const feed = document.getElementById('activity-feed');
+  if (!feed) return;
+  if (!STATE.activity.length) {
+    feed.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div>';
+    return;
+  }
+  feed.innerHTML = STATE.activity.slice(0,10).map(a => `
+    <div class="activity-item">
+      <div class="activity-dot ${a.type}"></div>
+      <div class="activity-content">
+        <div class="activity-title">${esc(a.title)}</div>
+        <div class="activity-time">${esc(a.time)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function addActivity(title, type='patrol') {
+  STATE.activity.unshift({ title, type, time: nowTime() });
+  if (STATE.activity.length > 30) STATE.activity.pop();
+  saveState();
+}
+
+// ═══════════════════════════════════════
+// DAY SHIFT LIST
+// ═══════════════════════════════════════
+function refreshDayShift() {
+  const list = document.getElementById('shift-task-list');
+  if (!list) return;
+
+  const total = DAY_SHIFT_TASKS.length;
+  const done = STATE.completedTaskIds.length;
+  const pct = Math.round((done / total) * 100);
+
+  const fill = document.getElementById('shift-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+
+  const sub = document.getElementById('dayshift-sub');
+  if (sub) sub.textContent = `${done} of ${total} tasks complete · ${pct}%`;
+
+  list.innerHTML = DAY_SHIFT_TASKS.map((task, idx) => {
+    const isDone = STATE.completedTaskIds.includes(task.id);
+    const tagColor = task.tagColor === 'red' ? 'red' : 'blue';
+    return `
+      <div class="shift-task-card ${isDone ? 'done' : ''}" onclick="startRoverTask('${task.id}')">
+        <div class="stc-left">
+          <div class="stc-num">${String(idx+1).padStart(2,'0')}</div>
+          <div class="stc-icon">${task.icon}</div>
+          <div class="stc-info">
+            <div class="stc-name">${task.label}</div>
+            <div class="stc-meta">${task.timeHint || task.window || task.tag}</div>
+          </div>
+        </div>
+        <div class="stc-right">
+          <span class="stc-tag tag-${tagColor}">${task.tag}</span>
+          ${isDone ? '<div class="stc-done-check">✓</div>' : '<div class="stc-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// START ROVER TASK
+// ═══════════════════════════════════════
+function startRoverTask(taskId) {
+  const task = DAY_SHIFT_TASKS.find(t => t.id === taskId);
+  if (!task) return;
+
+  if (task.type === 'lobby') {
+    STATE.activeLobby = task;
+    STATE.lobbyStartTime = null;
+    document.getElementById('lobby-title').textContent = task.label;
+    document.getElementById('lobby-window').textContent = task.window;
+    document.getElementById('lobby-state-start').classList.remove('hidden');
+    document.getElementById('lobby-state-active').classList.add('hidden');
+    document.getElementById('lobby-state-done').classList.add('hidden');
+    navigateTo('lobby-static');
+    return;
+  }
+
+  // Resolve steps (for tasks that share steps with another)
+  let steps = task.steps;
+  if (!steps && task.stepsRef) {
+    const ref = DAY_SHIFT_TASKS.find(t => t.id === task.stepsRef);
+    if (ref) steps = ref.steps;
+  }
+
+  STATE.activeTaskDef = { ...task, steps };
+  STATE.activeTask = { taskId: task.id, taskLabel: task.label, startedAt: new Date(), startTime: nowTime() };
+  STATE.currentStep = 0;
+  STATE.stepData = [];
+  STATE.taskPhotos = [];
+  STATE.taskPhotos2 = [];
+  STATE.taskIssueActive = false;
+
+  renderTaskStep();
+  navigateTo('task-active');
+}
+
+// ═══════════════════════════════════════
+// TASK STEP RENDER
+// ═══════════════════════════════════════
+function renderTaskStep() {
+  const task = STATE.activeTaskDef;
+  const idx = STATE.currentStep;
+  const step = task.steps[idx];
+
+  document.getElementById('task-active-title').textContent = task.label;
+  document.getElementById('task-active-meta').textContent = task.timeHint ? task.timeHint.toUpperCase() : '';
+
+  const pct = (idx / task.steps.length) * 100;
+  document.getElementById('task-progress-fill').style.width = pct + '%';
+  document.getElementById('task-progress-label').textContent = `Step ${idx+1} of ${task.steps.length}`;
+
+  document.getElementById('task-cp-number').textContent = String(idx+1).padStart(2,'0');
+  document.getElementById('task-cp-location').textContent = step.location;
+  document.getElementById('task-cp-instruction').textContent = step.instruction;
+
+  // Checklist — each item gets its own Nothing to Report / Reportable toggle
+  const checkArea = document.getElementById('task-checklist-area');
+  if (step.checks && step.checks.length) {
+    checkArea.innerHTML = `
+      <div class="obs-prompts">
+        <div class="obs-prompt-title">CONFIRM CHECKS</div>
+        ${step.checks.map((c,i) => `
+          <div class="check-item" id="check-item-${i}">
+            <div class="check-item-label">${c}</div>
+            <div class="check-item-actions">
+              <button class="ci-btn ntr" id="ci-ntr-${i}" onclick="setCheckItem(${i},'ntr')">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                NOTHING TO REPORT
+              </button>
+              <button class="ci-btn rep" id="ci-rep-${i}" onclick="setCheckItem(${i},'rep')">
+                <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M4 4h16v10H4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20v-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                REPORTABLE
+              </button>
+            </div>
+            <div class="ci-report-detail hidden" id="ci-detail-${i}">
+              <textarea class="field-textarea ci-textarea" id="ci-text-${i}" placeholder="Describe the issue for this item..."></textarea>
+              <select class="field-select" id="ci-priority-${i}" style="margin-top:6px">
+                <option value="low">Priority: Low</option>
+                <option value="medium">Priority: Medium</option>
+                <option value="high">Priority: High — Urgent</option>
+              </select>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    checkArea.innerHTML = '';
+  }
+
+  // Photos
+  const photoGroup = document.getElementById('task-photo-group');
+  const photoLabel = document.getElementById('task-photo-label');
+  const photoHint = document.getElementById('task-photo-hint');
+  const photo2Group = document.getElementById('task-photo2-group');
+  const preview = document.getElementById('task-photo-preview');
+  const preview2 = document.getElementById('task-photo2-preview');
+
+  STATE.taskPhotos = [];
+  STATE.taskPhotos2 = [];
+  if (preview) preview.innerHTML = '';
+  if (preview2) preview2.innerHTML = '';
+
+  if (task.photoMandatory || step.photoHint) {
+    photoGroup.classList.remove('hidden');
+    photoLabel.textContent = step.photoHint ? `PHOTO EVIDENCE — MANDATORY` : 'PHOTO EVIDENCE — MANDATORY';
+    if (photoHint) photoHint.textContent = step.photoHint || 'Tap to capture photo';
+  } else {
+    photoGroup.classList.remove('hidden');
+    photoLabel.textContent = 'PHOTO EVIDENCE (OPTIONAL)';
+    if (photoHint) photoHint.textContent = 'Tap to capture photo';
+  }
+
+  // Two photos for fire control room
+  if (step.requiresTwoPhotos) {
+    photo2Group.classList.remove('hidden');
+  } else {
+    photo2Group.classList.add('hidden');
+  }
+
+  // Reset fields
+  STATE.taskIssueActive = false;
+  document.getElementById('task-notes').value = '';
+  STATE._allClear = false;
+
+  const btn = document.getElementById('task-next-btn');
+  if (btn) btn.textContent = idx === task.steps.length - 1 ? 'COMPLETE TASK ›' : 'CONFIRM STEP ›';
+}
+
+function setCheckItem(idx, mode) {
+  const ntrBtn = document.getElementById(`ci-ntr-${idx}`);
+  const repBtn = document.getElementById(`ci-rep-${idx}`);
+  const detail = document.getElementById(`ci-detail-${idx}`);
+  const item = document.getElementById(`check-item-${idx}`);
+
+  // Clear both
+  if (ntrBtn) ntrBtn.classList.remove('selected');
+  if (repBtn) repBtn.classList.remove('selected');
+  if (detail) detail.classList.add('hidden');
+  if (item) item.classList.remove('ntr-done','rep-done');
+
+  if (mode === 'ntr') {
+    if (ntrBtn) ntrBtn.classList.add('selected');
+    if (item) item.classList.add('ntr-done');
+  } else {
+    if (repBtn) repBtn.classList.add('selected');
+    if (detail) detail.classList.remove('hidden');
+    if (item) item.classList.add('rep-done');
+  }
+}
+
+// ═══════════════════════════════════════
+// ADVANCE TASK STEP
+// ═══════════════════════════════════════
+function advanceTaskStep() {
+  const task = STATE.activeTaskDef;
+  const idx = STATE.currentStep;
+  const step = task.steps[idx];
+
+  // Photo mandatory check
+  if (task.photoMandatory && STATE.taskPhotos.length === 0) {
+    showToast('Photo is required for this step');
+    return;
+  }
+  if (step.requiresTwoPhotos && STATE.taskPhotos2.length === 0) {
+    showToast('Photo of Panel 2 is required');
+    return;
+  }
+
+  // Gather per-item check data
+  const checks = [];
+  let hasAnyReportable = false;
+  if (step.checks) {
+    step.checks.forEach((c, i) => {
+      const ntrSelected = document.getElementById(`ci-ntr-${i}`) && document.getElementById(`ci-ntr-${i}`).classList.contains('selected');
+      const repSelected = document.getElementById(`ci-rep-${i}`) && document.getElementById(`ci-rep-${i}`).classList.contains('selected');
+      const repText = document.getElementById(`ci-text-${i}`) ? document.getElementById(`ci-text-${i}`).value.trim() : '';
+      const repPriority = document.getElementById(`ci-priority-${i}`) ? document.getElementById(`ci-priority-${i}`).value : 'low';
+      if (repSelected) hasAnyReportable = true;
+      checks.push({
+        label: c,
+        status: repSelected ? 'reportable' : (ntrSelected ? 'ntr' : 'pending'),
+        reportText: repText,
+        priority: repPriority,
+      });
+    });
+  }
+
+  const data = {
+    location: step.location,
+    timestamp: nowTime(),
+    notes: document.getElementById('task-notes').value.trim(),
+    checks,
+    photos: [...STATE.taskPhotos],
+    photos2: [...STATE.taskPhotos2],
+    hasIssue: hasAnyReportable,
+  };
+
+  STATE.stepData.push(data);
+
+  // Add each reportable item as an escalation
+  checks.filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
+    STATE.escalations.unshift({
+      text: c.reportText,
+      location: step.location,
+      task: task.label,
+      time: data.timestamp,
+      priority: c.priority,
+    });
+    addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
+  });
+
+  STATE.currentStep++;
+
+  if (STATE.currentStep >= task.steps.length) {
+    completeTask();
+  } else {
+    renderTaskStep();
+  }
+}
+
+// ═══════════════════════════════════════
+// COMPLETE TASK
+// ═══════════════════════════════════════
+function completeTask() {
+  const task = STATE.activeTaskDef;
+  const session = STATE.activeTask;
+  const issues = STATE.stepData.filter(s => s.hasIssue).length;
+  const endTime = nowTime();
+  const duration = getDuration(session.startedAt);
+
+  const record = {
+    taskId: task.id,
+    taskLabel: task.label,
+    timeHint: task.timeHint || '',
+    startTime: session.startTime,
+    completedAt: endTime,
+    duration,
+    steps: task.steps.length,
+    issues,
+    stepData: STATE.stepData,
+    officer: '',
+  };
+
+  STATE._completedTaskRecord = record;
+  if (!STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
+  STATE.taskRecords.push(record);
+  addActivity(`${task.label}${task.timeHint ? ' — ' + task.timeHint : ''} completed`, 'patrol');
+  saveState();
+
+  document.getElementById('task-complete-title').textContent = `${task.label} Complete`;
+  document.getElementById('task-complete-meta').textContent = `${task.steps.length} steps · ${issues} issue(s) · Duration: ${duration}`;
+
+  const card = document.getElementById('task-summary-card');
+  card.innerHTML = `
+    <div class="summary-row"><span class="summary-label">TASK</span><span class="summary-value">${task.label}</span></div>
+    ${task.timeHint ? `<div class="summary-row"><span class="summary-label">RUN</span><span class="summary-value">${task.timeHint}</span></div>` : ''}
+    <div class="summary-row"><span class="summary-label">STARTED</span><span class="summary-value">${session.startTime}</span></div>
+    <div class="summary-row"><span class="summary-label">COMPLETED</span><span class="summary-value">${endTime}</span></div>
+    <div class="summary-row"><span class="summary-label">DURATION</span><span class="summary-value">${duration}</span></div>
+    <div class="summary-row"><span class="summary-label">STEPS</span><span class="summary-value good">${task.steps.length} completed</span></div>
+    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${issues > 0 ? 'bad' : 'good'}">${issues} flagged</span></div>
+    <div class="summary-row"><span class="summary-label">SITE</span><span class="summary-value">${SITE.name}</span></div>`;
+
+  document.getElementById('task-officer-name').value = '';
+  navigateTo('task-complete');
+}
+
+function toggleTaskIssue() {
+  // Legacy — replaced by per-item check toggles
+}
+
+// ═══════════════════════════════════════
+// LOBBY STATIC
+// ═══════════════════════════════════════
+function lobbyStart() {
+  STATE.lobbyStartTime = nowTime();
+  STATE.lobbyStartDate = new Date();
+  document.getElementById('lobby-start-time').textContent = STATE.lobbyStartTime;
+  document.getElementById('lobby-state-start').classList.add('hidden');
+  document.getElementById('lobby-state-active').classList.remove('hidden');
+}
+
+function lobbyFinish() {
+  const endTime = nowTime();
+  const duration = getDuration(STATE.lobbyStartDate);
+  document.getElementById('lobby-done-start').textContent = STATE.lobbyStartTime;
+  document.getElementById('lobby-done-end').textContent = endTime;
+  document.getElementById('lobby-duration-text').textContent = `Duration: ${duration}`;
+  document.getElementById('lobby-state-active').classList.add('hidden');
+  document.getElementById('lobby-state-done').classList.remove('hidden');
+
+  const task = STATE.activeLobby;
+  if (task && !STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
+  addActivity(`Lobby Static ${task ? task.window : ''} completed`, 'patrol');
+  STATE._completedLobbyRecord = {
+    taskId: task ? task.id : 'lobby',
+    window: task ? task.window : '',
+    startTime: STATE.lobbyStartTime,
+    endTime,
+    duration,
+    notes: document.getElementById('lobby-notes').value.trim(),
+  };
+  saveState();
+}
+
+async function generateLobbyPDF() {
+  const officerName = document.getElementById('lobby-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name first'); return; }
+  const rec = STATE._completedLobbyRecord;
+  if (!rec) { showToast('No lobby record found'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, M = 16;
+
+  doc.setFillColor(15,15,25); doc.rect(0,0,W,40,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(22);
+  doc.text('SECURITY OPERATIONS', M, 18);
+  doc.setFontSize(11); doc.setTextColor(150,150,180);
+  doc.text('LOBBY STATIC REPORT', M, 27);
+  doc.setTextColor(124,92,252); doc.setFontSize(10);
+  doc.text(SITE.name.toUpperCase(), W-M, 18, {align:'right'});
+
+  let y = 50;
+  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,28,3,3,'F');
+  const items = [['OFFICER',officerName],['WINDOW',rec.window],['STARTED',rec.startTime],['FINISHED',rec.endTime],['DURATION',rec.duration],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})]];
+  const cw = (W-M*2)/3;
+  items.forEach((item,i) => {
+    const col=i%3, row=Math.floor(i/3), x=M+col*cw+6, iy=y+8+row*13;
+    doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.text(item[0],x,iy);
+    doc.setTextColor(220,220,240); doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text(item[1],x,iy+5);
+  });
+
+  y += 36;
+  if (rec.notes) {
+    doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,8,'F');
+    doc.setTextColor(100,100,140); doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text('OBSERVATIONS',M,y+6);
+    y += 12;
+    doc.setTextColor(180,180,200); doc.setFontSize(9); doc.setFont('helvetica','normal');
+    const lines = doc.splitTextToSize(rec.notes, W-M*2);
+    doc.text(lines, M, y); y += lines.length*5+8;
+  }
+
+  addFooter(doc, W, M);
+  doc.save(`lobby_static_${rec.window.replace(/[^0-9]/g,'_')}_${dateSlug()}.pdf`);
+  showToast('PDF downloaded');
+}
+
+// ═══════════════════════════════════════
+// TASK PDF
+// ═══════════════════════════════════════
+async function generateTaskPDF() {
+  const officerName = document.getElementById('task-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name first'); document.getElementById('task-officer-name').focus(); return; }
+  showToast('Generating PDF...');
+
+  const record = STATE._completedTaskRecord;
+  if (!record) { showToast('No record found'); return; }
+  record.officer = officerName;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, M = 16;
+
+  doc.setFillColor(15,15,25); doc.rect(0,0,W,40,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(22);
+  doc.text('SECURITY OPERATIONS', M, 18);
+  doc.setFontSize(11); doc.setTextColor(150,150,180);
+  doc.text('PATROL / INSPECTION REPORT', M, 27);
+  doc.setTextColor(124,92,252); doc.setFontSize(10);
+  doc.text(SITE.name.toUpperCase(), W-M, 18, {align:'right'});
+  doc.setTextColor(150,150,180); doc.setFontSize(8);
+  doc.text('TESTING PLATFORM', W-M, 27, {align:'right'});
+
+  let y = 50;
+  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,32,3,3,'F');
+  const items = [['OFFICER',officerName],['TASK',record.taskLabel],['RUN',record.timeHint||'—'],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})],['STARTED',record.startTime],['COMPLETED',record.completedAt]];
+  const cw = (W-M*2)/3;
+  items.forEach((item,i) => {
+    const col=i%3, row=Math.floor(i/3), x=M+col*cw+6, iy=y+8+row*14;
+    doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.text(item[0],x,iy);
+    doc.setTextColor(220,220,240); doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text(String(item[1]),x,iy+5);
+    doc.setFont('helvetica','normal');
+  });
+
+  y += 42;
+  const issues = record.issues;
+  doc.setFillColor(issues>0?60:20, issues>0?20:60, 20);
+  doc.roundedRect(M,y,W-M*2,10,2,2,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text(`STATUS: ${record.steps} STEPS COMPLETED · ${issues} ISSUE(S) FLAGGED · DURATION: ${record.duration}`,M+4,y+7);
+  y += 18;
+
+  doc.setTextColor(100,100,140); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text('STEP LOG', M, y); y += 6;
+  doc.setDrawColor(40,40,60); doc.line(M,y,W-M,y); y += 8;
+
+  for (const [i,sd] of record.stepData.entries()) {
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
+    doc.setTextColor(124,92,252); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text(`STEP ${String(i+1).padStart(2,'0')}`, M+4, y+5.5);
+    doc.setTextColor(220,220,240); doc.text(sd.location.toUpperCase(), M+22, y+5.5);
+    doc.setTextColor(100,100,130); doc.text(sd.timestamp, W-M-4, y+5.5, {align:'right'});
+    y += 12;
+
+    if (sd.checks && sd.checks.length) {
+      sd.checks.forEach(c => {
+        if (y > 260) { doc.addPage(); y = 20; }
+        const isNtr = c.status === 'ntr';
+        const isRep = c.status === 'reportable';
+        doc.setTextColor(isNtr ? 34 : isRep ? 239 : 150, isNtr ? 197 : isRep ? 68 : 150, isNtr ? 94 : isRep ? 68 : 170);
+        doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+        const icon = isNtr ? '✓' : isRep ? '⚠' : '○';
+        const label = isNtr ? `${icon} ${c.label} — Nothing to Report` : isRep ? `${icon} ${c.label} — REPORTABLE` : `${icon} ${c.label} — Not checked`;
+        doc.text(label, M+4, y); y += 5;
+        if (isRep && c.reportText) {
+          doc.setTextColor(239,68,68); doc.setFontSize(7);
+          doc.text(`   Issue [${c.priority.toUpperCase()}]: ${c.reportText}`, M+4, y); y += 5;
+          doc.setFontSize(7.5);
+        }
+      });
+      y += 2;
+    }
+
+    if (sd.notes) {
+      doc.setTextColor(180,180,200); doc.setFontSize(8);
+      const lines = doc.splitTextToSize(`Notes: ${sd.notes}`, W-M*2-8);
+      doc.text(lines, M+4, y); y += lines.length*4.5+3;
+    }
+
+    if (sd.hasIssue && sd.issueText) {
+      if (y>255){doc.addPage();y=20;}
+      doc.setFillColor(50,20,20); doc.roundedRect(M+2,y,W-M*2-4,12,2,2,'F');
+      doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text(`⚠ [${sd.issuePriority.toUpperCase()}]: ${sd.issueText}`, M+6, y+8); y += 16;
+    }
+
+    for (const photo of (sd.photos||[]).slice(0,2)) {
+      if (y>240){doc.addPage();y=20;}
+      try { doc.addImage(photo,'JPEG',M+4,y,50,35); y+=38; } catch(e){}
+    }
+    for (const photo of (sd.photos2||[]).slice(0,1)) {
+      if (y>240){doc.addPage();y=20;}
+      try { doc.addImage(photo,'JPEG',M+60,y-38,50,35); } catch(e){}
+    }
+    y += 4;
+  }
+
+  addFooter(doc, W, M);
+  const fn = `${record.taskLabel.replace(/\s+/g,'_').toLowerCase()}_${dateSlug()}.pdf`;
+  doc.save(fn);
+  showToast('PDF downloaded');
+}
+
+function addFooter(doc, W, M) {
+  const n = doc.internal.getNumberOfPages();
+  for (let i=1;i<=n;i++) {
+    doc.setPage(i);
+    doc.setFillColor(15,15,25); doc.rect(0,285,W,12,'F');
+    doc.setTextColor(80,80,100); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text(`TESTING SECURITY PLATFORM · ${SITE.name} · Generated ${new Date().toLocaleString('en-AU')} · Page ${i} of ${n}`, W/2, 292, {align:'center'});
+  }
+}
+
+// ═══════════════════════════════════════
+// PHOTO CAPTURE
+// ═══════════════════════════════════════
+function triggerPhotoCapture(inputId) {
+  document.getElementById(inputId).click();
+}
+
+function handleTaskPhoto(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const preview = document.getElementById('task-photo-preview');
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      STATE.taskPhotos.push(e.target.result);
+      const img = document.createElement('img');
+      img.src = e.target.result; img.className = 'photo-thumb';
+      if (preview) preview.appendChild(img);
+      const ph = document.getElementById('task-photo-placeholder');
+      if (ph) ph.style.opacity = '0.4';
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function handleTaskPhoto2(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const preview = document.getElementById('task-photo2-preview');
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      STATE.taskPhotos2.push(e.target.result);
+      const img = document.createElement('img');
+      img.src = e.target.result; img.className = 'photo-thumb';
+      if (preview) preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function handlePhotoCapture(input, previewId) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const preview = document.getElementById(previewId);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const b64 = e.target.result;
+      if (previewId === 'aq-photo-preview') STATE.aqPhotos.push(b64);
+      const img = document.createElement('img');
+      img.src = b64; img.className = 'photo-thumb';
+      if (preview) preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+// ═══════════════════════════════════════
+// AUDITS
+// ═══════════════════════════════════════
+function refreshAuditList() {
+  const list = document.getElementById('audit-type-list');
+  if (!list) return;
+  list.innerHTML = AUDIT_TYPES.map(at => `
+    <div class="audit-type-card ${at.available ? 'available' : 'coming-soon'}"
+         onclick="${at.available ? `startAudit('${at.id}')` : 'showToast(\"Coming soon\")'}">
+      <div class="atc-icon">${at.icon}</div>
+      <div class="atc-name">${at.name}</div>
+      <span class="atc-tag ${at.available ? 'ready' : 'soon'}">${at.available ? 'READY' : 'SOON'}</span>
+    </div>`).join('');
+
+  const history = document.getElementById('audit-history');
+  if (!STATE.auditRecords.length) {
+    history.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No audits completed today</div></div>';
+  } else {
+    history.innerHTML = STATE.auditRecords.map(r => `
+      <div class="activity-item">
+        <div class="activity-dot audit"></div>
+        <div class="activity-content">
+          <div class="activity-title">${esc(r.auditTypeName)} — ${esc(r.asset)} (${esc(r.officer||'Unknown')})</div>
+          <div class="activity-time">${esc(r.completedAt)} · ${r.noCount} issue(s) found</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function startAudit(typeId) {
+  const type = AUDIT_TYPES.find(a => a.id === typeId);
+  if (!type || !type.available) return;
+  STATE.activeAudit = type;
+  STATE.activeAuditAsset = null;
+  STATE.currentQuestion = 0;
+  STATE.auditAnswers = [];
+  STATE.aqPhotos = [];
+  document.getElementById('audit-select-title').textContent = type.name;
+  const list = document.getElementById('asset-select-list');
+  list.innerHTML = type.assets.map(asset => `
+    <div class="asset-item" onclick="selectAuditAsset('${asset.replace(/'/g,"\\'")}')">
+      <div>
+        <div class="asset-item-name">${asset}</div>
+        <div class="asset-item-sub">${type.assetSub}</div>
+      </div>
+      <div class="asset-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+    </div>`).join('');
+  navigateTo('audit-select');
+}
+
+function startQuickAudit(name) {
+  const type = AUDIT_TYPES.find(a => a.name === name);
+  if (type && type.available) startAudit(type.id);
+}
+
+function selectAuditAsset(assetName) {
+  STATE.activeAuditAsset = assetName;
+  STATE.currentQuestion = 0;
+  STATE.auditAnswers = [];
+  STATE.aqPhotos = [];
+  renderAuditQuestion();
+  navigateTo('audit-active');
+}
+
+function renderAuditQuestion() {
+  const type = STATE.activeAudit;
+  const idx = STATE.currentQuestion;
+  document.getElementById('audit-active-title').textContent = STATE.activeAuditAsset;
+  document.getElementById('audit-active-meta').textContent = type.name.toUpperCase();
+  const pct = (idx / type.questions.length) * 100;
+  document.getElementById('audit-progress-fill').style.width = pct + '%';
+  document.getElementById('audit-progress-label').textContent = `Question ${idx+1} of ${type.questions.length}`;
+  document.getElementById('aq-number').textContent = String(idx+1).padStart(2,'0');
+  document.getElementById('aq-question').textContent = type.questions[idx];
+  document.getElementById('yn-yes').classList.remove('selected');
+  document.getElementById('yn-no').classList.remove('selected');
+  document.getElementById('aq-comments').value = '';
+  document.getElementById('aq-photo-preview').innerHTML = '';
+  STATE.aqPhotos = [];
+  STATE._currentAuditAnswer = null;
+  const btn = document.getElementById('audit-next-btn');
+  if (btn) btn.textContent = idx === type.questions.length-1 ? 'COMPLETE AUDIT ›' : 'NEXT QUESTION ›';
+}
+
+function setAuditAnswer(answer) {
+  STATE._currentAuditAnswer = answer;
+  document.getElementById('yn-yes').classList.toggle('selected', answer==='yes');
+  document.getElementById('yn-no').classList.toggle('selected', answer==='no');
+}
+
+function advanceAuditQuestion() {
+  if (!STATE._currentAuditAnswer) { showToast('Please select YES or NO'); return; }
+  const type = STATE.activeAudit;
+  const idx = STATE.currentQuestion;
+  STATE.auditAnswers.push({
+    question: type.questions[idx],
+    answer: STATE._currentAuditAnswer,
+    comments: document.getElementById('aq-comments').value.trim(),
+    photos: [...STATE.aqPhotos],
+    timestamp: nowTime(),
+  });
+  STATE.currentQuestion++;
+  if (STATE.currentQuestion >= type.questions.length) completeAudit();
+  else renderAuditQuestion();
+}
+
+function completeAudit() {
+  const type = STATE.activeAudit;
+  const asset = STATE.activeAuditAsset;
+  const noCount = STATE.auditAnswers.filter(a => a.answer==='no').length;
+  const endTime = nowTime();
+  const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, noCount, officer:'' };
+  STATE._completedAuditRecord = record;
+  STATE.auditRecords.push(record);
+  addActivity(`${type.name} — ${asset} completed`, 'audit');
+  saveState();
+
+  document.getElementById('complete-audit-title').textContent = `${type.name} Complete`;
+  document.getElementById('complete-audit-meta').textContent = `${asset} · ${STATE.auditAnswers.length} questions · ${noCount} issue(s)`;
+
+  const card = document.getElementById('audit-summary-card');
+  card.innerHTML = `
+    <div class="summary-row"><span class="summary-label">AUDIT TYPE</span><span class="summary-value">${type.name}</span></div>
+    <div class="summary-row"><span class="summary-label">ASSET</span><span class="summary-value">${asset}</span></div>
+    <div class="summary-row"><span class="summary-label">COMPLETED</span><span class="summary-value">${endTime}</span></div>
+    <div class="summary-row"><span class="summary-label">QUESTIONS</span><span class="summary-value good">${STATE.auditAnswers.length} completed</span></div>
+    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${noCount>0?'bad':'good'}">${noCount} identified</span></div>
+    <div class="summary-row"><span class="summary-label">SITE</span><span class="summary-value">${SITE.name}</span></div>`;
+
+  document.getElementById('audit-officer-name').value = '';
+  navigateTo('audit-complete');
+}
+
+async function generateAuditPDF() {
+  const officerName = document.getElementById('audit-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name first'); return; }
+  showToast('Generating PDF...');
+  const record = STATE._completedAuditRecord;
+  if (!record) return;
+  record.officer = officerName;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, M = 16;
+
+  doc.setFillColor(15,15,25); doc.rect(0,0,W,40,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(22);
+  doc.text('SECURITY OPERATIONS', M, 18);
+  doc.setFontSize(11); doc.setTextColor(150,150,180);
+  doc.text('AUDIT & INSPECTION REPORT', M, 27);
+  doc.setTextColor(59,130,246); doc.setFontSize(10);
+  doc.text(SITE.name.toUpperCase(), W-M, 18, {align:'right'});
+
+  let y = 50;
+  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,32,3,3,'F');
+  const items = [['OFFICER',officerName],['AUDIT TYPE',record.auditTypeName],['ASSET',record.asset],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})],['COMPLETED',record.completedAt],['SITE',SITE.name]];
+  const cw = (W-M*2)/3;
+  items.forEach((item,i) => {
+    const col=i%3,row=Math.floor(i/3),x=M+col*cw+6,iy=y+8+row*14;
+    doc.setTextColor(100,100,130);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(item[0],x,iy);
+    doc.setTextColor(220,220,240);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text(String(item[1]),x,iy+5);
+    doc.setFont('helvetica','normal');
+  });
+
+  y += 42;
+  const nc = record.noCount;
+  doc.setFillColor(nc>0?60:20,nc>0?20:60,20);
+  doc.roundedRect(M,y,W-M*2,10,2,2,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.text(`STATUS: ${record.answers.length} QUESTIONS · ${nc} ISSUE(S) IDENTIFIED`,M+4,y+7);
+  y += 18;
+
+  doc.setTextColor(100,100,140);doc.setFontSize(9);doc.setFont('helvetica','bold');
+  doc.text('INSPECTION QUESTIONS',M,y);y+=6;
+  doc.setDrawColor(40,40,60);doc.line(M,y,W-M,y);y+=8;
+
+  for (const [i,ans] of record.answers.entries()) {
+    if (y>250){doc.addPage();y=20;}
+    const isNo = ans.answer==='no';
+    doc.setFillColor(isNo?50:22,isNo?20:22,isNo?20:32);
+    doc.roundedRect(M,y,W-M*2,9,2,2,'F');
+    doc.setTextColor(isNo?239:59,isNo?68:130,isNo?68:246);
+    doc.setFontSize(7);doc.setFont('helvetica','bold');
+    doc.text(`Q${String(i+1).padStart(2,'0')}  ${ans.answer.toUpperCase()}`,M+4,y+6.5);
+    doc.setTextColor(200,200,220);doc.setFont('helvetica','normal');doc.setFontSize(8);
+    const qLines = doc.splitTextToSize(ans.question,W-M*2-30);
+    doc.text(qLines,M+22,y+6.5);
+    y += qLines.length>1?12+(qLines.length-1)*4:13;
+    if (ans.comments) {
+      doc.setTextColor(150,150,170);doc.setFontSize(7.5);
+      const cl = doc.splitTextToSize(`Comment: ${ans.comments}`,W-M*2-8);
+      doc.text(cl,M+4,y);y+=cl.length*4+3;
+    }
+    for (const photo of (ans.photos||[]).slice(0,2)) {
+      if(y>240){doc.addPage();y=20;}
+      try{doc.addImage(photo,'JPEG',M+4,y,50,35);y+=38;}catch(e){}
+    }
+    y+=2;
+  }
+
+  addFooter(doc,W,M);
+  doc.save(`audit_${record.auditTypeName.replace(/\s+/g,'_').toLowerCase()}_${record.asset.replace(/\s+/g,'_').toLowerCase()}_${dateSlug()}.pdf`);
+  showToast('PDF downloaded');
+}
+
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+function nowTime() {
+  return new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',hour12:true});
+}
+function getDuration(startDate) {
+  const ms = new Date()-startDate, mins=Math.floor(ms/60000);
+  if(mins<1)return'< 1 min';
+  if(mins<60)return`${mins} min`;
+  return`${Math.floor(mins/60)}h ${mins%60}m`;
+}
+function dateSlug() {
+  const d=new Date();
+  return`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function esc(str){if(!str)return'';return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(msg){const e=document.querySelector('.toast');if(e)e.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2800);}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  updateClock();
+  setInterval(updateClock,30000);
+  setTimeout(() => {
+    const splash=document.getElementById('splash');
+    const main=document.getElementById('main');
+    if(splash)splash.classList.add('fade-out');
+    if(main)main.classList.remove('hidden');
+    refreshDashboard();
+    setTimeout(()=>{if(splash)splash.style.display='none';},600);
+  },1600);
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+
+</script>
+</body>
+</html>
