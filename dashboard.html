@@ -477,12 +477,23 @@ function renderDashboard(data) {
   const activity = data.activity || [];
   const pdfs = data.pdfs || [];
 
-  // Work out which tasks are done based on patrol names
-  const completedLabels = patrols.map(p => (p[2]||'') + '|' + (p[3]||''));
+  // Work out which tasks are done — match on label + hint
   const doneTaskIds = [];
+  const usedPatrolIndexes = new Set();
   DAY_TASKS.forEach(t => {
-    const key = t.label + '|' + (t.hint||'');
-    if (completedLabels.includes(key)) doneTaskIds.push(t.id);
+    for (let i = 0; i < patrols.length; i++) {
+      if (usedPatrolIndexes.has(i)) continue;
+      const pLabel = (patrols[i][2]||'').trim();
+      const pHint  = (patrols[i][3]||'').trim();
+      const tLabel = t.label.trim();
+      const tHint  = (t.hint||'').trim();
+      // Match if label matches and either hint matches or both are empty
+      if (pLabel === tLabel && (pHint === tHint || (!pHint && !tHint) || pHint.includes(tHint) || tHint.includes(pHint))) {
+        doneTaskIds.push(t.id);
+        usedPatrolIndexes.add(i);
+        break;
+      }
+    }
   });
 
   const doneCount = doneTaskIds.length;
@@ -526,11 +537,21 @@ function renderDashboard(data) {
   if (!escalations.length) {
     escBody.innerHTML = '<div class="empty">No active escalations ✓</div>';
   } else {
-    escBody.innerHTML = escalations.map(e => `
-      <div class="esc-row">
-        <div class="esc-title">${esc(e[4]||'')}</div>
-        <div class="esc-meta">${esc(e[1]||'')} · ${esc(e[2]||'')} · ${esc(e[5]||'')}</div>
-        <span class="esc-pill ${e[3]||'low'}">${(e[3]||'low').toUpperCase()}</span>
+    escBody.innerHTML = escalations.map((e,i) => `
+      <div class="esc-row" onclick="toggleEsc(${i})" style="cursor:pointer">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span class="esc-pill ${e[3]||'low'}">${(e[3]||'low').toUpperCase()}</span>
+          <span style="font-size:11px;color:var(--text-muted)">${esc(e[5]||'')} · ${esc(formatTime(e[0]))}</span>
+        </div>
+        <div class="esc-title" style="margin-top:6px">${esc(e[4]||'')}</div>
+        <div class="esc-meta">${esc(e[1]||'')} · ${esc(e[2]||'')}</div>
+        <div class="esc-detail hidden" id="esc-detail-${i}" style="margin-top:8px;padding:10px;background:rgba(239,68,68,0.08);border-radius:6px;font-size:12px;color:var(--text-sec);line-height:1.5">
+          <strong style="color:var(--text);display:block;margin-bottom:4px">FULL DETAIL</strong>
+          Location: ${esc(e[1]||'—')}<br>
+          Task: ${esc(e[2]||'—')}<br>
+          Officer: ${esc(e[5]||'—')}<br>
+          Site: ${esc(e[6]||'—')}
+        </div>
       </div>`).join('');
   }
 
@@ -650,6 +671,11 @@ function downloadReport(filename, btn) {
     pendingDownload = null;
   };
   document.body.appendChild(script);
+}
+
+function toggleEsc(idx) {
+  var el = document.getElementById('esc-detail-' + idx);
+  if (el) el.classList.toggle('hidden');
 }
 
 function formatTime(ts) {
