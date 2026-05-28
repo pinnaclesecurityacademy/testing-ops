@@ -1763,7 +1763,8 @@ function completeFlexibleTask() {
   STATE.taskRecords.push(record);
   addActivity(`${task.label}${task.timeHint ? ' — '+task.timeHint : ''} completed`, 'patrol');
   saveState();
-  syncToSheets({ type:'patrol', officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:task.rooms.length, issues });
+  syncToSheets({ type:'patrol', taskId:task.id, officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:task.rooms.length, issues });
+  syncTaskComplete(task.id, task.label, task.timeHint||'', '', endTime);
   syncActivityToSheets(`${task.label}${task.timeHint ? ' — '+task.timeHint : ''} completed`, 'patrol');
 
   document.getElementById('task-complete-title').textContent = `${task.label} Complete`;
@@ -1781,7 +1782,8 @@ async function saveContinueTask() {
   const record = STATE._completedTaskRecord;
   if (record) {
     record.officer = officerName;
-    syncToSheets({ type:'patrol', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
+    syncToSheets({ type:'patrol', taskId:record.taskId||'', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
+    syncTaskComplete(record.taskId||'', record.taskLabel, record.timeHint||'', officerName, record.completedAt);
     try {
       const { doc, filename } = await buildTaskPDFDoc(record, officerName);
       const pdfBase64 = doc.output('datauristring');
@@ -1797,7 +1799,9 @@ function saveContinueLobby() {
   const rec = STATE._completedLobbyRecord;
   if (rec) {
     rec.officer = officerName;
-    syncToSheets({ type:'patrol', officer:officerName, taskLabel:'Lobby Static', timeHint:STATE.activeLobby ? (STATE.activeLobby.timeHint || STATE.activeLobby.window || '') : '', site:SITE.name, startTime:rec.startTime, completedAt:rec.endTime, duration:rec.duration, roomCount:1, issues:0 });
+    const _lh = STATE.activeLobby ? (STATE.activeLobby.timeHint || STATE.activeLobby.window || '') : '';
+    syncToSheets({ type:'patrol', taskId:STATE.activeLobby?STATE.activeLobby.id:'', officer:officerName, taskLabel:STATE.activeLobby?STATE.activeLobby.label:'Lobby Static', timeHint:_lh, site:SITE.name, startTime:rec.startTime, completedAt:rec.endTime, duration:rec.duration, roomCount:1, issues:0 });
+    if (STATE.activeLobby) syncTaskComplete(STATE.activeLobby.id, STATE.activeLobby.label, _lh, officerName, rec.endTime);
   }
   navigateTo('dayshift');
 }
@@ -2061,7 +2065,8 @@ function completePlantPatrol() {
   STATE.taskRecords.push(record);
   addActivity(`${task.label} — ${task.timeHint} completed`, 'patrol');
   saveState();
-  syncToSheets({ type:'patrol', officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:totalRooms, issues });
+  syncToSheets({ type:'patrol', taskId:task.id, officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:totalRooms, issues });
+  syncTaskComplete(task.id, task.label, task.timeHint||'', '', endTime);
   syncActivityToSheets(`${task.label} — ${task.timeHint} completed`, 'patrol');
 
   document.getElementById('task-complete-title').textContent = `${task.label} Complete`;
@@ -2116,8 +2121,10 @@ function lobbyFinish() {
   const task = STATE.activeLobby;
   if (task && !STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
   addActivity(`Lobby Static ${task ? task.window : ''} completed`, 'patrol');
-  syncToSheets({ type:'patrol', officer:'', taskLabel:'Lobby Static', timeHint:task?task.window:'', site:SITE.name, startTime:STATE.lobbyStartTime, completedAt:endTime, duration, roomCount:1, issues:0 });
-  syncActivityToSheets(`Lobby Static ${task ? task.window : ''} completed`, 'patrol');
+  const _lobbyHint = task ? (task.timeHint || task.window || '') : '';
+  syncToSheets({ type:'patrol', taskId:task?task.id:'', officer:'', taskLabel:task?task.label:'Lobby Static', timeHint:_lobbyHint, site:SITE.name, startTime:STATE.lobbyStartTime, completedAt:endTime, duration, roomCount:1, issues:0 });
+  if (task) syncTaskComplete(task.id, task.label, _lobbyHint, '', endTime);
+  syncActivityToSheets(`${task ? task.label : 'Lobby Static'} ${_lobbyHint} completed`, 'patrol');
   STATE._completedLobbyRecord = {
     taskId: task ? task.id : 'lobby', window: task ? task.window : '',
     startTime: STATE.lobbyStartTime, endTime, duration,
@@ -2617,6 +2624,10 @@ function syncActivityToSheets(title, activityType) {
     title,
     site: SITE.name,
   });
+}
+
+function syncTaskComplete(taskId, taskLabel, timeHint, officer, completedAt) {
+  syncToSheets({ type:'taskComplete', taskId, taskLabel, timeHint, officer: officer || '', site: SITE.name, completedAt });
 }
 
 // ═══════════════════════════════════════

@@ -477,18 +477,38 @@ function renderDashboard(data) {
   const activity = data.activity || [];
   const pdfs = data.pdfs || [];
 
-  // Work out which tasks are done — match on label + hint
+  // Work out which tasks are done
+  // Primary: match by taskId from taskCompletions (if GAS returns it)
+  const taskCompletions = data.taskCompletions || [];
+  const completedByTaskId = new Set(taskCompletions.map(tc => String(tc.taskId || tc[0] || '')).filter(Boolean));
+
   const doneTaskIds = [];
   const usedPatrolIndexes = new Set();
   DAY_TASKS.forEach(t => {
+    // 1. taskId direct match (unambiguous)
+    if (completedByTaskId.has(t.id)) {
+      doneTaskIds.push(t.id);
+      return;
+    }
+    // 2. Scan patrol rows — taskId match if present, else lenient label+hint
     for (let i = 0; i < patrols.length; i++) {
       if (usedPatrolIndexes.has(i)) continue;
-      const pLabel = (patrols[i][2]||'').trim();
-      const pHint  = (patrols[i][3]||'').trim();
-      const tLabel = t.label.trim();
-      const tHint  = (t.hint||'').trim();
-      // Match if label matches and either hint matches or both are empty
-      if (pLabel === tLabel && (pHint === tHint || (!pHint && !tHint) || pHint.includes(tHint) || tHint.includes(pHint))) {
+      const pTaskId = (patrols[i][10] || patrols[i][4] || '').toString().trim();
+      const pLabel  = (patrols[i][2] || '').trim().toLowerCase();
+      const pHint   = (patrols[i][3] || '').trim().toLowerCase();
+      const tLabel  = t.label.trim().toLowerCase();
+      const tHint   = (t.hint || '').trim().toLowerCase();
+      // taskId match wins immediately
+      if (pTaskId && pTaskId === t.id) {
+        doneTaskIds.push(t.id);
+        usedPatrolIndexes.add(i);
+        return;
+      }
+      // Lenient label match: exact or contains (case-insensitive)
+      const labelMatch = pLabel === tLabel || pLabel.includes(tLabel) || tLabel.includes(pLabel);
+      // Hint match: both empty OR either contains the other
+      const hintMatch = !tHint || !pHint || pHint === tHint || pHint.includes(tHint) || tHint.includes(pHint);
+      if (labelMatch && hintMatch) {
         doneTaskIds.push(t.id);
         usedPatrolIndexes.add(i);
         break;
