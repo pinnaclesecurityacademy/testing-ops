@@ -48,7 +48,7 @@ html, body {
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: 'Barlow', sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
@@ -276,7 +276,7 @@ html, body {
 .quick-start-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 0 16px; }
 .qs-btn {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 18px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px;
   cursor: pointer; transition: border-color var(--transition), background var(--transition); -webkit-tap-highlight-color: transparent;
 }
 .qs-btn:active { background: var(--bg-card-hover); }
@@ -305,7 +305,7 @@ html, body {
 .shift-task-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
 .shift-task-card {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 16px; display: flex; align-items: center; justify-content: space-between;
   cursor: pointer; transition: border-color var(--transition), background var(--transition); -webkit-tap-highlight-color: transparent;
 }
 .shift-task-card:active { background: var(--bg-card-hover); }
@@ -342,7 +342,7 @@ html, body {
 }
 .room-item {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+  padding: 18px 16px; display: flex; align-items: center; gap: 14px;
   cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
 }
 .room-item.completed { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.05); }
@@ -416,7 +416,7 @@ html, body {
 }
 .cp-location {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 28px; font-weight: 800; letter-spacing: 0.5px; color: var(--text-primary); line-height: 1.1;
+  font-size: 30px; font-weight: 800; letter-spacing: 0.5px; color: var(--text-primary); line-height: 1.1;
 }
 .cp-instruction { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
 
@@ -429,7 +429,7 @@ html, body {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 4px;
 }
-.check-item { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.check-item { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--border); }
 .check-item:last-child { border-bottom: none; }
 .check-item-label { font-size: 14px; font-weight: 500; color: var(--text-primary); line-height: 1.4; }
 .check-item.ntr-done .check-item-label { color: var(--text-muted); text-decoration: line-through; }
@@ -437,7 +437,7 @@ html, body {
 .check-item-actions { display: flex; gap: 8px; }
 .ci-btn {
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
-  padding: 10px 6px; border-radius: var(--radius-sm); border: 1.5px solid;
+  padding: 14px 6px; border-radius: var(--radius-sm); border: 1.5px solid;
   font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px;
   cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
 }
@@ -459,7 +459,7 @@ html, body {
 }
 .field-textarea {
   background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 15px;
+  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 18px;
   padding: 12px 14px; resize: none; min-height: 80px; outline: none;
   transition: border-color var(--transition); width: 100%;
 }
@@ -467,7 +467,7 @@ html, body {
 .field-textarea::placeholder { color: var(--text-muted); }
 .field-input {
   background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 500;
+  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 18px; font-weight: 500;
   padding: 14px 16px; outline: none; transition: border-color var(--transition); width: 100%;
 }
 .field-input:focus { border-color: var(--border-accent); }
@@ -498,11 +498,11 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 .aq-number { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--blue); }
 .aq-question {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1.2;
+  font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1.2;
 }
 .yn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .yn-btn {
-  display: flex; align-items: center; justify-content: center; gap: 8px; padding: 18px;
+  display: flex; align-items: center; justify-content: center; gap: 8px; padding: 22px 18px;
   border-radius: var(--radius); border: 2px solid;
   font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: 2px;
   cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
@@ -546,18 +546,18 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   background: linear-gradient(135deg, var(--purple), var(--blue));
   border: none; border-radius: var(--radius); color: #fff;
   font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 2px;
-  padding: 16px 24px; cursor: pointer; transition: opacity var(--transition), transform var(--transition); -webkit-tap-highlight-color: transparent;
+  padding: 20px 24px; cursor: pointer; transition: opacity var(--transition), transform var(--transition); -webkit-tap-highlight-color: transparent;
 }
 .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
 .btn-secondary {
   display: flex; align-items: center; justify-content: center;
   background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius);
   color: var(--text-secondary); font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px; font-weight: 700; letter-spacing: 2px; padding: 16px 24px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  font-size: 15px; font-weight: 700; letter-spacing: 2px; padding: 20px 24px; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .btn-full { width: 100%; }
 .btn-row { display: flex; gap: 10px; }
-.btn-row .btn-primary, .btn-row .btn-secondary { flex: 1; font-size: 13px; padding: 14px 8px; letter-spacing: 1px; }
+.btn-row .btn-primary, .btn-row .btn-secondary { flex: 1; font-size: 13px; padding: 18px 8px; letter-spacing: 1px; }
 
 /* ── COMPLETE SCREEN ────────────────────── */
 .complete-hero { display: flex; flex-direction: column; align-items: center; padding: 32px 16px 20px; gap: 12px; }
@@ -691,6 +691,54 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   .toast { bottom: 24px; }
 }
 
+/* ── DAY / NIGHT MODE ──────────────────── */
+body.day-mode {
+  --bg-base: #f5f5f7;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f5;
+  --bg-elevated: #e8e8f0;
+  --border: rgba(0,0,0,0.08);
+  --border-accent: rgba(124,92,252,0.35);
+  --text-primary: #1a1a2e;
+  --text-secondary: #5a5a7a;
+  --text-muted: #9090a8;
+}
+body.night-mode {
+  --bg-base: #0f0f1a;
+  --bg-surface: #111118;
+  --bg-card: #1a1a28;
+  --bg-card-hover: #1c1c2e;
+  --bg-elevated: #1e1e2a;
+  --border: rgba(255,255,255,0.08);
+  --border-accent: rgba(124,92,252,0.35);
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0b8;
+  --text-muted: #555568;
+}
+
+/* ── REPORTS PAGE ───────────────────────── */
+.report-item {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; margin: 0 16px 10px; display: flex; align-items: center; gap: 14px;
+}
+.report-type-icon { font-size: 26px; flex-shrink: 0; }
+.report-info { flex: 1; min-width: 0; }
+.report-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 700; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.report-meta { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+.report-dl-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--purple-dim); border: 1px solid var(--border-accent); border-radius: var(--radius-sm);
+  color: var(--purple); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px; padding: 12px 16px;
+  cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent;
+}
+.report-dl-btn:active { opacity: 0.8; }
+
 </style>
 </head>
 <body>
@@ -723,7 +771,7 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
       <div class="status-divider"></div>
       <div class="status-item" id="dash-date"></div>
       <div class="status-divider"></div>
-      <div class="status-item">SHIFT: DAY</div>
+      <div class="status-item" id="shift-indicator">SHIFT: DAY</div>
     </div>
     <div class="dash-stats">
       <div class="stat-card primary" onclick="navigateTo('dayshift')">
@@ -1075,6 +1123,34 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   </div>
 </div>
 
+<!-- ═══════ REPORTS ═══════ -->
+<div id="page-reports" class="page">
+  <div class="page-scroll">
+    <div class="page-header">
+      <div class="page-header-title">REPORTS</div>
+      <div class="page-header-sub">PDFs generated this shift</div>
+    </div>
+    <div style="padding:16px 16px 0">
+      <div class="field-group" style="margin-bottom:12px">
+        <label class="field-label">OFFICER NAME</label>
+        <input type="text" class="field-input" id="summary-officer-name" placeholder="Enter your full name..."/>
+      </div>
+      <button class="btn-primary btn-full hidden" id="daily-summary-btn" onclick="generateDailySummaryPDF()">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        GENERATE DAILY SUMMARY
+      </button>
+    </div>
+    <div class="section-header" style="margin-top:16px">
+      <span class="section-title">GENERATED REPORTS</span>
+      <span class="section-badge" id="reports-count">0</span>
+    </div>
+    <div id="reports-list">
+      <div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports generated yet this shift</div></div>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
 </div><!-- /page-container -->
 
 <nav class="bottomnav">
@@ -1093,6 +1169,10 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   <button class="bnav-btn" id="bnav-audits" onclick="navigateTo('audits')">
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     <span>Audits</span>
+  </button>
+  <button class="bnav-btn" id="bnav-reports" onclick="navigateTo('reports')">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span>Reports</span>
   </button>
   <div class="sidebar-extra">
     <div class="sidebar-divider"></div>
@@ -1330,17 +1410,30 @@ const STATE = {
   activity: [],
   _completedTaskRecord: null,
   _completedLobbyRecord: null,
+  // Reports
+  shiftReports: [], // { filename, reportType, taskLabel, timestamp, dataUri }
 };
 
 // ═══════════════════════════════════════
 // PERSISTENCE
 // ═══════════════════════════════════════
+function getShift() {
+  const h = new Date().getHours();
+  return (h >= 6 && h < 18) ? 'day' : 'night';
+}
+
 function loadState() {
   try {
+    const currentShift = getShift();
     const today = new Date().toDateString();
-    if (localStorage.getItem('t_date') !== today) {
-      ['t_completed','t_tasks','t_audits','t_escs','t_activity','t_lobby'].forEach(k => localStorage.removeItem(k));
+    const storedShift = localStorage.getItem('t_shift');
+    const storedShiftDate = localStorage.getItem('t_shiftDate');
+    const shiftChanged = storedShift !== currentShift || storedShiftDate !== today;
+    if (shiftChanged) {
+      ['t_completed','t_tasks','t_audits','t_escs','t_activity','t_lobby','t_reports'].forEach(k => localStorage.removeItem(k));
       localStorage.setItem('t_date', today);
+      localStorage.setItem('t_shift', currentShift);
+      localStorage.setItem('t_shiftDate', today);
       return;
     }
     const load = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e){ return def; } };
@@ -1349,6 +1442,7 @@ function loadState() {
     STATE.auditRecords = load('t_audits', []);
     STATE.escalations = load('t_escs', []);
     STATE.activity = load('t_activity', []);
+    STATE.shiftReports = load('t_reports', []);
     // Restore in-progress lobby
     const lobby = load('t_lobby', null);
     if (lobby && lobby.taskId) {
@@ -1361,12 +1455,24 @@ function loadState() {
 
 function saveState() {
   try {
+    const today = new Date().toDateString();
     localStorage.setItem('t_completed', JSON.stringify(STATE.completedTaskIds));
     localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
     localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
     localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
     localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
-    localStorage.setItem('t_date', new Date().toDateString());
+    localStorage.setItem('t_date', today);
+    localStorage.setItem('t_shift', getShift());
+    localStorage.setItem('t_shiftDate', today);
+    // Try to persist reports with dataUri; fall back to metadata-only if quota exceeded
+    try {
+      localStorage.setItem('t_reports', JSON.stringify(STATE.shiftReports || []));
+    } catch(e2) {
+      try {
+        const lite = (STATE.shiftReports || []).map(r => ({ ...r, dataUri: '' }));
+        localStorage.setItem('t_reports', JSON.stringify(lite));
+      } catch(e3) {}
+    }
   } catch(e) {}
 }
 
@@ -1387,8 +1493,8 @@ function saveLobbyState() {
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
-const ALL_PAGES = ['dashboard','dayshift','nightshift','audits','flexible-rooms','room-active','room-complete','plant-levels','plant-level-rooms','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
-const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'nightshift','audits':'audits','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-level-rooms':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
+const ALL_PAGES = ['dashboard','dayshift','nightshift','audits','reports','flexible-rooms','room-active','room-complete','plant-levels','plant-level-rooms','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
+const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'nightshift','audits':'audits','reports':'reports','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-level-rooms':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
 
 function navigateTo(page) {
   ALL_PAGES.forEach(p => { const el = document.getElementById(`page-${p}`); if (el) el.classList.remove('active'); });
@@ -1401,6 +1507,68 @@ function navigateTo(page) {
   if (page === 'dashboard') refreshDashboard();
   if (page === 'dayshift') refreshDayShift();
   if (page === 'audits') refreshAuditList();
+  if (page === 'reports') refreshReports();
+}
+
+// ═══════════════════════════════════════
+// SHIFT THEME
+// ═══════════════════════════════════════
+function applyShiftTheme() {
+  const shift = getShift();
+  document.body.classList.remove('day-mode', 'night-mode');
+  document.body.classList.add(shift + '-mode');
+  const indicator = document.getElementById('shift-indicator');
+  if (indicator) indicator.textContent = 'SHIFT: ' + shift.toUpperCase();
+}
+
+// ═══════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════
+function addToReports(dataUri, filename, reportType, taskLabel) {
+  if (!STATE.shiftReports) STATE.shiftReports = [];
+  STATE.shiftReports.unshift({ filename, reportType, taskLabel, timestamp: nowTime(), dataUri });
+  saveState();
+  refreshReports();
+}
+
+function refreshReports() {
+  const list = document.getElementById('reports-list');
+  const summaryBtn = document.getElementById('daily-summary-btn');
+  const countBadge = document.getElementById('reports-count');
+  const hasCompleted = STATE.completedTaskIds.length > 0;
+  if (summaryBtn) summaryBtn.classList.toggle('hidden', !hasCompleted);
+  const reports = STATE.shiftReports || [];
+  if (countBadge) countBadge.textContent = reports.length;
+  if (!list) return;
+  if (!reports.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports generated yet this shift</div></div>';
+    return;
+  }
+  const typeIcons = { 'Patrol Report':'🗂️', 'Audit Report':'📋', 'Lobby Static Report':'🏛️', 'Daily Summary':'📊', 'Day Shift Report':'📊' };
+  list.innerHTML = reports.map((r, i) => `
+    <div class="report-item">
+      <div class="report-type-icon">${typeIcons[r.reportType] || '📄'}</div>
+      <div class="report-info">
+        <div class="report-title">${esc(r.taskLabel || r.reportType)}</div>
+        <div class="report-meta">${esc(r.reportType)} · ${esc(r.timestamp)}</div>
+      </div>
+      <button class="report-dl-btn" onclick="downloadShiftReport(${i})">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        DOWNLOAD
+      </button>
+    </div>`).join('');
+}
+
+function downloadShiftReport(idx) {
+  const r = (STATE.shiftReports || [])[idx];
+  if (!r) return;
+  if (!r.dataUri) { showToast('Report data not available — regenerate PDF'); return; }
+  const link = document.createElement('a');
+  link.href = r.dataUri;
+  link.download = r.filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 // ═══════════════════════════════════════
@@ -1734,10 +1902,11 @@ function confirmRoom() {
     hasIssue: hasReportable,
   };
 
+  const escPhoto = STATE.taskPhotos.length > 0 ? STATE.taskPhotos[0] : null;
   [...checks, ...obsChecks].filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
-    STATE.escalations.unshift({ text: c.reportText, location: room.name, task: task.label, time: result.timestamp, priority: c.priority });
+    STATE.escalations.unshift({ text: c.reportText, location: room.name, task: task.label, time: result.timestamp, priority: c.priority, photo: escPhoto });
     addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
-    syncToSheets({ type:'escalation', location:room.name, task:task.label, priority:c.priority, text:c.reportText, officer:'', site:SITE.name });
+    syncToSheets({ type:'escalation', location:room.name, task:task.label, priority:c.priority, text:c.reportText, officer:'', site:SITE.name, photo: escPhoto || '' });
     syncActivityToSheets(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
   });
 
@@ -1788,6 +1957,7 @@ async function saveContinueTask() {
       const { doc, filename } = await buildTaskPDFDoc(record, officerName);
       const pdfBase64 = doc.output('datauristring');
       syncPDFToSheets(officerName, record.taskLabel, filename, pdfBase64);
+      addToReports(pdfBase64, filename, 'Patrol Report', record.taskLabel);
     } catch(e) {}
   }
   navigateTo('dayshift');
@@ -2021,9 +2191,12 @@ function confirmPlantRoom() {
     });
   }
 
+  const plantEscPhoto = STATE.plantRoomPhotos.length > 0 ? STATE.plantRoomPhotos[0] : null;
   checks.filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
-    STATE.escalations.unshift({ text: c.reportText, location: `${level.name} — ${room.name}`, task: task ? task.label : 'Plant Room Patrol', time: nowTime(), priority: c.priority });
+    STATE.escalations.unshift({ text: c.reportText, location: `${level.name} — ${room.name}`, task: task ? task.label : 'Plant Room Patrol', time: nowTime(), priority: c.priority, photo: plantEscPhoto });
     addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
+    syncToSheets({ type:'escalation', location:`${level.name} — ${room.name}`, task:task?task.label:'Plant Room Patrol', priority:c.priority, text:c.reportText, officer:'', site:SITE.name, photo: plantEscPhoto || '' });
+    syncActivityToSheets(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
   });
 
   if (!STATE.plantLevelResults[STATE.activePlantLevel]) STATE.plantLevelResults[STATE.activePlantLevel] = {};
@@ -2126,10 +2299,13 @@ function lobbyFinish() {
   if (task) syncTaskComplete(task.id, task.label, _lobbyHint, '', endTime);
   syncActivityToSheets(`${task ? task.label : 'Lobby Static'} ${_lobbyHint} completed`, 'patrol');
   STATE._completedLobbyRecord = {
-    taskId: task ? task.id : 'lobby', window: task ? task.window : '',
-    startTime: STATE.lobbyStartTime, endTime, duration,
+    taskId: task ? task.id : 'lobby', taskLabel: task ? task.label : 'Lobby Static',
+    timeHint: task ? (task.timeHint || task.window || '') : '',
+    window: task ? task.window : '',
+    startTime: STATE.lobbyStartTime, endTime, completedAt: endTime, duration,
     notes: document.getElementById('lobby-notes') ? document.getElementById('lobby-notes').value.trim() : '',
   };
+  STATE.taskRecords.push(STATE._completedLobbyRecord);
   STATE.lobbyStartTime = null; STATE.lobbyStartedAt = null;
   localStorage.removeItem('t_lobby');
   saveState();
@@ -2147,6 +2323,7 @@ function capturePhotos(input, previewId, arr) {
   const files = Array.from(input.files);
   if (!files.length) return;
   const preview = document.getElementById(previewId);
+  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -2155,6 +2332,19 @@ function capturePhotos(input, previewId, arr) {
         const img = document.createElement('img');
         img.src = e.target.result; img.className = 'photo-thumb';
         preview.appendChild(img);
+      }
+      // Auto-save to camera roll / downloads on touch (mobile) devices
+      if (isTouch) {
+        try {
+          const ts = dateSlug();
+          const link = document.createElement('a');
+          link.href = e.target.result;
+          link.download = `sec_photo_${ts}.jpg`;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch(ex) {}
       }
     };
     reader.readAsDataURL(file);
@@ -2291,6 +2481,7 @@ async function generateTaskPDF() {
   try {
     const pdfBase64 = doc.output('datauristring');
     syncPDFToSheets(officerName, record.taskLabel, filename, pdfBase64);
+    addToReports(pdfBase64, filename, 'Patrol Report', record.taskLabel);
   } catch(e) {}
   showToast('PDF downloaded');
 }
@@ -2374,7 +2565,13 @@ async function generateEODPDF() {
   }
 
   addFooter(doc, W, M);
-  doc.save(`day_shift_report_${dateSlug()}.pdf`);
+  const eodFilename = `day_shift_report_${dateSlug()}.pdf`;
+  doc.save(eodFilename);
+  try {
+    const eodBase64 = doc.output('datauristring');
+    syncPDFToSheets(officerName, 'End of Day Shift Report', eodFilename, eodBase64);
+    addToReports(eodBase64, eodFilename, 'Day Shift Report', 'End of Day Report');
+  } catch(e) {}
   showToast('Full day report downloaded');
 }
 
@@ -2562,8 +2759,137 @@ async function generateAuditPDF() {
   try {
     const pdfBase64 = doc.output('datauristring');
     syncPDFToSheets(officerName, `${record.auditTypeName} — ${record.asset}`, auditFn, pdfBase64);
+    addToReports(pdfBase64, auditFn, 'Audit Report', `${record.auditTypeName} — ${record.asset}`);
   } catch(e) {}
   showToast('PDF downloaded');
+}
+
+// ═══════════════════════════════════════
+// DAILY SUMMARY PDF
+// ═══════════════════════════════════════
+async function generateDailySummaryPDF() {
+  const officerName = document.getElementById('summary-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name'); document.getElementById('summary-officer-name').focus(); return; }
+  showToast('Generating daily summary...');
+
+  const shift = getShift();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, M = 16;
+
+  // Header
+  doc.setFillColor(15,15,25); doc.rect(0,0,W,46,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('DAILY INSPECTION REPORT', M, 16);
+  doc.setFontSize(9); doc.setTextColor(150,150,180); doc.setFont('helvetica','normal');
+  doc.text(SITE.name.toUpperCase(), M, 25);
+  doc.text(`Officer: ${officerName}`, M, 33);
+  doc.setTextColor(124,92,252); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text(shift.toUpperCase() + ' SHIFT', W-M, 16, {align:'right'});
+  doc.setTextColor(150,150,180); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text(new Date().toLocaleDateString('en-AU',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}), W-M, 25, {align:'right'});
+
+  let y = 54;
+
+  // Task summary label
+  doc.setFillColor(30,30,50); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
+  doc.setTextColor(100,100,140); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('TASK COMPLETION LOG', M+4, y+5.5); y += 12;
+
+  for (const task of DAY_SHIFT_TASKS) {
+    if (!STATE.completedTaskIds.includes(task.id)) continue;
+    const record = STATE.taskRecords.find(r => r.taskId === task.id);
+    if (y > 250) { doc.addPage(); y = 20; }
+
+    // Task header row
+    doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,10,2,2,'F');
+    doc.setTextColor(124,92,252); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    const taskLabel = task.label + (task.timeHint ? ' — ' + task.timeHint : '');
+    doc.text(taskLabel.toUpperCase(), M+4, y+7);
+    if (record && record.startTime && record.completedAt) {
+      doc.setTextColor(34,197,94); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.text(`${record.startTime} → ${record.completedAt}  ✓`, W-M-4, y+7, {align:'right'});
+    } else {
+      doc.setTextColor(34,197,94); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.text('✓ COMPLETE', W-M-4, y+7, {align:'right'});
+    }
+    y += 13;
+
+    // Show issues for flexible tasks (roomResults)
+    if (record && record.roomResults) {
+      for (const [, rd] of Object.entries(record.roomResults)) {
+        if (!rd.hasIssue) continue;
+        const issueChecks = [...(rd.checks||[]),...(rd.obsChecks||[])].filter(c=>c.status==='reportable'&&c.reportText);
+        for (const c of issueChecks) {
+          if (y>260){doc.addPage();y=20;}
+          doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,10,2,2,'F');
+          doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','normal');
+          const issLine = doc.splitTextToSize(`✕  ${rd.roomName}: [${c.priority.toUpperCase()}] ${c.reportText}`, W-M*2-12);
+          doc.text(issLine[0], M+6, y+7); y += 13;
+          if (rd.photos && rd.photos.length>0) {
+            if (y>240){doc.addPage();y=20;}
+            const added = await addPhotoToPDF(doc, rd.photos[0], M+6, y, 50, 40);
+            if (added) y += added+4;
+          }
+        }
+      }
+    }
+
+    // Show issues for plant tasks (levelResults)
+    if (record && record.levelResults) {
+      for (const [, lr] of Object.entries(record.levelResults)) {
+        for (const [, rd] of Object.entries(lr)) {
+          if (!rd.hasIssue) continue;
+          const issueChecks = (rd.checks||[]).filter(c=>c.status==='reportable'&&c.reportText);
+          for (const c of issueChecks) {
+            if (y>260){doc.addPage();y=20;}
+            doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,10,2,2,'F');
+            doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','normal');
+            const issLine = doc.splitTextToSize(`✕  ${rd.roomName}: [${c.priority.toUpperCase()}] ${c.reportText}`, W-M*2-12);
+            doc.text(issLine[0], M+6, y+7); y += 13;
+            if (rd.photos && rd.photos.length>0) {
+              if (y>240){doc.addPage();y=20;}
+              const added = await addPhotoToPDF(doc, rd.photos[0], M+6, y, 50, 40);
+              if (added) y += added+4;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Escalations section
+  if (STATE.escalations.length > 0) {
+    if (y>220){doc.addPage();y=20;}
+    y += 6;
+    doc.setFillColor(50,20,20); doc.roundedRect(M,y,W-M*2,9,2,2,'F');
+    doc.setTextColor(239,68,68); doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text(`ESCALATIONS (${STATE.escalations.length})`, M+4, y+6.5); y += 14;
+    for (const e of STATE.escalations) {
+      if (y>250){doc.addPage();y=20;}
+      doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,13,2,2,'F');
+      doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text(`[${e.priority.toUpperCase()}] ${e.location}`, M+4, y+5.5);
+      doc.setTextColor(200,180,180); doc.setFont('helvetica','normal');
+      const descLines = doc.splitTextToSize(e.text, W-M*2-8);
+      doc.text(descLines[0], M+4, y+10.5); y += 16;
+      if (e.photo) {
+        if (y>240){doc.addPage();y=20;}
+        const added = await addPhotoToPDF(doc, e.photo, M+4, y, 50, 40);
+        if (added) y += added+4;
+      }
+    }
+  }
+
+  addFooter(doc, W, M);
+  const summaryFilename = `daily_summary_${shift}_${dateSlug()}.pdf`;
+  doc.save(summaryFilename);
+  try {
+    const pdfBase64 = doc.output('datauristring');
+    syncPDFToSheets(officerName, 'Daily Inspection Report', summaryFilename, pdfBase64);
+    addToReports(pdfBase64, summaryFilename, 'Daily Summary', 'Daily Inspection Report');
+  } catch(e) {}
+  showToast('Daily summary downloaded');
 }
 
 function addFooter(doc, W, M) {
@@ -2635,6 +2961,7 @@ function syncTaskComplete(taskId, taskLabel, timeHint, officer, completedAt) {
 // ═══════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
   loadState();
+  applyShiftTheme();
   updateClock();
   setInterval(updateClock, 30000);
 
@@ -2693,6 +3020,7 @@ async function generateLobbyPDF() {
   try {
     const pdfBase64 = doc.output('datauristring');
     syncPDFToSheets(officerName, `Lobby Static ${rec.window}`, lobbyFn, pdfBase64);
+    addToReports(pdfBase64, lobbyFn, 'Lobby Static Report', `Lobby Static ${rec.window}`);
   } catch(e) {}
   showToast('PDF downloaded');
 }

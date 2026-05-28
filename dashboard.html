@@ -222,6 +222,12 @@
     }
     .dl-btn:hover { background: rgba(124,92,252,0.25); }
     .dl-btn.loading { opacity: 0.6; cursor: wait; }
+    .shift-badge {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      background: var(--purple-dim); border: 1px solid rgba(124,92,252,0.3);
+      border-radius: 99px; padding: 4px 12px; color: var(--purple);
+    }
 
     /* STAT CARDS */
     .mini-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px; }
@@ -286,6 +292,7 @@
     </div>
     <div class="topbar-right">
       <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <div class="shift-badge" id="dash-shift">DAY SHIFT</div>
       <div class="last-updated" id="last-updated">Connecting...</div>
       <div class="clock" id="clock"></div>
     </div>
@@ -323,7 +330,7 @@
       <div class="shift-hero-divider"></div>
       <div class="shift-hero-progress">
         <div class="progress-label">
-          <span>DAY SHIFT PROGRESS</span>
+          <span id="shift-progress-label">DAY SHIFT PROGRESS</span>
           <span id="hero-pct">0%</span>
         </div>
         <div class="progress-track">
@@ -337,7 +344,7 @@
       <!-- Task list -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">DAY SHIFT TASKS</div>
+          <div class="card-title" id="shift-tasks-label">DAY SHIFT TASKS</div>
           <div class="card-badge purple" id="tasks-badge">0 / 11</div>
         </div>
         <div class="card-body" id="task-list-body">
@@ -436,10 +443,18 @@ const DAY_TASKS = [
 let dashData = null;
 let refreshTimer = null;
 
-// Clock
+// Clock + shift indicator
 function updateClock() {
   const el = document.getElementById('clock');
   if (el) el.textContent = new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const h = new Date().getHours();
+  const shift = (h >= 6 && h < 18) ? 'DAY' : 'NIGHT';
+  const shiftEl = document.getElementById('dash-shift');
+  if (shiftEl) shiftEl.textContent = shift + ' SHIFT';
+  const progLabel = document.getElementById('shift-progress-label');
+  if (progLabel) progLabel.textContent = shift + ' SHIFT PROGRESS';
+  const tasksLabel = document.getElementById('shift-tasks-label');
+  if (tasksLabel) tasksLabel.textContent = shift + ' SHIFT TASKS';
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -571,6 +586,7 @@ function renderDashboard(data) {
           Task: ${esc(e[2]||'—')}<br>
           Officer: ${esc(e[5]||'—')}<br>
           Site: ${esc(e[6]||'—')}
+          ${e[7] ? `<div style="margin-top:10px"><img src="${e[7]}" style="width:100%;max-width:320px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);display:block;margin-bottom:8px" alt="Escalation photo"/><a href="${e[7]}" download="escalation_photo.jpg" style="display:inline-flex;align-items:center;gap:5px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:var(--red);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 12px;text-decoration:none;cursor:pointer"><svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>DOWNLOAD PHOTO</a></div>` : ''}
         </div>
       </div>`).join('');
   }
