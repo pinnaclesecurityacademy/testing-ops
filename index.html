@@ -615,6 +615,82 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 
 .bottom-spacer { height: 32px; }
 
+/* ── DESKTOP SIDEBAR ─────────────────────────── */
+.sidebar-extra { display: none; }
+
+.sidebar-divider { height: 1px; background: var(--border); margin: 10px 16px; }
+.sidebar-section-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  color: var(--text-muted); padding: 4px 20px 6px;
+}
+.sidebar-task-item {
+  padding: 7px 20px; display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: background var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.sidebar-task-item:hover { background: var(--bg-card-hover); }
+.sidebar-task-item.done { opacity: 0.5; }
+.sidebar-task-item.locked { cursor: default; }
+.sidebar-task-icon { font-size: 14px; flex-shrink: 0; }
+.sidebar-task-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+  flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sidebar-task-item.done .sidebar-task-name { color: var(--text-muted); }
+.sidebar-task-check { font-size: 11px; color: var(--green); flex-shrink: 0; }
+.sidebar-status {
+  padding: 8px 20px 16px; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted);
+}
+
+@media (min-width: 900px) {
+  .main {
+    display: grid;
+    grid-template-rows: var(--nav-h) 1fr;
+    grid-template-columns: 264px 1fr;
+    grid-template-areas: "topnav topnav" "sidebar content";
+    height: 100%;
+    overflow: hidden;
+    flex: unset;
+    flex-direction: unset;
+  }
+  .topnav { grid-area: topnav; }
+  #page-container { grid-area: content; overflow: hidden; min-height: 0; }
+  .bottomnav {
+    grid-area: sidebar;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    padding: 8px 0 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    overflow-y: auto;
+    gap: 0;
+  }
+  .bnav-btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 14px 20px;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    border-radius: 0;
+    gap: 14px;
+    min-height: 48px;
+  }
+  .bnav-btn span { font-size: 12px; font-weight: 600; }
+  .bnav-btn.active {
+    background: rgba(124,92,252,0.1);
+    border-left: 3px solid var(--purple);
+    padding-left: 17px;
+  }
+  .page-scroll { padding-bottom: 24px; }
+  .sidebar-extra { display: block; }
+  .toast { bottom: 24px; }
+}
+
 </style>
 </head>
 <body>
@@ -1018,6 +1094,13 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     <span>Audits</span>
   </button>
+  <div class="sidebar-extra">
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-section-label">DAY SHIFT TASKS</div>
+    <div id="sidebar-shift-list"></div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-status" id="sidebar-site-status"></div>
+  </div>
 </nav>
 
 </div><!-- /main -->
@@ -1390,9 +1473,10 @@ function refreshDayShift() {
   const eod = document.getElementById('eod-section');
   if (eod) eod.style.display = done >= total ? 'block' : 'none';
 
+  const lockSvg = `<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
   list.innerHTML = DAY_SHIFT_TASKS.map((task, idx) => {
     const isDone = STATE.completedTaskIds.includes(task.id);
-    return `<div class="shift-task-card ${isDone ? 'done' : ''}" onclick="startRoverTask('${task.id}')">
+    return `<div class="shift-task-card ${isDone ? 'done' : ''}" ${isDone ? 'style="cursor:default"' : `onclick="startRoverTask('${task.id}')"`}>
       <div class="stc-left">
         <div class="stc-num">${String(idx+1).padStart(2,'0')}</div>
         <div class="stc-icon">${task.icon}</div>
@@ -1403,10 +1487,28 @@ function refreshDayShift() {
       </div>
       <div class="stc-right">
         <span class="stc-tag tag-${task.tagColor || 'blue'}">${task.tag}</span>
-        ${isDone ? '<div class="stc-done-check">✓</div>' : '<div class="stc-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>'}
+        ${isDone ? `<div class="stc-done-check">✓</div><div class="stc-arrow" style="color:var(--text-muted);opacity:0.5">${lockSvg}</div>` : '<div class="stc-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>'}
       </div>
     </div>`;
   }).join('');
+  refreshSidebarShiftList();
+}
+
+function refreshSidebarShiftList() {
+  const el = document.getElementById('sidebar-shift-list');
+  if (!el) return;
+  const done = STATE.completedTaskIds.length;
+  const total = DAY_SHIFT_TASKS.length;
+  el.innerHTML = DAY_SHIFT_TASKS.map(task => {
+    const isDone = STATE.completedTaskIds.includes(task.id);
+    return `<div class="sidebar-task-item ${isDone ? 'done locked' : ''}" ${isDone ? '' : `onclick="startRoverTask('${task.id}')"`}>
+      <span class="sidebar-task-icon">${task.icon}</span>
+      <span class="sidebar-task-name">${task.label}${task.timeHint ? ' · ' + task.timeHint : ''}</span>
+      ${isDone ? '<span class="sidebar-task-check">✓</span>' : ''}
+    </div>`;
+  }).join('');
+  const status = document.getElementById('sidebar-site-status');
+  if (status) status.textContent = `${done} of ${total} tasks complete · ${SITE.name}`;
 }
 
 // ═══════════════════════════════════════
@@ -1415,6 +1517,7 @@ function refreshDayShift() {
 function startRoverTask(taskId) {
   const task = DAY_SHIFT_TASKS.find(t => t.id === taskId);
   if (!task) return;
+  if (STATE.completedTaskIds.includes(task.id)) return;
 
   if (task.type === 'lobby') { startLobby(task); return; }
   if (task.type === 'plant') { startPlantPatrol(task); return; }
@@ -1580,6 +1683,24 @@ function confirmRoom() {
   if (room.photoMandatory && STATE.taskPhotos.length === 0) { showToast('Photo is mandatory for this room'); return; }
   if (room.requiresTwoPhotos && STATE.taskPhotos2.length === 0) { showToast('Photo of Panel 2 is required'); return; }
 
+  // Validate all check items have been answered
+  const numRoomChecks = (room.checks || []).length;
+  for (let _i = 0; _i < numRoomChecks; _i++) {
+    const _ntr = document.getElementById(`rchk-ntr-${_i}`);
+    const _rep = document.getElementById(`rchk-rep-${_i}`);
+    if (!(_ntr && _ntr.classList.contains('selected')) && !(_rep && _rep.classList.contains('selected'))) {
+      showToast('Please complete all checks'); return;
+    }
+  }
+  const numObs = (STATE._currentRoomObsPrompts || []).length;
+  for (let _i = 0; _i < numObs; _i++) {
+    const _ntr = document.getElementById(`obs-ntr-${_i}`);
+    const _rep = document.getElementById(`obs-rep-${_i}`);
+    if (!(_ntr && _ntr.classList.contains('selected')) && !(_rep && _rep.classList.contains('selected'))) {
+      showToast('Please complete all checks'); return;
+    }
+  }
+
   const checks = [];
   let hasReportable = false;
   if (room.checks) {
@@ -1655,9 +1776,10 @@ function completeFlexibleTask() {
 }
 
 async function saveContinueTask() {
+  const officerName = document.getElementById('task-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name'); return; }
   const record = STATE._completedTaskRecord;
   if (record) {
-    const officerName = document.getElementById('task-officer-name').value.trim() || 'Officer';
     record.officer = officerName;
     syncToSheets({ type:'patrol', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
     try {
@@ -1670,13 +1792,21 @@ async function saveContinueTask() {
 }
 
 function saveContinueLobby() {
+  const officerName = document.getElementById('lobby-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name'); return; }
+  const rec = STATE._completedLobbyRecord;
+  if (rec) {
+    rec.officer = officerName;
+    syncToSheets({ type:'patrol', officer:officerName, taskLabel:'Lobby Static', timeHint:STATE.activeLobby ? (STATE.activeLobby.timeHint || STATE.activeLobby.window || '') : '', site:SITE.name, startTime:rec.startTime, completedAt:rec.endTime, duration:rec.duration, roomCount:1, issues:0 });
+  }
   navigateTo('dayshift');
 }
 
 function saveContinueAudit() {
+  const officerName = document.getElementById('audit-officer-name').value.trim();
+  if (!officerName) { showToast('Please enter your name'); return; }
   const record = STATE._completedAuditRecord;
   if (record) {
-    const officerName = document.getElementById('audit-officer-name').value.trim() || 'Officer';
     record.officer = officerName;
     syncToSheets({ type:'audit', officer:officerName, auditTypeName:record.auditTypeName, asset:record.asset, site:SITE.name, completedAt:record.completedAt, answers:record.answers.length, noCount:record.noCount });
   }
@@ -1862,6 +1992,16 @@ function confirmPlantRoom() {
   if (!room) return;
 
   if (STATE.plantRoomPhotos.length === 0) { showToast('Photo is mandatory for this room'); return; }
+
+  // Validate all plant check items have been answered
+  const numPlantChecks = (room.checks || []).length;
+  for (let _i = 0; _i < numPlantChecks; _i++) {
+    const _ntr = document.getElementById(`pchk-ntr-${_i}`);
+    const _rep = document.getElementById(`pchk-rep-${_i}`);
+    if (!(_ntr && _ntr.classList.contains('selected')) && !(_rep && _rep.classList.contains('selected'))) {
+      showToast('Please complete all checks'); return;
+    }
+  }
 
   const task = DAY_SHIFT_TASKS.find(t => t.id === STATE.activePlantTaskId);
   const checks = [];
