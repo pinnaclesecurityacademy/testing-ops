@@ -759,7 +759,10 @@ body.night-mode {
 <nav class="topnav">
   <div class="topnav-left"><span class="nav-wordmark">TESTING</span></div>
   <div class="topnav-center"><span id="nav-site-name">Tower 3 ITS</span></div>
-  <div class="topnav-right"><div class="nav-time" id="nav-time"></div></div>
+  <div class="topnav-right" style="gap:10px">
+    <div id="sync-badge" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--purple);opacity:0.8">↑ SYNC</div>
+    <div class="nav-time" id="nav-time"></div>
+  </div>
 </nav>
 
 <div id="page-container">
@@ -1705,18 +1708,25 @@ function startRoverTask(taskId) {
   }
 
   STATE.activeTaskDef = { ...task, rooms };
-  // Restore any previously saved room results for this task
+  // Restore mid-patrol progress — saved as { rooms:{...}, startTime:'...' } with photos stripped
   try {
     const saved = localStorage.getItem(`t_room_results_${task.id}`);
-    STATE.roomResults = saved ? JSON.parse(saved) : {};
-  } catch(e) { STATE.roomResults = {}; }
-  // Only set start time if this is a fresh start
-  if (!Object.keys(STATE.roomResults).length) {
+    if (saved) {
+      const payload = JSON.parse(saved);
+      STATE.roomResults = payload.rooms || payload; // handle legacy plain-object format
+      if (payload.startTime) STATE.taskStartTime = payload.startTime;
+      if (!STATE.taskStartedAt) STATE.taskStartedAt = new Date();
+      console.log('[Patrol] Restored', Object.keys(STATE.roomResults).length, 'completed rooms for task', task.id);
+    } else {
+      STATE.roomResults = {};
+      STATE.taskStartTime = nowTime();
+      STATE.taskStartedAt = new Date();
+    }
+  } catch(e) {
+    console.warn('[Patrol] Could not restore progress:', e);
+    STATE.roomResults = {};
     STATE.taskStartTime = nowTime();
     STATE.taskStartedAt = new Date();
-  } else {
-    if (!STATE.taskStartTime) STATE.taskStartTime = nowTime();
-    if (!STATE.taskStartedAt) STATE.taskStartedAt = new Date();
   }
 
   renderFlexibleRooms();
@@ -1746,11 +1756,11 @@ function renderFlexibleRooms() {
   listEl.innerHTML = task.rooms.map(room => {
     const result = STATE.roomResults[room.id];
     const isDone = !!result;
-    return `<div class="room-item ${isDone ? 'completed' : ''}" style="${isDone ? 'cursor:default' : ''}" ${isDone ? '' : `onclick="startRoom('${room.id}')"`}>
+    return `<div class="room-item ${isDone ? 'completed' : ''}" style="${isDone ? 'cursor:default;pointer-events:none;opacity:0.75' : ''}" ${isDone ? '' : `onclick="startRoom('${room.id}')"`}>
       <div class="room-item-check">${isDone ? '✓' : ''}</div>
       <div style="flex:1">
         <div class="room-item-name">${room.name}</div>
-        <div class="room-item-meta">${room.photoMandatory ? '📷 Photo required' : '📷 Photo optional'}${isDone ? ' · Done' : ''}</div>
+        <div class="room-item-meta">${isDone ? '✓ Completed' : (room.photoMandatory ? '📷 Photo required' : '📷 Photo optional')}</div>
       </div>
       <div class="room-item-arrow" style="color:var(--text-muted);opacity:0.5">${isDone ? lockSvg : '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'}</div>
     </div>`;
@@ -1758,6 +1768,7 @@ function renderFlexibleRooms() {
 }
 
 function startRoom(roomId) {
+  if (STATE.roomResults[roomId]) return; // already completed — locked
   const task = STATE.activeTaskDef;
   const room = task.rooms.find(r => r.id === roomId);
   if (!room) return;
@@ -1929,8 +1940,18 @@ function confirmRoom() {
   });
 
   STATE.roomResults[STATE.activeRoomId] = result;
-  // Persist mid-patrol progress immediately so closing app doesn't lose work
-  try { localStorage.setItem(`t_room_results_${task.id}`, JSON.stringify(STATE.roomResults)); } catch(e) {}
+  // Persist mid-patrol progress: strip photos before saving to avoid localStorage quota failures
+  try {
+    const liteRooms = {};
+    for (const [k, v] of Object.entries(STATE.roomResults)) {
+      liteRooms[k] = { ...v, photos: [], photos2: [] };
+    }
+    const payload = { rooms: liteRooms, startTime: STATE.taskStartTime };
+    localStorage.setItem(`t_room_results_${task.id}`, JSON.stringify(payload));
+    console.log('[Patrol] Saved room progress for', task.id, '— rooms done:', Object.keys(liteRooms));
+  } catch(e) {
+    console.warn('[Patrol] Failed to persist room progress:', e);
+  }
   navigateTo('flexible-rooms');
   renderFlexibleRooms();
 }
@@ -2954,16 +2975,24 @@ function showToast(msg){const e=document.querySelector('.toast');if(e)e.remove()
 // ═══════════════════════════════════════
 // GOOGLE SHEETS SYNC
 // ═══════════════════════════════════════
+let _syncTimer = null;
+function _showSyncBadge() {
+  const b = document.getElementById('sync-badge');
+  if (b) { b.style.display = 'block'; clearTimeout(_syncTimer); _syncTimer = setTimeout(() => { b.style.display = 'none'; }, 2000); }
+}
+
 function syncToSheets(data) {
   if (!SHEETS_URL) return;
+  console.log('[Sync →]', data.type, data);
+  _showSyncBadge();
   try {
     fetch(SHEETS_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
-    }).catch(() => {});
-  } catch(e) {}
+    }).catch(err => console.warn('[Sync] fetch error:', err));
+  } catch(e) { console.warn('[Sync] error:', e); }
 }
 
 function syncPDFToSheets(officer, reportType, filename, pdfBase64) {

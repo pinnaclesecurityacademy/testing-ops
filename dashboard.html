@@ -492,41 +492,50 @@ function renderDashboard(data) {
   const activity = data.activity || [];
   const pdfs = data.pdfs || [];
 
-  // Work out which tasks are done
-  // Primary: match by taskId from taskCompletions (if GAS returns it)
+  // Helper: normalise a string for loose matching
+  function norm(s) { return String(s || '').trim().toLowerCase().replace(/\s+/g,' '); }
+
+  // Work out which tasks are done — scan patrols rows by taskId then by label+hint
   const taskCompletions = data.taskCompletions || [];
-  const completedByTaskId = new Set(taskCompletions.map(tc => String(tc.taskId || tc[0] || '')).filter(Boolean));
+  const completedByTaskId = new Set(
+    taskCompletions.map(tc => String(tc.taskId || tc[0] || '')).filter(Boolean)
+  );
 
   const doneTaskIds = [];
   const usedPatrolIndexes = new Set();
+
   DAY_TASKS.forEach(t => {
-    // 1. taskId direct match (unambiguous)
-    if (completedByTaskId.has(t.id)) {
-      doneTaskIds.push(t.id);
-      return;
-    }
-    // 2. Scan patrol rows — taskId match if present, else lenient label+hint
+    // 1. taskId direct match from taskCompletions tab
+    if (completedByTaskId.has(t.id)) { doneTaskIds.push(t.id); return; }
+
+    // 2. Scan Patrols rows
     for (let i = 0; i < patrols.length; i++) {
       if (usedPatrolIndexes.has(i)) continue;
-      const pTaskId = (patrols[i][10] || patrols[i][4] || '').toString().trim();
-      const pLabel  = (patrols[i][2] || '').trim().toLowerCase();
-      const pHint   = (patrols[i][3] || '').trim().toLowerCase();
-      const tLabel  = t.label.trim().toLowerCase();
-      const tHint   = (t.hint || '').trim().toLowerCase();
-      // taskId match wins immediately
-      if (pTaskId && pTaskId === t.id) {
-        doneTaskIds.push(t.id);
-        usedPatrolIndexes.add(i);
-        return;
+      const row = patrols[i];
+
+      // Try taskId at various column positions (GAS may write it to col 4, 10, or 11)
+      const pId = norm(row[10] || row[11] || row[4] || '');
+      if (pId && pId === t.id) {
+        doneTaskIds.push(t.id); usedPatrolIndexes.add(i); return;
       }
-      // Lenient label match: exact or contains (case-insensitive)
-      const labelMatch = pLabel === tLabel || pLabel.includes(tLabel) || tLabel.includes(pLabel);
-      // Hint match: both empty OR either contains the other
-      const hintMatch = !tHint || !pHint || pHint === tHint || pHint.includes(tHint) || tHint.includes(pHint);
+
+      // Label + hint loose match (primary fallback)
+      const pLabel = norm(row[2] || '');
+      const pHint  = norm(row[3] || '');
+      const tLabel = norm(t.label);
+      const tHint  = norm(t.hint || '');
+
+      const labelMatch = pLabel === tLabel
+        || pLabel.includes(tLabel) || tLabel.includes(pLabel);
+      const hintMatch  = !tHint || !pHint
+        || pHint === tHint || pHint.includes(tHint) || tHint.includes(pHint)
+        // also handle "Morning/Midday/Afternoon" vs time-window forms
+        || (tHint.includes('morning') && pHint.includes('morning'))
+        || (tHint.includes('midday') && pHint.includes('midday'))
+        || (tHint.includes('afternoon') && pHint.includes('afternoon'));
+
       if (labelMatch && hintMatch) {
-        doneTaskIds.push(t.id);
-        usedPatrolIndexes.add(i);
-        break;
+        doneTaskIds.push(t.id); usedPatrolIndexes.add(i); break;
       }
     }
   });
@@ -552,7 +561,11 @@ function renderDashboard(data) {
   taskBody.innerHTML = DAY_TASKS.map((t, idx) => {
     const done = doneTaskIds.includes(t.id);
     const isCritical = t.tag === 'CRITICAL';
-    const patrol = done ? patrols.find(p => p[2] === t.label && (p[3]||'') === (t.hint||'')) : null;
+    const patrol = done ? patrols.find(p => {
+      const pl = norm(p[2]); const tl = norm(t.label);
+      const ph = norm(p[3]); const th = norm(t.hint||'');
+      return (pl === tl || pl.includes(tl) || tl.includes(pl)) && (!th || !ph || ph.includes(th) || th.includes(ph));
+    }) : null;
     return `<div class="task-row">
       <div class="task-num">${String(idx+1).padStart(2,'0')}</div>
       <div class="task-icon">${t.icon}</div>
