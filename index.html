@@ -1232,6 +1232,7 @@ const DAY_SHIFT_TASKS = [
       { id: 'heat', name: 'Heat Exchange Room', instruction: 'Photograph the heat exchange room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of heat exchange room — MANDATORY' },
       { id: 'switch', name: 'Retail Main Switch Room', instruction: 'Photograph the switchboard. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switchboard — MANDATORY' },
       { id: 'fire-control', name: 'Fire Control Room', instruction: 'Photograph both fire control panels. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of Panel 1 — MANDATORY', requiresTwoPhotos: true },
+      { id: 'water-meter', name: 'T3 Water Meter & Pump Room', instruction: 'Photograph the water meter and pump room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of water meter & pump room — MANDATORY' },
     ]
   },
   {
@@ -1431,6 +1432,11 @@ function loadState() {
     const shiftChanged = storedShift !== currentShift || storedShiftDate !== today;
     if (shiftChanged) {
       ['t_completed','t_tasks','t_audits','t_escs','t_activity','t_lobby','t_reports'].forEach(k => localStorage.removeItem(k));
+      // Clear any mid-patrol room progress keys
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith('t_room_results_') || k.startsWith('t_plant_results_'))) localStorage.removeItem(k);
+      }
       localStorage.setItem('t_date', today);
       localStorage.setItem('t_shift', currentShift);
       localStorage.setItem('t_shiftDate', today);
@@ -1698,9 +1704,19 @@ function startRoverTask(taskId) {
   }
 
   STATE.activeTaskDef = { ...task, rooms };
-  STATE.roomResults = {};
-  STATE.taskStartTime = nowTime();
-  STATE.taskStartedAt = new Date();
+  // Restore any previously saved room results for this task
+  try {
+    const saved = localStorage.getItem(`t_room_results_${task.id}`);
+    STATE.roomResults = saved ? JSON.parse(saved) : {};
+  } catch(e) { STATE.roomResults = {}; }
+  // Only set start time if this is a fresh start
+  if (!Object.keys(STATE.roomResults).length) {
+    STATE.taskStartTime = nowTime();
+    STATE.taskStartedAt = new Date();
+  } else {
+    if (!STATE.taskStartTime) STATE.taskStartTime = nowTime();
+    if (!STATE.taskStartedAt) STATE.taskStartedAt = new Date();
+  }
 
   renderFlexibleRooms();
   navigateTo('flexible-rooms');
@@ -1725,16 +1741,17 @@ function renderFlexibleRooms() {
   if (completeBtn) completeBtn.classList.toggle('hidden', !allDone);
 
   if (!listEl) return;
+  const lockSvg = `<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
   listEl.innerHTML = task.rooms.map(room => {
     const result = STATE.roomResults[room.id];
     const isDone = !!result;
-    return `<div class="room-item ${isDone ? 'completed' : ''}" onclick="startRoom('${room.id}')">
+    return `<div class="room-item ${isDone ? 'completed' : ''}" style="${isDone ? 'cursor:default' : ''}" ${isDone ? '' : `onclick="startRoom('${room.id}')"`}>
       <div class="room-item-check">${isDone ? '✓' : ''}</div>
       <div style="flex:1">
         <div class="room-item-name">${room.name}</div>
         <div class="room-item-meta">${room.photoMandatory ? '📷 Photo required' : '📷 Photo optional'}${isDone ? ' · Done' : ''}</div>
       </div>
-      <div class="room-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <div class="room-item-arrow" style="color:var(--text-muted);opacity:0.5">${isDone ? lockSvg : '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'}</div>
     </div>`;
   }).join('');
 }
@@ -1911,6 +1928,8 @@ function confirmRoom() {
   });
 
   STATE.roomResults[STATE.activeRoomId] = result;
+  // Persist mid-patrol progress immediately so closing app doesn't lose work
+  try { localStorage.setItem(`t_room_results_${task.id}`, JSON.stringify(STATE.roomResults)); } catch(e) {}
   navigateTo('flexible-rooms');
   renderFlexibleRooms();
 }
@@ -1930,6 +1949,7 @@ function completeFlexibleTask() {
   STATE._completedTaskRecord = record;
   if (!STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
   STATE.taskRecords.push(record);
+  try { localStorage.removeItem(`t_room_results_${task.id}`); } catch(e) {}
   addActivity(`${task.label}${task.timeHint ? ' — '+task.timeHint : ''} completed`, 'patrol');
   saveState();
   syncToSheets({ type:'patrol', taskId:task.id, officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:task.rooms.length, issues });
@@ -2015,9 +2035,18 @@ function renderTaskSummary(record) {
 // ═══════════════════════════════════════
 function startPlantPatrol(task) {
   STATE.activePlantTaskId = task.id;
-  STATE.plantLevelResults = {};
-  STATE.taskStartTime = nowTime();
-  STATE.taskStartedAt = new Date();
+  // Restore any previously saved plant level results
+  try {
+    const saved = localStorage.getItem(`t_plant_results_${task.id}`);
+    STATE.plantLevelResults = saved ? JSON.parse(saved) : {};
+  } catch(e) { STATE.plantLevelResults = {}; }
+  if (!Object.keys(STATE.plantLevelResults).length) {
+    STATE.taskStartTime = nowTime();
+    STATE.taskStartedAt = new Date();
+  } else {
+    if (!STATE.taskStartTime) STATE.taskStartTime = nowTime();
+    if (!STATE.taskStartedAt) STATE.taskStartedAt = new Date();
+  }
   renderPlantLevels();
   navigateTo('plant-levels');
 }
@@ -2086,15 +2115,16 @@ function renderPlantLevelRooms() {
   if (completeBtn) completeBtn.classList.toggle('hidden', !allDone);
 
   if (!listEl) return;
+  const plantLockSvg = `<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
   listEl.innerHTML = level.rooms.map(room => {
     const done = !!levelResult[room.id];
-    return `<div class="room-item ${done ? 'completed' : ''}" onclick="startPlantRoom('${room.id}')">
+    return `<div class="room-item ${done ? 'completed' : ''}" style="${done ? 'cursor:default' : ''}" ${done ? '' : `onclick="startPlantRoom('${room.id}')"`}>
       <div class="room-item-check">${done ? '✓' : ''}</div>
       <div style="flex:1">
         <div class="room-item-name">${room.name}</div>
         <div class="room-item-meta">📷 Photo mandatory${done ? ' · Done' : ''}</div>
       </div>
-      <div class="room-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <div class="room-item-arrow" style="color:var(--text-muted);opacity:0.5">${done ? plantLockSvg : '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'}</div>
     </div>`;
   }).join('');
 }
@@ -2205,8 +2235,9 @@ function confirmPlantRoom() {
     notes: document.getElementById('plant-room-notes').value.trim(),
     checks, photos: [...STATE.plantRoomPhotos], hasIssue: hasReportable,
   };
+  // Persist mid-patrol progress immediately
+  try { localStorage.setItem(`t_plant_results_${STATE.activePlantTaskId}`, JSON.stringify(STATE.plantLevelResults)); } catch(e) {}
 
-  // Go back to level rooms list
   renderPlantLevelRooms();
   navigateTo('plant-level-rooms');
 }
@@ -2236,6 +2267,7 @@ function completePlantPatrol() {
   STATE._completedTaskRecord = record;
   if (!STATE.completedTaskIds.includes(task.id)) STATE.completedTaskIds.push(task.id);
   STATE.taskRecords.push(record);
+  try { localStorage.removeItem(`t_plant_results_${task.id}`); } catch(e) {}
   addActivity(`${task.label} — ${task.timeHint} completed`, 'patrol');
   saveState();
   syncToSheets({ type:'patrol', taskId:task.id, officer:'', taskLabel:task.label, timeHint:task.timeHint||'', site:SITE.name, startTime:STATE.taskStartTime, completedAt:endTime, duration, roomCount:totalRooms, issues });
@@ -2323,7 +2355,6 @@ function capturePhotos(input, previewId, arr) {
   const files = Array.from(input.files);
   if (!files.length) return;
   const preview = document.getElementById(previewId);
-  const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -2332,19 +2363,6 @@ function capturePhotos(input, previewId, arr) {
         const img = document.createElement('img');
         img.src = e.target.result; img.className = 'photo-thumb';
         preview.appendChild(img);
-      }
-      // Auto-save to camera roll / downloads on touch (mobile) devices
-      if (isTouch) {
-        try {
-          const ts = dateSlug();
-          const link = document.createElement('a');
-          link.href = e.target.result;
-          link.download = `sec_photo_${ts}.jpg`;
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } catch(ex) {}
       }
     };
     reader.readAsDataURL(file);
@@ -2382,6 +2400,20 @@ async function addPhotoToPDF(doc, photo, x, y, maxW, maxH) {
     doc.addImage(fixed, 'JPEG', x, y, w, h);
     return h + 4;
   } catch(e) { return 0; }
+}
+
+async function addEscalationPhotoToPDF(doc, photo, M, W, y) {
+  if (!photo) return 0;
+  const photoW = W - M * 2;
+  // Red label header
+  doc.setFillColor(180, 30, 30);
+  doc.roundedRect(M, y, photoW, 7, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+  doc.text('ESCALATION PHOTO', M + 4, y + 5);
+  y += 9;
+  const added = await addPhotoToPDF(doc, photo, M, y, photoW, 110);
+  return 9 + (added || 0);
 }
 
 // ═══════════════════════════════════════
@@ -2489,7 +2521,7 @@ async function generateTaskPDF() {
 // ═══════════════════════════════════════
 // END OF DAY PDF
 // ═══════════════════════════════════════
-async function generateEODPDF() {
+async function generateEODPDF() { // async needed for escalation photo rendering
   const officerName = document.getElementById('eod-officer-name').value.trim();
   if (!officerName) { showToast('Please enter your name'); document.getElementById('eod-officer-name').focus(); return; }
   showToast('Generating full day report...');
@@ -2556,12 +2588,20 @@ async function generateEODPDF() {
     y += 4;
     doc.setTextColor(239,68,68); doc.setFontSize(9); doc.setFont('helvetica','bold');
     doc.text('ESCALATIONS LOG', M, y); y += 8;
-    STATE.escalations.forEach(e => {
-      if(y>265){doc.addPage();y=20;}
-      doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,10,2,2,'F');
+    for (const e of STATE.escalations) {
+      if(y>250){doc.addPage();y=20;}
+      doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,13,2,2,'F');
       doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-      doc.text(`[${e.priority.toUpperCase()}] ${e.location}: ${e.text.slice(0,80)}`, M+4, y+7); y+=13;
-    });
+      doc.text(`[${e.priority.toUpperCase()}] ${e.location}`, M+4, y+5.5);
+      doc.setTextColor(200,180,180); doc.setFont('helvetica','normal');
+      doc.text(e.text.slice(0,90), M+4, y+10.5);
+      y += 16;
+      if (e.photo) {
+        if (y>230){doc.addPage();y=20;}
+        const added = await addEscalationPhotoToPDF(doc, e.photo, M, W, y);
+        if (added) y += added+4;
+      }
+    }
   }
 
   addFooter(doc, W, M);
@@ -2874,8 +2914,8 @@ async function generateDailySummaryPDF() {
       const descLines = doc.splitTextToSize(e.text, W-M*2-8);
       doc.text(descLines[0], M+4, y+10.5); y += 16;
       if (e.photo) {
-        if (y>240){doc.addPage();y=20;}
-        const added = await addPhotoToPDF(doc, e.photo, M+4, y, 50, 40);
+        if (y>230){doc.addPage();y=20;}
+        const added = await addEscalationPhotoToPDF(doc, e.photo, M, W, y);
         if (added) y += added+4;
       }
     }
