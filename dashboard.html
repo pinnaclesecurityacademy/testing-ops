@@ -461,14 +461,6 @@ function formatTime(ts) {
   catch(e) { return String(ts).slice(11,16); }
 }
 
-function showApp(errorMsg) {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  if (errorMsg) {
-    document.getElementById('error-area').innerHTML =
-      '<div class="error-banner">⚠ ' + esc(errorMsg) + '</div>';
-  }
-}
 
 // ── Clock + shift indicator ──────────────────────────────
 function updateClock() {
@@ -483,17 +475,22 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ── Fetch dashboard data ─────────────────────────────────
+// ── Show/hide loading overlay ────────────────────────────
+function showApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+// ── Fetch dashboard data via JSONP ───────────────────────
 function fetchDashboard() {
-  fetch(SHEETS_URL + '?action=getDashboard&t=' + Date.now())
-    .then(function(res) {
-      return res.text();
-    })
-    .then(function(text) {
-      console.log('[Raw response]', text.substring(0, 200));
-      var data = JSON.parse(text);
-      _dashboardLoaded = true;
-      console.log('[Dashboard raw taskCompletions]', JSON.stringify(data.taskCompletions));
+  var old = document.getElementById('sheets-script');
+  if (old) old.remove();
+
+  // Define callback on window before the script tag is injected
+  window.handleDashboardData = function(data) {
+    _dashboardLoaded = true;
+    console.log('[Dashboard raw]', JSON.stringify(data).substring(0, 300));
+    try {
       if (data.result === 'success') {
         dashData = data;
         renderDashboard(data);
@@ -501,16 +498,25 @@ function fetchDashboard() {
         document.getElementById('error-area').innerHTML = '';
         showApp();
       } else {
-        throw new Error(data.message || 'Non-success result: ' + data.result);
+        console.warn('[Dashboard] non-success:', data.result, data.message);
+        showApp();
       }
-    })
-    .catch(function(err) {
-      console.warn('[Dashboard error]', err.message);
-      document.getElementById('error-area').innerHTML =
-        '<div class="error-banner">⚠ Connection error: ' + esc(err.message) + ' — retrying in 30 s</div>';
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-    });
+    } catch(err) {
+      console.warn('[Render error]', err.message);
+      showApp();
+    }
+  };
+
+  var script = document.createElement('script');
+  script.id = 'sheets-script';
+  script.src = SHEETS_URL + '?action=getDashboard&callback=handleDashboardData&t=' + Date.now();
+  script.onerror = function() {
+    console.warn('[JSONP error] script failed to load');
+    document.getElementById('error-area').innerHTML =
+      '<div class="error-banner">⚠ Connection error — retrying in 30 s</div>';
+    showApp();
+  };
+  document.head.appendChild(script);
 }
 
 // ── Render ───────────────────────────────────────────────
@@ -736,9 +742,11 @@ function startRefresh() {
   // 10-second fallback: if fetch hasn't resolved, show empty dashboard
   setTimeout(function() {
     if (!_dashboardLoaded) {
-      console.warn('[Dashboard] 10s timeout — fetch did not complete.');
-      showApp('Request timed out. Check network and that the Apps Script is deployed as a web app accessible to Anyone.');
+      console.warn('[Dashboard] 10s timeout — JSONP did not fire.');
+      document.getElementById('error-area').innerHTML =
+        '<div class="error-banner">⚠ No response after 10 s. Check the Apps Script deployment URL and that it is published as a web app accessible to Anyone.</div>';
       try { renderDashboard({}); } catch(e) {}
+      showApp();
     }
   }, 10000);
 
