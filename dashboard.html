@@ -486,10 +486,10 @@ updateClock();
 // ── JSONP callback ───────────────────────────────────────
 function handleDashboardData(data) {
   _dashboardLoaded = true;
-  console.log('[Dashboard] raw response — result:', data && data.result,
+  console.log('[Dashboard raw]', JSON.stringify(data.taskCompletions));
+  console.log('[Dashboard] result:', data && data.result,
     '| patrols:', (data.patrols||[]).length,
-    '| taskCompletions:', (data.taskCompletions||[]).length,
-    (data.taskCompletions||[]).map(function(x){ return x && x.taskId; }));
+    '| taskCompletions:', (data.taskCompletions||[]).length);
 
   if (!data || data.result !== 'success') {
     showApp('Google Sheets returned: ' + (data && data.result ? data.result : 'no response'));
@@ -537,11 +537,12 @@ function renderDashboard(data) {
   // Primary: TaskCompletions tab objects — each has a .taskId property
   const completedIds = new Set();
   (data.taskCompletions || []).forEach(function(tc) {
-    if (tc && typeof tc === 'object' && !Array.isArray(tc) && tc.taskId) {
-      completedIds.add(String(tc.taskId));
-    }
+    if (!tc) return;
+    // Handle both object form {taskId:'...'} and array form ['timestamp','taskId',...]
+    var id = (typeof tc === 'object' && !Array.isArray(tc)) ? tc.taskId : tc[1];
+    if (id) completedIds.add(String(id).trim());
   });
-  console.log('[Dashboard] completedIds from taskCompletions:', Array.from(completedIds));
+  console.log('[completedIds]', Array.from(completedIds));
 
   // Fallback: scan patrol rows
   // Each row: [0]=Timestamp [1]=Officer [2]=TaskLabel [3]=TimeHint ... [10]=TaskId
@@ -549,6 +550,7 @@ function renderDashboard(data) {
   const usedPatrolIdx = new Set();
 
   DAY_TASKS.forEach(function(t) {
+    console.log('[match]', t.id, completedIds.has(t.id));
     // 1. Exact taskId hit — most reliable
     if (completedIds.has(t.id)) { doneTaskIds.push(t.id); return; }
 
