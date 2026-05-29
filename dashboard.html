@@ -483,46 +483,38 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// ── JSONP callback ───────────────────────────────────────
-function handleDashboardData(data) {
-  _dashboardLoaded = true;
-  console.log('[Dashboard raw]', JSON.stringify(data.taskCompletions));
-  console.log('[Dashboard] result:', data && data.result,
-    '| patrols:', (data.patrols||[]).length,
-    '| taskCompletions:', (data.taskCompletions||[]).length);
-
-  if (!data || data.result !== 'success') {
-    showApp('Google Sheets returned: ' + (data && data.result ? data.result : 'no response'));
-    return;
-  }
-
-  dashData = data;
-  try {
-    renderDashboard(data);
-  } catch(err) {
-    console.error('[Dashboard] renderDashboard threw:', err);
-    showApp('Render error: ' + err.message);
-    return;
-  }
-  document.getElementById('last-updated').textContent = 'Updated ' + (data.lastUpdated || '—');
-  document.getElementById('error-area').innerHTML = '';
-  showApp();
-}
-
-// ── Fetch via JSONP script tag ───────────────────────────
+// ── Fetch dashboard data ─────────────────────────────────
 function fetchDashboard() {
-  var old = document.getElementById('sheets-script');
-  if (old) old.remove();
-  var script = document.createElement('script');
-  script.id = 'sheets-script';
-  script.onerror = function() {
-    console.warn('[Dashboard] JSONP script load error');
-    document.getElementById('error-area').innerHTML =
-      '<div class="error-banner">⚠ Connection error — retrying in 30 s. Check Apps Script deployment URL and permissions.</div>';
-    if (!_dashboardLoaded) showApp('Could not reach Google Sheets. Check the deployment URL.');
-  };
-  script.src = SHEETS_URL + '?action=getDashboard&callback=handleDashboardData&t=' + Date.now();
-  document.body.appendChild(script);
+  fetch(SHEETS_URL + '?action=getDashboard&t=' + Date.now())
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      _dashboardLoaded = true;
+      console.log('[Dashboard raw]', JSON.stringify(data.taskCompletions));
+      console.log('[Dashboard] result:', data.result,
+        '| patrols:', (data.patrols||[]).length,
+        '| taskCompletions:', (data.taskCompletions||[]).length);
+      if (!data || data.result !== 'success') {
+        showApp('Google Sheets returned: ' + (data && data.result ? data.result : 'no response'));
+        return;
+      }
+      dashData = data;
+      try {
+        renderDashboard(data);
+      } catch(err) {
+        console.error('[Dashboard] renderDashboard threw:', err);
+        showApp('Render error: ' + err.message);
+        return;
+      }
+      document.getElementById('last-updated').textContent = 'Updated ' + (data.lastUpdated || '—');
+      document.getElementById('error-area').innerHTML = '';
+      showApp();
+    })
+    .catch(function(err) {
+      console.warn('[Dashboard error]', err.message);
+      document.getElementById('error-area').innerHTML =
+        '<div class="error-banner">⚠ Connection error: ' + esc(err.message) + ' — retrying in 30 s</div>';
+      if (!_dashboardLoaded) showApp('Could not reach Google Sheets: ' + err.message);
+    });
 }
 
 // ── Render ───────────────────────────────────────────────
@@ -745,12 +737,11 @@ function toggleEsc(idx) {
 
 // ── Auto-refresh + timeout fallback ─────────────────────
 function startRefresh() {
-  // 10-second fallback: if JSONP never calls back, show app anyway with error
+  // 10-second fallback: if fetch hasn't resolved, show empty dashboard
   setTimeout(function() {
     if (!_dashboardLoaded) {
-      console.warn('[Dashboard] 10s timeout — JSONP did not fire. Showing empty dashboard.');
-      showApp('Could not load data from Google Sheets. Check the deployment URL and that the script is published as a web app accessible to Anyone.');
-      // Still render an empty dashboard so layout is visible
+      console.warn('[Dashboard] 10s timeout — fetch did not complete.');
+      showApp('Request timed out. Check network and that the Apps Script is deployed as a web app accessible to Anyone.');
       try { renderDashboard({}); } catch(e) {}
     }
   }, 10000);
