@@ -426,6 +426,27 @@
 </div>
 
 <script>
+// ── JSONP callbacks — must be on window before any script tag fires ──
+window.handleDashboardData = function(data) {
+  console.log('[JSONP callback fired]', data && data.result);
+  _dashboardLoaded = true;
+  try {
+    if (data.result === 'success') {
+      dashData = data;
+      renderDashboard(data);
+      document.getElementById('last-updated').textContent = 'Updated ' + (data.lastUpdated || '—');
+      document.getElementById('error-area').innerHTML = '';
+    } else {
+      console.warn('[Dashboard] non-success result:', data.result, data.message);
+    }
+  } catch(err) {
+    console.warn('[Render error]', err.message);
+  }
+  showApp();
+};
+
+window.testCallback = function(data) { console.log('[TEST callback]', data && data.result); };
+
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxGIMlKhiedkYFA-s7gUmot-LUaymmMbzAiZ2HxZbTiIwySFsdtC2y4NyH5sjyEsHSeTw/exec';
 
 // Must match DAY_SHIFT_TASKS ids/labels in index.html exactly
@@ -485,28 +506,6 @@ function showApp() {
 function fetchDashboard() {
   var old = document.getElementById('sheets-script');
   if (old) old.remove();
-
-  // Define callback on window before the script tag is injected
-  window.handleDashboardData = function(data) {
-    _dashboardLoaded = true;
-    console.log('[Dashboard raw]', JSON.stringify(data).substring(0, 300));
-    try {
-      if (data.result === 'success') {
-        dashData = data;
-        renderDashboard(data);
-        document.getElementById('last-updated').textContent = 'Updated ' + (data.lastUpdated || '—');
-        document.getElementById('error-area').innerHTML = '';
-        showApp();
-      } else {
-        console.warn('[Dashboard] non-success:', data.result, data.message);
-        showApp();
-      }
-    } catch(err) {
-      console.warn('[Render error]', err.message);
-      showApp();
-    }
-  };
-
   var script = document.createElement('script');
   script.id = 'sheets-script';
   script.src = SHEETS_URL + '?action=getDashboard&callback=handleDashboardData&t=' + Date.now();
