@@ -618,6 +618,8 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 
 /* ── DESKTOP SIDEBAR ─────────────────────────── */
 .sidebar-extra { display: none; }
+.sidebar-header { display: none; }
+.sidebar-nav-label { display: none; }
 
 .sidebar-divider { height: 1px; background: var(--border); margin: 10px 16px; }
 .sidebar-section-label {
@@ -649,7 +651,7 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   .main {
     display: grid;
     grid-template-rows: var(--nav-h) 1fr;
-    grid-template-columns: 264px 1fr;
+    grid-template-columns: 240px 1fr;
     grid-template-areas: "topnav topnav" "sidebar content";
     height: 100%;
     overflow: hidden;
@@ -665,29 +667,69 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
     min-height: 0;
     border-top: none;
     border-right: 1px solid var(--border);
-    padding: 8px 0 0;
+    padding: 0;
     justify-content: flex-start;
     align-items: stretch;
     overflow-y: auto;
     gap: 0;
   }
+
+  /* Sidebar header */
+  .sidebar-header {
+    display: block;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px; font-weight: 800; letter-spacing: 3px; color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .sidebar-site-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px; font-weight: 800; color: var(--purple);
+    letter-spacing: 0.5px; margin-bottom: 10px; line-height: 1.2;
+  }
+  .sidebar-shift-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    background: var(--purple-dim); color: var(--purple);
+    border: 1px solid var(--border-accent); border-radius: 99px;
+    padding: 3px 10px;
+  }
+
+  /* Nav section label */
+  .sidebar-nav-label {
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px; font-weight: 700; letter-spacing: 2px;
+    color: var(--text-muted); padding: 14px 20px 4px;
+  }
+
   .bnav-btn {
     flex-direction: row;
     justify-content: flex-start;
-    padding: 14px 20px;
+    padding: 11px 20px;
     font-size: 12px;
     letter-spacing: 0.3px;
     border-radius: 0;
-    gap: 14px;
-    min-height: 48px;
+    gap: 12px;
+    min-height: 44px;
   }
+  .bnav-btn svg { flex-shrink: 0; }
   .bnav-btn span { font-size: 12px; font-weight: 600; }
   .bnav-btn.active {
     background: rgba(124,92,252,0.1);
     border-left: 3px solid var(--purple);
     padding-left: 17px;
   }
+
+  /* Content area: max-width 800px centered */
   .page-scroll { padding-bottom: 24px; }
+  .page-scroll > * { max-width: 800px; margin-left: auto; margin-right: auto; }
+
   .sidebar-extra { display: block; }
   .toast { bottom: 24px; }
 }
@@ -1158,6 +1200,12 @@ body.night-mode {
 </div><!-- /page-container -->
 
 <nav class="bottomnav">
+  <div class="sidebar-header">
+    <div class="sidebar-brand">TESTING</div>
+    <div class="sidebar-site-name" id="sidebar-site-name-el">Tower 3 ITS</div>
+    <div class="sidebar-shift-pill" id="sidebar-shift-pill">DAY SHIFT</div>
+  </div>
+  <div class="sidebar-nav-label">NAVIGATE</div>
   <button class="bnav-btn active" id="bnav-dashboard" onclick="navigateTo('dashboard')">
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
     <span>Dashboard</span>
@@ -1180,7 +1228,7 @@ body.night-mode {
   </button>
   <div class="sidebar-extra">
     <div class="sidebar-divider"></div>
-    <div class="sidebar-section-label">DAY SHIFT TASKS</div>
+    <div class="sidebar-section-label" id="sidebar-tasks-label">DAY SHIFT TASKS</div>
     <div id="sidebar-shift-list"></div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-status" id="sidebar-site-status"></div>
@@ -1529,6 +1577,10 @@ function applyShiftTheme() {
   document.body.classList.add(shift + '-mode');
   const indicator = document.getElementById('shift-indicator');
   if (indicator) indicator.textContent = 'SHIFT: ' + shift.toUpperCase();
+  const pill = document.getElementById('sidebar-shift-pill');
+  if (pill) pill.textContent = shift.toUpperCase() + ' SHIFT';
+  const tasksLabel = document.getElementById('sidebar-tasks-label');
+  if (tasksLabel) tasksLabel.textContent = shift.toUpperCase() + ' SHIFT TASKS';
 }
 
 // ═══════════════════════════════════════
