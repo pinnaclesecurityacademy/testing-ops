@@ -462,6 +462,9 @@ updateClock();
 // JSONP callback — called by the script tag
 function handleDashboardData(data) {
   if (data.result === 'success') {
+    const tc = data.taskCompletions || [];
+    const patrols = data.patrols || [];
+    console.log('[Dashboard] patrols:', patrols.length, '| taskCompletions:', tc.length, tc.map(x => x && x.taskId));
     dashData = data;
     renderDashboard(data);
     document.getElementById('last-updated').textContent = 'Updated ' + data.lastUpdated;

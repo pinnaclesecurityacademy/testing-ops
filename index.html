@@ -2983,13 +2983,16 @@ function _showSyncBadge() {
 
 function syncToSheets(data) {
   if (!SHEETS_URL) return;
-  console.log('[Sync →]', data.type, data);
+  console.log('[Sync →]', data.type, JSON.stringify(data).slice(0, 200));
   _showSyncBadge();
   try {
+    // No Content-Type header — 'application/json' is non-simple and triggers a CORS
+    // preflight that Apps Script cannot handle, causing the POST to be silently dropped.
+    // Without the header the browser sends text/plain (simple), skips preflight, and
+    // e.postData.contents in doPost() still contains the full JSON string.
     fetch(SHEETS_URL, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }).catch(err => console.warn('[Sync] fetch error:', err));
   } catch(e) { console.warn('[Sync] error:', e); }
@@ -3001,29 +3004,19 @@ function syncPDFToSheets(officer, reportType, filename, pdfBase64) {
     fetch(SHEETS_URL, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'pdf',
-        officer,
-        reportType,
-        filename,
-        pdfData: pdfBase64,
-      }),
+      body: JSON.stringify({ type:'pdf', officer, reportType, filename, pdfData: pdfBase64 }),
     }).catch(() => {});
   } catch(e) {}
 }
 
 function syncActivityToSheets(title, activityType) {
-  syncToSheets({
-    type: 'activity',
-    activityType,
-    title,
-    site: SITE.name,
-  });
+  syncToSheets({ type:'activity', activityType, title, site: SITE.name });
 }
 
 function syncTaskComplete(taskId, taskLabel, timeHint, officer, completedAt) {
-  syncToSheets({ type:'taskComplete', taskId, taskLabel, timeHint, officer: officer || '', site: SITE.name, completedAt });
+  const payload = { type:'taskComplete', taskId, taskLabel, timeHint: timeHint||'', officer: officer||'', site: SITE.name, completedAt: completedAt||nowTime() };
+  console.log('[TaskComplete]', payload.taskId, payload.taskLabel, payload.timeHint, payload.completedAt);
+  syncToSheets(payload);
 }
 
 // ═══════════════════════════════════════
