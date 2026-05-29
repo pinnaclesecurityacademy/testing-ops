@@ -486,34 +486,30 @@ updateClock();
 // ── Fetch dashboard data ─────────────────────────────────
 function fetchDashboard() {
   fetch(SHEETS_URL + '?action=getDashboard&t=' + Date.now())
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
+    .then(function(res) {
+      return res.text();
+    })
+    .then(function(text) {
+      console.log('[Raw response]', text.substring(0, 200));
+      var data = JSON.parse(text);
       _dashboardLoaded = true;
-      console.log('[Dashboard raw]', JSON.stringify(data.taskCompletions));
-      console.log('[Dashboard] result:', data.result,
-        '| patrols:', (data.patrols||[]).length,
-        '| taskCompletions:', (data.taskCompletions||[]).length);
-      if (!data || data.result !== 'success') {
-        showApp('Google Sheets returned: ' + (data && data.result ? data.result : 'no response'));
-        return;
-      }
-      dashData = data;
-      try {
+      console.log('[Dashboard raw taskCompletions]', JSON.stringify(data.taskCompletions));
+      if (data.result === 'success') {
+        dashData = data;
         renderDashboard(data);
-      } catch(err) {
-        console.error('[Dashboard] renderDashboard threw:', err);
-        showApp('Render error: ' + err.message);
-        return;
+        document.getElementById('last-updated').textContent = 'Updated ' + (data.lastUpdated || '—');
+        document.getElementById('error-area').innerHTML = '';
+        showApp();
+      } else {
+        throw new Error(data.message || 'Non-success result: ' + data.result);
       }
-      document.getElementById('last-updated').textContent = 'Updated ' + (data.lastUpdated || '—');
-      document.getElementById('error-area').innerHTML = '';
-      showApp();
     })
     .catch(function(err) {
       console.warn('[Dashboard error]', err.message);
       document.getElementById('error-area').innerHTML =
         '<div class="error-banner">⚠ Connection error: ' + esc(err.message) + ' — retrying in 30 s</div>';
-      if (!_dashboardLoaded) showApp('Could not reach Google Sheets: ' + err.message);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
     });
 }
 
