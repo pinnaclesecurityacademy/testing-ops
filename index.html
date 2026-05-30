@@ -801,8 +801,8 @@ body.night-mode {
 <nav class="topnav">
   <div class="topnav-left"><span class="nav-wordmark">TESTING</span></div>
   <div class="topnav-center"><span id="nav-site-name">Tower 3 ITS</span></div>
-  <div class="topnav-right" style="gap:10px">
-    <div id="sync-badge" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--purple);opacity:0.8">↑ SYNC</div>
+  <div class="topnav-right">
+    <button id="sync-btn" onclick="manualSync()" style="background:none;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-muted);padding:4px 8px;">↑ SYNC</button>
     <div class="nav-time" id="nav-time"></div>
   </div>
 </nav>
@@ -1239,11 +1239,107 @@ body.night-mode {
 </div><!-- /app -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
 
 const SITE = { name: 'Tower 3 ITS', auditsTarget: 4 };
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxGIMlKhiedkYFA-s7gUmot-LUaymmMbzAiZ2HxZbTiIwySFsdtC2y4NyH5sjyEsHSeTw/exec';
+
+const SUPABASE_URL = 'https://htmualmpkihisxnyvax.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0bXVhbG1ncGtpaGlzeG55dmF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTMwODAsImV4cCI6MjA5NTY4OTA4MH0.m5_YOhMVmVLiinZo1hLc8WV9b8q1tm_E2ysi0xqkADM';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SB_TABLE = 'ops_state';
+const SB_SITE_ID = 'tower3-its';
+
+async function sbSaveState() {
+  try {
+    const { error } = await _sb.from(SB_TABLE).upsert({
+      site_id: SB_SITE_ID,
+      state_date: new Date().toDateString(),
+      completed_task_ids: STATE.completedTaskIds,
+      task_records: STATE.taskRecords,
+      audit_records: STATE.auditRecords,
+      escalations: STATE.escalations,
+      activity: STATE.activity,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'site_id' });
+    if (error) console.warn('Supabase save error:', error.message);
+  } catch(e) { console.warn('Supabase save failed:', e); }
+}
+
+async function sbSaveLobbyState() {
+  try {
+    const lobbyData = (STATE.activeLobby && STATE.lobbyStartTime) ? {
+      taskId: STATE.activeLobby.id,
+      startTime: STATE.lobbyStartTime,
+      startedAt: STATE.lobbyStartedAt ? STATE.lobbyStartedAt.toISOString() : null,
+    } : null;
+    await _sb.from(SB_TABLE).upsert({
+      site_id: SB_SITE_ID,
+      lobby: lobbyData,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'site_id' });
+  } catch(e) { console.warn('Supabase lobby save failed:', e); }
+}
+
+async function sbLoadState() {
+  try {
+    const { data, error } = await _sb.from(SB_TABLE).select('*').eq('site_id', SB_SITE_ID).single();
+    if (error || !data) return false;
+    const today = new Date().toDateString();
+    if (data.state_date !== today) {
+      await _sb.from(SB_TABLE).upsert({
+        site_id: SB_SITE_ID,
+        state_date: today,
+        completed_task_ids: [],
+        task_records: [],
+        audit_records: [],
+        escalations: [],
+        activity: [],
+        lobby: null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'site_id' });
+      return true;
+    }
+    STATE.completedTaskIds = data.completed_task_ids || [];
+    STATE.taskRecords = data.task_records || [];
+    STATE.auditRecords = data.audit_records || [];
+    STATE.escalations = data.escalations || [];
+    STATE.activity = data.activity || [];
+    if (data.lobby && data.lobby.taskId) {
+      STATE.activeLobby = DAY_SHIFT_TASKS.find(t => t.id === data.lobby.taskId);
+      STATE.lobbyStartTime = data.lobby.startTime;
+      STATE.lobbyStartedAt = data.lobby.startedAt ? new Date(data.lobby.startedAt) : null;
+    }
+    return true;
+  } catch(e) { console.warn('Supabase load failed:', e); return false; }
+}
+
+let _syncInterval = null;
+function startSyncPolling() {
+  if (_syncInterval) return;
+  _syncInterval = setInterval(async () => {
+    const ok = await sbLoadState();
+    if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); }
+  }, 30000);
+}
+
+function showSyncStatus(msg, ok = true) {
+  const btn = document.getElementById('sync-btn');
+  if (btn) {
+    btn.textContent = msg;
+    btn.style.color = ok ? 'var(--green)' : 'var(--red)';
+    setTimeout(() => { btn.textContent = '↑ SYNC'; btn.style.color = ''; }, 2500);
+  }
+}
+
+async function manualSync() {
+  showSyncStatus('SYNCING…');
+  const ok = await sbLoadState();
+  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('SYNCED ✓', true); }
+  else { showSyncStatus('FAILED ✗', false); }
+}
 
 // ═══════════════════════════════════════
 // DAY SHIFT TASK DEFINITIONS
@@ -1477,31 +1573,14 @@ function getShift() {
 
 function loadState() {
   try {
-    const currentShift = getShift();
     const today = new Date().toDateString();
-    const storedShift = localStorage.getItem('t_shift');
-    const storedShiftDate = localStorage.getItem('t_shiftDate');
-    const shiftChanged = storedShift !== currentShift || storedShiftDate !== today;
-    if (shiftChanged) {
-      ['t_completed','t_tasks','t_audits','t_escs','t_activity','t_lobby','t_reports'].forEach(k => localStorage.removeItem(k));
-      // Clear any mid-patrol room progress keys
-      for (let i = localStorage.length - 1; i >= 0; i--) {
-        const k = localStorage.key(i);
-        if (k && (k.startsWith('t_room_results_') || k.startsWith('t_plant_results_'))) localStorage.removeItem(k);
-      }
-      localStorage.setItem('t_date', today);
-      localStorage.setItem('t_shift', currentShift);
-      localStorage.setItem('t_shiftDate', today);
-      return;
-    }
+    if (localStorage.getItem('t_date') !== today) return;
     const load = (k, def) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; } catch(e){ return def; } };
     STATE.completedTaskIds = load('t_completed', []);
     STATE.taskRecords = load('t_tasks', []);
     STATE.auditRecords = load('t_audits', []);
     STATE.escalations = load('t_escs', []);
     STATE.activity = load('t_activity', []);
-    STATE.shiftReports = load('t_reports', []);
-    // Restore in-progress lobby
     const lobby = load('t_lobby', null);
     if (lobby && lobby.taskId) {
       STATE.activeLobby = DAY_SHIFT_TASKS.find(t => t.id === lobby.taskId);
@@ -1512,29 +1591,19 @@ function loadState() {
 }
 
 function saveState() {
+  sbSaveState();
   try {
-    const today = new Date().toDateString();
     localStorage.setItem('t_completed', JSON.stringify(STATE.completedTaskIds));
     localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
     localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
     localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
     localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
-    localStorage.setItem('t_date', today);
-    localStorage.setItem('t_shift', getShift());
-    localStorage.setItem('t_shiftDate', today);
-    // Try to persist reports with dataUri; fall back to metadata-only if quota exceeded
-    try {
-      localStorage.setItem('t_reports', JSON.stringify(STATE.shiftReports || []));
-    } catch(e2) {
-      try {
-        const lite = (STATE.shiftReports || []).map(r => ({ ...r, dataUri: '' }));
-        localStorage.setItem('t_reports', JSON.stringify(lite));
-      } catch(e3) {}
-    }
+    localStorage.setItem('t_date', new Date().toDateString());
   } catch(e) {}
 }
 
 function saveLobbyState() {
+  sbSaveLobbyState();
   try {
     if (STATE.activeLobby && STATE.lobbyStartTime) {
       localStorage.setItem('t_lobby', JSON.stringify({
@@ -3074,29 +3143,22 @@ function syncTaskComplete(taskId, taskLabel, timeHint, officer, completedAt) {
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
-window.addEventListener('DOMContentLoaded',()=>{
-  loadState();
-  applyShiftTheme();
+window.addEventListener('DOMContentLoaded', async () => {
   updateClock();
   setInterval(updateClock, 30000);
-
+  applyShiftTheme();
   const splash = document.getElementById('splash');
   const main = document.getElementById('main');
-
-  // Show main immediately
+  loadState();
   if (main) main.classList.remove('hidden');
-
-  // Refresh all pages
   refreshDashboard();
   refreshDayShift();
   refreshAuditList();
-
-  // Fade splash after short delay
-  setTimeout(()=>{
-    if (splash) splash.classList.add('fade-out');
-    setTimeout(()=>{ if(splash) splash.style.display='none'; }, 600);
-  }, 800);
-
+  const ok = await sbLoadState();
+  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('SYNCED ✓', true); }
+  else { showSyncStatus('OFFLINE', false); }
+  startSyncPolling();
+  setTimeout(()=>{ if (splash) splash.classList.add('fade-out'); setTimeout(()=>{ if(splash) splash.style.display='none'; }, 600); }, 800);
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
 
