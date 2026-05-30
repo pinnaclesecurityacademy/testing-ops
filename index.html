@@ -1264,8 +1264,8 @@ async function sbSaveState() {
       activity: STATE.activity,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'site_id' });
-    if (error) console.warn('Supabase save error:', error.message);
-  } catch(e) { console.warn('Supabase save failed:', e); }
+    if (error) { console.warn('Supabase save error:', error.message); document.getElementById('sync-btn').textContent = 'ERR: ' + error.message; }
+  } catch(e) { console.warn('Supabase save failed:', e); document.getElementById('sync-btn').textContent = 'ERR: ' + e.message; }
 }
 
 async function sbSaveLobbyState() {
