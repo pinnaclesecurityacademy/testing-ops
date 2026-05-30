@@ -1104,6 +1104,17 @@ body.night-mode {
       <div class="patrol-active-meta">SELECT ASSET TO INSPECT</div>
     </div>
     <div class="asset-list" id="asset-select-list"></div>
+    <div id="audit-report-section" style="display:none;padding:0 16px 16px">
+      <div id="audit-report-status" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-muted);text-align:center;padding:10px 0 14px"></div>
+      <div class="field-group">
+        <label class="field-label">OFFICER NAME (FOR REPORT)</label>
+        <input type="text" class="field-input" id="audit-report-officer" placeholder="Enter your full name..."/>
+      </div>
+      <button class="btn-primary btn-full" style="margin-top:10px" onclick="generateAuditSessionReport()">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        GENERATE REPORT ›
+      </button>
+    </div>
     <div class="bottom-spacer"></div>
   </div>
 </div>
@@ -1159,17 +1170,11 @@ body.night-mode {
       <div class="complete-meta" id="complete-audit-meta"></div>
     </div>
     <div class="summary-card" id="audit-summary-card"></div>
-    <div class="field-group" style="padding:0 16px">
-      <label class="field-label">OFFICER NAME (FOR REPORT)</label>
-      <input type="text" class="field-input" id="audit-officer-name" placeholder="Enter your full name..."/>
-    </div>
-    <div style="padding:0 16px;margin-top:12px">
+    <div id="audit-complete-status" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-muted);text-align:center;padding:10px 0 4px"></div>
+    <div style="padding:0 16px;margin-top:8px">
       <div class="btn-row">
-        <button class="btn-secondary" onclick="saveContinueAudit()">SAVE &amp; CONTINUE</button>
-        <button class="btn-primary" onclick="generateAuditPDF()">
-          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          GENERATE PDF
-        </button>
+        <button class="btn-secondary" onclick="auditAnother()">AUDIT ANOTHER</button>
+        <button class="btn-primary" onclick="navigateTo('audits')">DONE ›</button>
       </div>
     </div>
     <div class="bottom-spacer"></div>
@@ -2210,15 +2215,19 @@ function saveContinueLobby() {
   navigateTo('dayshift');
 }
 
-function saveContinueAudit() {
-  const officerName = document.getElementById('audit-officer-name').value.trim();
-  if (!officerName) { showToast('Please enter your name'); return; }
-  const record = STATE._completedAuditRecord;
-  if (record) {
-    record.officer = officerName;
-    syncToSheets({ type:'audit', officer:officerName, auditTypeName:record.auditTypeName, asset:record.asset, site:SITE.name, completedAt:record.completedAt, answers:record.answers.length, noCount:record.noCount });
-  }
-  navigateTo('audits');
+function auditAnother() {
+  refreshAuditSelect();
+  navigateTo('audit-select');
+}
+
+function refreshAuditSelect() {
+  const type = STATE.activeAudit;
+  if (!type) return;
+  const records = STATE.auditRecords.filter(r => r.auditTypeId === type.id);
+  const section = document.getElementById('audit-report-section');
+  const statusEl = document.getElementById('audit-report-status');
+  if (section) section.style.display = records.length > 0 ? '' : 'none';
+  if (statusEl) statusEl.textContent = `${records.length} asset${records.length!==1?'s':''} audited today — generate a session report below`;
 }
 
 function renderTaskSummary(record) {
@@ -2879,6 +2888,7 @@ function startAudit(typeId) {
           <div class="asset-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
         </div>`).join('')}
     </div>`).join('');
+  refreshAuditSelect();
   navigateTo('audit-select');
 }
 
@@ -2974,73 +2984,111 @@ function completeAudit() {
     <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${noCount>0?'bad':'good'}">${noCount} identified</span></div>
     ${skipCount>0?`<div class="summary-row"><span class="summary-label">SKIPPED</span><span class="summary-value" style="color:#fbbf24">${skipCount} question(s)</span></div>`:''}`;
 
-  document.getElementById('audit-officer-name').value = '';
+  const todayCount = STATE.auditRecords.filter(r => r.auditTypeId === type.id).length;
+  document.getElementById('audit-complete-status').textContent = `${todayCount} asset${todayCount!==1?'s':''} audited today`;
   navigateTo('audit-complete');
 }
 
-async function generateAuditPDF() {
-  const officerName = document.getElementById('audit-officer-name').value.trim();
-  if (!officerName) { showToast('Please enter your name first'); return; }
-  showToast('Generating PDF...');
-  const record = STATE._completedAuditRecord;
-  if (!record) return;
-  record.officer = officerName;
-  syncToSheets({ type:'audit', officer:officerName, auditTypeName:record.auditTypeName, asset:record.asset, site:SITE.name, completedAt:record.completedAt, answers:record.answers.length, noCount:record.noCount });
+async function generateAuditSessionReport() {
+  const officerName = document.getElementById('audit-report-officer').value.trim();
+  if (!officerName) { showToast('Please enter your name'); return; }
+  const type = STATE.activeAudit;
+  if (!type) return;
+  const records = STATE.auditRecords.filter(r => r.auditTypeId === type.id);
+  if (records.length === 0) { showToast('No completed audits to report'); return; }
+  showToast('Generating report...');
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   const W=210, M=16;
 
-  doc.setFillColor(15,15,25);doc.rect(0,0,W,40,'F');
-  doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text('SECURITY OPERATIONS',M,17);
-  doc.setFontSize(10);doc.setTextColor(150,150,180);doc.text('AUDIT & INSPECTION REPORT',M,26);
-  doc.setTextColor(59,130,246);doc.setFontSize(9);doc.text(SITE.name.toUpperCase(),W-M,17,{align:'right'});
-  doc.setTextColor(150,150,180);doc.setFontSize(8);doc.text('TESTING PLATFORM',W-M,26,{align:'right'});
+  // Header
+  doc.setFillColor(15,15,25); doc.rect(0,0,W,46,'F');
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('SECURITY OPERATIONS', M, 17);
+  doc.setFontSize(10); doc.setTextColor(150,150,180); doc.setFont('helvetica','normal');
+  doc.text('AUDIT SESSION REPORT', M, 27);
+  doc.setTextColor(59,130,246); doc.setFontSize(9); doc.setFont('helvetica','bold');
+  doc.text(SITE.name.toUpperCase(), W-M, 17, {align:'right'});
+  doc.setTextColor(150,150,180); doc.setFontSize(8); doc.setFont('helvetica','normal');
+  doc.text(type.name.toUpperCase(), W-M, 27, {align:'right'});
 
-  let y=48;
-  doc.setFillColor(22,22,32);doc.roundedRect(M,y,W-M*2,30,3,3,'F');
-  const items=[['OFFICER',officerName],['AUDIT TYPE',record.auditTypeName],['ASSET',record.asset],['DATE',new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'})],['COMPLETED',record.completedAt],['SITE',SITE.name]];
-  const cw=(W-M*2)/3;
-  items.forEach((item,i)=>{const col=i%3,row=Math.floor(i/3),x=M+col*cw+6,iy=y+7+row*13;doc.setTextColor(100,100,130);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text(item[0],x,iy);doc.setTextColor(220,220,240);doc.setFontSize(9);doc.setFont('helvetica','bold');doc.text(String(item[1]),x,iy+4.5);doc.setFont('helvetica','normal');});
-  y+=38;
+  let y=52;
 
-  const nc=record.noCount;
-  const sc=record.skipCount||0;
-  doc.setFillColor(nc>0?60:20,nc>0?20:60,20);doc.roundedRect(M,y,W-M*2,9,2,2,'F');
-  doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
-  doc.text(`STATUS: ${record.answers.length} QUESTIONS · ${nc} ISSUE(S)${sc>0?` · ${sc} SKIPPED`:''}`,M+4,y+6.5);y+=15;
+  // Meta block: officer, type, date, assets count
+  const dateStr = new Date().toLocaleDateString('en-AU',{day:'2-digit',month:'long',year:'numeric'});
+  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,20,3,3,'F');
+  const mw=(W-M*2)/4;
+  [['OFFICER',officerName],['AUDIT TYPE',type.name],['DATE',dateStr],['ASSETS',String(records.length)]].forEach(([lbl,val],i)=>{
+    const x=M+i*mw+4;
+    doc.setTextColor(100,100,130); doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.text(lbl,x,y+7);
+    doc.setTextColor(220,220,240); doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.text(val,x,y+14);
+  });
+  y+=26;
 
-  for(const [i,ans] of record.answers.entries()){
-    if(y>248){doc.addPage();y=20;}
-    const isNo=ans.answer==='no';
-    const isSkip=ans.answer==='skip';
-    doc.setFillColor(isNo?50:isSkip?45:22,isNo?20:isSkip?38:22,isNo?20:isSkip?5:32);
-    doc.roundedRect(M,y,W-M*2,9,2,2,'F');
-    doc.setTextColor(isNo?239:isSkip?251:59,isNo?68:isSkip?191:130,isNo?68:isSkip?36:246);
-    doc.setFontSize(7);doc.setFont('helvetica','bold');
-    doc.text(`Q${String(i+1).padStart(2,'0')}  ${ans.answer.toUpperCase()}`,M+4,y+6.5);
-    doc.setTextColor(200,200,220);doc.setFont('helvetica','normal');doc.setFontSize(8);
-    const qLines=doc.splitTextToSize(ans.question,W-M*2-30);doc.text(qLines,M+22,y+6.5);
-    y+=qLines.length>1?12+(qLines.length-1)*4:13;
-    if(isSkip&&ans.skipReason){doc.setTextColor(251,191,36);doc.setFontSize(7.5);const sl=doc.splitTextToSize(`Skip reason: ${ans.skipReason}`,W-M*2-8);doc.text(sl,M+4,y);y+=sl.length*4+3;}
-    if(ans.comments){doc.setTextColor(150,150,170);doc.setFontSize(7.5);const cl=doc.splitTextToSize(`Comment: ${ans.comments}`,W-M*2-8);doc.text(cl,M+4,y);y+=cl.length*4+3;}
-    for(const photo of (ans.photos||[]).slice(0,2)){
-      if(y>235){doc.addPage();y=20;}
-      const added = await addPhotoToPDF(doc, photo, M+4, y, 55, 45);
-      if(added) y+=added+2;
+  // Session totals bar
+  const totalNo=records.reduce((s,r)=>s+r.noCount,0);
+  const totalSkip=records.reduce((s,r)=>s+(r.skipCount||0),0);
+  const totalQ=records.reduce((s,r)=>s+r.answers.length,0);
+  doc.setFillColor(totalNo>0?60:20,totalNo>0?20:60,20); doc.roundedRect(M,y,W-M*2,9,2,2,'F');
+  doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text(`SESSION: ${records.length} ASSETS · ${totalQ} QUESTIONS · ${totalNo} ISSUES${totalSkip>0?` · ${totalSkip} SKIPPED`:''}`,M+4,y+6.5);
+  y+=15;
+
+  // Per-asset sections
+  for(const record of records){
+    if(y>240){doc.addPage();y=20;}
+    // Asset header
+    doc.setFillColor(28,28,46); doc.roundedRect(M,y,W-M*2,14,2,2,'F');
+    doc.setTextColor(59,130,246); doc.setFontSize(11); doc.setFont('helvetica','bold');
+    doc.text(record.asset,M+4,y+9.5);
+    const nc=record.noCount, sc=record.skipCount||0;
+    doc.setTextColor(150,150,170); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(`${record.completedAt} · ${record.answers.length}Q · ${nc} issue(s)${sc>0?` · ${sc} skipped`:''}`,W-M-4,y+9.5,{align:'right'});
+    y+=18;
+
+    for(const [i,ans] of record.answers.entries()){
+      if(y>248){doc.addPage();y=20;}
+      const isNo=ans.answer==='no', isSkip=ans.answer==='skip';
+      doc.setFillColor(isNo?50:isSkip?45:22,isNo?20:isSkip?38:22,isNo?20:isSkip?5:32);
+      doc.roundedRect(M,y,W-M*2,9,2,2,'F');
+      doc.setTextColor(isNo?239:isSkip?251:59,isNo?68:isSkip?191:130,isNo?68:isSkip?36:246);
+      doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text(`Q${String(i+1).padStart(2,'0')}  ${ans.answer.toUpperCase()}`,M+4,y+6.5);
+      doc.setTextColor(200,200,220); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      const qLines=doc.splitTextToSize(ans.question,W-M*2-30); doc.text(qLines,M+22,y+6.5);
+      y+=qLines.length>1?12+(qLines.length-1)*4:13;
+      if(isSkip&&ans.skipReason){doc.setTextColor(251,191,36);doc.setFontSize(7.5);const sl=doc.splitTextToSize(`Skip reason: ${ans.skipReason}`,W-M*2-8);doc.text(sl,M+4,y);y+=sl.length*4+3;}
+      if(ans.comments){doc.setTextColor(150,150,170);doc.setFontSize(7.5);const cl=doc.splitTextToSize(`Comment: ${ans.comments}`,W-M*2-8);doc.text(cl,M+4,y);y+=cl.length*4+3;}
+      for(const photo of (ans.photos||[]).slice(0,2)){
+        if(y>235){doc.addPage();y=20;}
+        const added=await addPhotoToPDF(doc,photo,M+4,y,55,45);
+        if(added) y+=added+2;
+      }
+      y+=2;
     }
-    y+=2;
+    y+=6;
   }
 
+  // Summary footer block
+  if(y>240){doc.addPage();y=20;}
+  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,22,3,3,'F');
+  doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('SESSION SUMMARY',M+4,y+7);
+  doc.setTextColor(220,220,240); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+  const sw=(W-M*2)/3;
+  [[`Assets audited: ${records.length}`,0],[`Issues flagged: ${totalNo}`,1],[`Questions skipped: ${totalSkip}`,2]].forEach(([t,i])=>doc.text(t,M+i*sw+4,y+16));
+  y+=28;
+
   addFooter(doc,W,M);
-  const auditFn = `audit_${record.auditTypeName.replace(/\s+/g,'_').toLowerCase()}_${record.asset.replace(/[\s()]/g,'_').toLowerCase()}_${dateSlug()}.pdf`;
-  doc.save(auditFn);
+  const fn=`audit_session_${type.id}_${dateSlug()}.pdf`;
+  doc.save(fn);
   try {
-    const pdfBase64 = doc.output('datauristring');
-    syncPDFToSheets(officerName, `${record.auditTypeName} — ${record.asset}`, auditFn, pdfBase64);
-    addToReports(pdfBase64, auditFn, 'Audit Report', `${record.auditTypeName} — ${record.asset}`);
+    const pdfBase64=doc.output('datauristring');
+    syncPDFToSheets(officerName,`${type.name} Session Report`,fn,pdfBase64);
+    addToReports(pdfBase64,fn,'Audit Report',`${type.name} Session Report`);
   } catch(e) {}
-  showToast('PDF downloaded');
+  showToast('Report downloaded');
 }
 
 // ═══════════════════════════════════════
