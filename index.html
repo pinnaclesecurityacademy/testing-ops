@@ -11,7 +11,7 @@
   <title>Pinnacle Inspect</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
 /* ═══════════════════════════════════════════════════
    PINNACLE INSPECT — OPERATIONS PLATFORM
@@ -58,13 +58,15 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body, * { font-family: 'Barlow', sans-serif; }
+.stat-label, .nav-label, .section-title, h1, h2, h3 { font-family: 'Barlow Condensed', sans-serif; }
 
 html, body {
   height: 100%;
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: 'Barlow', sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
