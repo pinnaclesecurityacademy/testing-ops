@@ -3,41 +3,56 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <meta name="theme-color" content="#0a0a0f"/>
+  <meta name="theme-color" content="#FFFFFF"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="TESTING"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Pinnacle Inspect"/>
   <link rel="apple-touch-icon" href="icon.png"/>
-  <title>TESTING — Security Operations</title>
+  <title>Pinnacle Inspect</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
 /* ═══════════════════════════════════════════════════
-   TESTING — SECURITY OPERATIONS PLATFORM
+   PINNACLE INSPECT — OPERATIONS PLATFORM
 ═══════════════════════════════════════════════════ */
 
 :root {
-  --bg-base: #0a0a0f;
-  --bg-surface: #111118;
-  --bg-card: #16161f;
-  --bg-card-hover: #1c1c28;
-  --bg-elevated: #1e1e2a;
-  --border: rgba(255,255,255,0.08);
-  --border-accent: rgba(124,92,252,0.35);
-  --purple: #7c5cfc;
-  --purple-dim: rgba(124,92,252,0.15);
-  --blue: #3b82f6;
-  --blue-dim: rgba(59,130,246,0.15);
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0b8;
-  --text-muted: #555568;
-  --green: #22c55e;
-  --amber: #f59e0b;
-  --red: #ef4444;
+  /* Pinnacle Inspect — Light Design System */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F7F8FA;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F0F1F3;
+  --text-primary: #1A1A2E;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --accent-gold: #C9A84C;
+  --accent-green: #1B4D3E;
+  --accent-green-light: #E8F0ED;
+  --border-color: #E5E7EB;
+  --border-light: #F3F4F6;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  /* Legacy aliases — keep existing component rules working */
+  --bg-base: #FFFFFF;
+  --bg-surface: #F7F8FA;
+  --bg-card-hover: #F0F1F3;
+  --border: #E5E7EB;
+  --border-accent: #C9A84C;
+  --purple: #1B4D3E;
+  --purple-dim: #E8F0ED;
+  --blue: #1B4D3E;
+  --blue-dim: #E8F0ED;
+  --green: #10B981;
+  --amber: #F59E0B;
+  --red: #EF4444;
   --nav-h: 56px;
-  --bnav-h: 64px;
-  --radius: 14px;
+  --bnav-h: 60px;
+  --radius: 12px;
   --radius-sm: 8px;
   --transition: 200ms cubic-bezier(0.4,0,0.2,1);
 }
@@ -66,30 +81,18 @@ html, body {
 /* ── SPLASH ─────────────────────────────── */
 .splash {
   position: fixed; inset: 0; z-index: 9999;
-  background: var(--bg-base);
+  background: #0D1B3E;
   display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.5s ease, visibility 0.5s ease;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
 }
 .splash.fade-out { opacity: 0; visibility: hidden; }
-.splash-inner { display: flex; flex-direction: column; align-items: center; gap: 48px; }
-.splash-wordmark { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.splash-title {
+.splash-inner { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.splash-logo { width: 180px; height: auto; display: block; }
+.splash-tagline {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 42px; font-weight: 800; letter-spacing: 8px;
-  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  font-size: 11px; font-weight: 600; letter-spacing: 3px; color: #C9A84C;
+  text-transform: uppercase;
 }
-.splash-sub {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px; font-weight: 600; letter-spacing: 4px; color: var(--text-muted);
-}
-.splash-loader { width: 160px; height: 2px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
-.splash-bar {
-  height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
-  border-radius: 99px; width: 0%;
-  animation: splashLoad 1.2s cubic-bezier(0.4,0,0.2,1) forwards;
-}
-@keyframes splashLoad { 0%{width:0%} 60%{width:80%} 100%{width:100%} }
 
 /* ── MAIN LAYOUT ────────────────────────── */
 .main {
@@ -104,22 +107,23 @@ html, body {
 .topnav {
   height: var(--nav-h);
   min-height: var(--nav-h);
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border-color);
   display: flex; align-items: center;
   padding: 0 16px; gap: 12px;
   flex-shrink: 0; z-index: 100;
+  box-shadow: var(--shadow-sm);
 }
 .topnav-left { flex: 1; }
 .topnav-center { flex: 0 0 auto; }
-.topnav-right { flex: 1; display: flex; justify-content: flex-end; }
+.topnav-right { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .nav-wordmark {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px; font-weight: 800; letter-spacing: 3px; color: var(--text-secondary);
+  font-family: 'Barlow', sans-serif;
+  font-size: 16px; font-weight: 700; color: var(--text-primary);
 }
 #nav-site-name {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--purple); text-transform: uppercase;
+  font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--accent-green); text-transform: uppercase;
 }
 .nav-time {
   font-family: 'JetBrains Mono', monospace;
@@ -164,11 +168,12 @@ html, body {
 .bottomnav {
   height: var(--bnav-h);
   min-height: var(--bnav-h);
-  background: var(--bg-surface);
-  border-top: 1px solid var(--border);
+  background: #FFFFFF;
+  border-top: 1px solid var(--border-color);
   display: flex;
   flex-shrink: 0;
   z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .bnav-btn {
   flex: 1; background: none; border: none; cursor: pointer;
@@ -177,7 +182,7 @@ html, body {
   font-family: 'Barlow', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
   transition: color var(--transition); -webkit-tap-highlight-color: transparent;
 }
-.bnav-btn.active { color: var(--purple); }
+.bnav-btn.active { color: var(--accent-green); }
 .bnav-btn span { font-size: 10px; }
 
 /* ── STATUS BAND ────────────────────────── */
@@ -200,14 +205,15 @@ html, body {
 /* ── DASH STATS ─────────────────────────── */
 .dash-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
 .stat-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px;
   padding: 16px; cursor: pointer;
-  transition: border-color var(--transition), background var(--transition);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), transform var(--transition);
   position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent;
 }
-.stat-card:active { background: var(--bg-card-hover); }
-.stat-card.primary { border-color: var(--border-accent); }
-.stat-card.secondary { border-color: rgba(59,130,246,0.2); }
+.stat-card:active { box-shadow: var(--shadow-md); transform: scale(0.99); }
+.stat-card.primary { border-left: 3px solid var(--accent-green); }
+.stat-card.secondary { border-left: 3px solid var(--accent-gold); }
 .stat-label {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 6px;
@@ -223,7 +229,7 @@ html, body {
   height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue));
   border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
 }
-.stat-icon { position: absolute; right: 12px; top: 12px; color: rgba(255,255,255,0.06); }
+.stat-icon { position: absolute; right: 12px; top: 12px; color: var(--accent-green-light); }
 
 /* ── SECTION HEADERS ────────────────────── */
 .section-header {
@@ -240,21 +246,24 @@ html, body {
   font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--border-accent);
 }
 
-/* ── ESCALATIONS ────────────────────────── */
+/* ── ISSUES (formerly Escalations) ─────── */
 .escalation-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
 .escalation-item {
-  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  background: #FFFFFF; border: 1px solid var(--border-color); border-left: 4px solid var(--danger);
   border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  box-shadow: var(--shadow-sm);
 }
+.escalation-item.priority-medium { border-left-color: var(--warning); }
+.escalation-item.priority-low { border-left-color: #3B82F6; }
 .esc-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .esc-meta { font-size: 11px; color: var(--text-secondary); }
 .esc-priority {
   display: inline-block; font-family: 'Barlow Condensed', sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 2px 8px; border-radius: 99px; margin-top: 2px;
 }
-.esc-priority.high { background: rgba(239,68,68,0.2); color: var(--red); }
-.esc-priority.medium { background: rgba(245,158,11,0.2); color: var(--amber); }
-.esc-priority.low { background: rgba(34,197,94,0.1); color: var(--green); }
+.esc-priority.high { background: #FEE2E2; color: #991B1B; }
+.esc-priority.medium { background: #FEF3C7; color: #92400E; }
+.esc-priority.low { background: #DBEAFE; color: #1E40AF; }
 
 /* ── ACTIVITY FEED ──────────────────────── */
 .activity-feed { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; }
@@ -305,12 +314,13 @@ html, body {
 }
 .shift-task-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
 .shift-task-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 18px 16px; display: flex; align-items: center; justify-content: space-between;
-  cursor: pointer; transition: border-color var(--transition), background var(--transition); -webkit-tap-highlight-color: transparent;
+  background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px;
+  padding: 16px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), transform var(--transition); -webkit-tap-highlight-color: transparent;
 }
-.shift-task-card:active { background: var(--bg-card-hover); }
-.shift-task-card.done { opacity: 0.55; border-color: rgba(34,197,94,0.15); }
+.shift-task-card:active { box-shadow: var(--shadow-md); transform: scale(0.99); }
+.shift-task-card.done { opacity: 0.6; border-color: rgba(16,185,129,0.2); }
 .stc-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
 .stc-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); flex-shrink: 0; width: 20px; }
 .stc-icon { font-size: 20px; flex-shrink: 0; }
@@ -459,24 +469,24 @@ html, body {
   font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted);
 }
 .field-textarea {
-  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 18px;
-  padding: 12px 14px; resize: none; min-height: 80px; outline: none;
+  background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 8px;
+  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 15px;
+  padding: 10px 14px; resize: none; min-height: 80px; outline: none;
   transition: border-color var(--transition); width: 100%;
 }
-.field-textarea:focus { border-color: var(--border-accent); }
+.field-textarea:focus { border-color: var(--accent-green); }
 .field-textarea::placeholder { color: var(--text-muted); }
 .field-input {
-  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 18px; font-weight: 500;
-  padding: 14px 16px; outline: none; transition: border-color var(--transition); width: 100%;
+  background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 8px;
+  color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 500;
+  padding: 10px 14px; outline: none; transition: border-color var(--transition); width: 100%;
 }
-.field-input:focus { border-color: var(--border-accent); }
+.field-input:focus { border-color: var(--accent-green); }
 .field-input::placeholder { color: var(--text-muted); }
 .field-select {
-  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 8px;
   color: var(--text-primary); font-family: 'Barlow', sans-serif; font-size: 14px;
-  padding: 12px 14px; outline: none; width: 100%; cursor: pointer;
+  padding: 10px 14px; outline: none; width: 100%; cursor: pointer;
 }
 
 /* ── PHOTO CAPTURE ──────────────────────── */
@@ -508,12 +518,12 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 800; letter-spacing: 2px;
   cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
 }
-.yn-btn.yes { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.2); color: var(--green); }
-.yn-btn.yes.selected { background: rgba(34,197,94,0.2); border-color: var(--green); }
-.yn-btn.no { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: var(--red); }
-.yn-btn.no.selected { background: rgba(239,68,68,0.2); border-color: var(--red); }
-.yn-btn.skip { background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.2); color: #fbbf24; }
-.yn-btn.skip.selected { background: rgba(251,191,36,0.2); border-color: #fbbf24; }
+.yn-btn.yes { background: var(--accent-green-light); border-color: rgba(27,77,62,0.2); color: var(--accent-green); }
+.yn-btn.yes.selected { background: var(--accent-green); border-color: var(--accent-green); color: #fff; }
+.yn-btn.no { background: #FEE2E2; border-color: rgba(239,68,68,0.3); color: #991B1B; }
+.yn-btn.no.selected { background: #FEE2E2; border-color: #991B1B; color: #991B1B; }
+.yn-btn.skip { background: #FEF3C7; border-color: rgba(217,119,6,0.3); color: #92400E; }
+.yn-btn.skip.selected { background: #FEF3C7; border-color: #D97706; color: #92400E; }
 
 /* ── ASSET LIST ─────────────────────────── */
 .asset-list { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
@@ -546,17 +556,17 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 /* ── BUTTONS ────────────────────────────── */
 .btn-primary {
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  border: none; border-radius: var(--radius); color: #fff;
-  font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 2px;
-  padding: 20px 24px; cursor: pointer; transition: opacity var(--transition), transform var(--transition); -webkit-tap-highlight-color: transparent;
+  background: var(--accent-green);
+  border: none; border-radius: 8px; color: #fff;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 1.5px;
+  padding: 14px 20px; cursor: pointer; transition: opacity var(--transition), transform var(--transition); -webkit-tap-highlight-color: transparent;
 }
 .btn-primary:active { opacity: 0.85; transform: scale(0.98); }
 .btn-secondary {
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius);
-  color: var(--text-secondary); font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px; font-weight: 700; letter-spacing: 2px; padding: 20px 24px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 8px;
+  color: var(--text-primary); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: 1.5px; padding: 14px 20px; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .btn-full { width: 100%; }
 .btn-row { display: flex; gap: 10px; }
@@ -564,7 +574,7 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 
 /* ── COMPLETE SCREEN ────────────────────── */
 .complete-hero { display: flex; flex-direction: column; align-items: center; padding: 32px 16px 20px; gap: 12px; }
-.complete-icon { width: 72px; height: 72px; background: var(--purple-dim); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.complete-icon { width: 72px; height: 72px; background: var(--accent-green-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .complete-title { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: 1px; color: var(--text-primary); }
 .complete-meta { font-size: 13px; color: var(--text-secondary); text-align: center; }
 
@@ -598,8 +608,8 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 
 /* ── EOD BANNER ─────────────────────────── */
 .eod-banner {
-  margin: 16px; background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(59,130,246,0.15));
-  border: 1px solid var(--border-accent); border-radius: var(--radius); padding: 20px;
+  margin: 16px; background: var(--accent-green-light);
+  border: 1px solid rgba(27,77,62,0.2); border-radius: var(--radius); padding: 20px;
   display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
 }
 .eod-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 1px; color: var(--text-primary); }
@@ -608,9 +618,9 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 /* ── TOAST ──────────────────────────────── */
 .toast {
   position: fixed; bottom: calc(var(--bnav-h) + 16px); left: 50%; transform: translateX(-50%);
-  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
-  padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--text-primary);
-  z-index: 9999; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  background: var(--text-primary); border-radius: var(--radius-sm);
+  padding: 10px 20px; font-size: 13px; font-weight: 500; color: #FFFFFF;
+  z-index: 9999; white-space: nowrap; box-shadow: var(--shadow-lg);
   animation: toastIn 0.25s ease, toastOut 0.25s ease 2.5s forwards;
 }
 @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
@@ -723,9 +733,10 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   .bnav-btn svg { flex-shrink: 0; }
   .bnav-btn span { font-size: 12px; font-weight: 600; }
   .bnav-btn.active {
-    background: rgba(124,92,252,0.1);
-    border-left: 3px solid var(--purple);
+    background: var(--accent-green-light);
+    border-left: 3px solid var(--accent-green);
     padding-left: 17px;
+    color: var(--accent-green);
   }
 
   /* Content area: max-width 800px centered */
@@ -736,31 +747,8 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
   .toast { bottom: 24px; }
 }
 
-/* ── DAY / NIGHT MODE ──────────────────── */
-body.day-mode {
-  --bg-base: #f5f5f7;
-  --bg-surface: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f0f0f5;
-  --bg-elevated: #e8e8f0;
-  --border: rgba(0,0,0,0.08);
-  --border-accent: rgba(124,92,252,0.35);
-  --text-primary: #1a1a2e;
-  --text-secondary: #5a5a7a;
-  --text-muted: #9090a8;
-}
-body.night-mode {
-  --bg-base: #0f0f1a;
-  --bg-surface: #111118;
-  --bg-card: #1a1a28;
-  --bg-card-hover: #1c1c2e;
-  --bg-elevated: #1e1e2a;
-  --border: rgba(255,255,255,0.08);
-  --border-accent: rgba(124,92,252,0.35);
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0b8;
-  --text-muted: #555568;
-}
+/* ── SHIFT MODE (kept as no-op — always light theme) ── */
+body.day-mode, body.night-mode { /* theme is always light */ }
 
 /* ── REPORTS PAGE ───────────────────────── */
 .report-item {
@@ -777,8 +765,8 @@ body.night-mode {
 .report-meta { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
 .report-dl-btn {
   display: flex; align-items: center; justify-content: center; gap: 6px;
-  background: var(--purple-dim); border: 1px solid var(--border-accent); border-radius: var(--radius-sm);
-  color: var(--purple); font-family: 'Barlow Condensed', sans-serif;
+  background: var(--accent-green); border: none; border-radius: var(--radius-sm);
+  color: #fff; font-family: 'Barlow Condensed', sans-serif;
   font-size: 12px; font-weight: 700; letter-spacing: 1px; padding: 12px 16px;
   cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent;
 }
@@ -792,8 +780,8 @@ body.night-mode {
 <!-- SPLASH -->
 <div id="splash" class="splash">
   <div class="splash-inner">
-    <div class="splash-wordmark"><span class="splash-title">TESTING</span><span class="splash-sub">SECURITY OPERATIONS PLATFORM</span></div>
-    <div class="splash-loader"><div class="splash-bar"></div></div>
+    <img src="pinnacle-inspect-logo.png" alt="Pinnacle Inspect" class="splash-logo"/>
+    <span class="splash-tagline">INSPECT • VERIFY • ASSURE</span>
   </div>
 </div>
 
@@ -801,11 +789,10 @@ body.night-mode {
 <div id="main" class="main hidden">
 
 <nav class="topnav">
-  <div class="topnav-left"><span class="nav-wordmark">TESTING</span></div>
+  <div class="topnav-left"><span class="nav-wordmark">Pinnacle Inspect</span></div>
   <div class="topnav-center"><span id="nav-site-name">Tower 3 ITS</span></div>
   <div class="topnav-right">
-    <button id="sync-btn" onclick="manualSync()" style="background:none;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text-muted);padding:4px 8px;">↑ SYNC</button>
-    <div class="nav-time" id="nav-time"></div>
+    <button id="sync-btn" onclick="manualSync()" style="background:var(--accent-green);border:none;border-radius:99px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;padding:5px 12px;">↑ SYNC</button>
   </div>
 </nav>
 
@@ -830,15 +817,15 @@ body.night-mode {
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" width="32" height="32"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
       </div>
       <div class="stat-card secondary" onclick="navigateTo('audits')">
-        <div class="stat-label">AUDITS TODAY</div>
+        <div class="stat-label">INSPECTIONS TODAY</div>
         <div class="stat-value" id="stat-audits">0<span>/4</span></div>
-        <div class="stat-sub">Tap to start audit</div>
+        <div class="stat-sub">Tap to start inspection</div>
         <div class="stat-progress"><div class="stat-progress-fill" id="audit-progress" style="width:0%"></div></div>
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" width="32" height="32"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
       </div>
     </div>
-    <div class="section-header"><span class="section-title">ACTIVE ESCALATIONS</span><span class="section-badge" id="esc-count">0</span></div>
-    <div id="escalations-list" class="escalation-list"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No active escalations</div></div></div>
+    <div class="section-header"><span class="section-title">OPEN ISSUES</span><span class="section-badge" id="esc-count">0</span></div>
+    <div id="escalations-list" class="escalation-list"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div></div>
     <div class="section-header"><span class="section-title">RECENT ACTIVITY</span></div>
     <div id="activity-feed" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div></div>
     <div class="section-header"><span class="section-title">QUICK START</span></div>
@@ -846,7 +833,7 @@ body.night-mode {
       <button class="qs-btn patrol" onclick="startQuickPatrol('White Level Inspection')"><div class="qs-icon">⬜</div><div class="qs-label">White Level</div></button>
       <button class="qs-btn patrol" onclick="startQuickPatrol('External Patrol')"><div class="qs-icon">🔦</div><div class="qs-label">External Patrol</div></button>
       <button class="qs-btn patrol" onclick="startRoverTask('plant-room-morning')"><div class="qs-icon">⚙️</div><div class="qs-label">Plant Room</div></button>
-      <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')"><div class="qs-icon">🛗</div><div class="qs-label">Lift Audit</div></button>
+      <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')"><div class="qs-icon">🛗</div><div class="qs-label">Lift Inspection</div></button>
     </div>
     <div class="bottom-spacer"></div>
   </div>
@@ -855,7 +842,7 @@ body.night-mode {
 <!-- ═══════ DAY SHIFT ═══════ -->
 <div id="page-dayshift" class="page">
   <div class="page-scroll">
-    <div class="page-header"><div class="page-header-title">DAY SHIFT ROVER</div><div class="page-header-sub" id="dayshift-sub">Complete tasks in order</div></div>
+    <div class="page-header"><div class="page-header-title">DAY SHIFT INSPECTIONS</div><div class="page-header-sub" id="dayshift-sub">Complete tasks in order</div></div>
     <div class="shift-progress-bar"><div class="shift-progress-fill" id="shift-progress-fill" style="width:0%"></div></div>
     <div class="shift-task-list" id="shift-task-list"></div>
     <div id="eod-section" style="display:none">
@@ -879,7 +866,7 @@ body.night-mode {
 <!-- ═══════ NIGHT SHIFT ═══════ -->
 <div id="page-nightshift" class="page">
   <div class="page-scroll">
-    <div class="page-header"><div class="page-header-title">NIGHT SHIFT ROVER</div><div class="page-header-sub">Coming soon</div></div>
+    <div class="page-header"><div class="page-header-title">NIGHT SHIFT INSPECTIONS</div><div class="page-header-sub">Coming soon</div></div>
     <div style="padding:48px 16px;text-align:center">
       <div style="font-size:48px;margin-bottom:16px">🌙</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary);letter-spacing:1px">NIGHT SHIFT WORKFLOW</div>
@@ -892,10 +879,10 @@ body.night-mode {
 <!-- ═══════ AUDITS ═══════ -->
 <div id="page-audits" class="page">
   <div class="page-scroll">
-    <div class="page-header"><div class="page-header-title">AUDITS & INSPECTIONS</div><div class="page-header-sub">Select audit type to begin</div></div>
+    <div class="page-header"><div class="page-header-title">INSPECTIONS</div><div class="page-header-sub">Select inspection type to begin</div></div>
     <div class="audit-type-grid" id="audit-type-list"></div>
-    <div class="section-header" style="margin-top:24px"><span class="section-title">TODAY'S AUDIT LOG</span></div>
-    <div id="audit-history" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No audits completed today</div></div></div>
+    <div class="section-header" style="margin-top:24px"><span class="section-title">TODAY'S INSPECTION LOG</span></div>
+    <div id="audit-history" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No inspections completed today</div></div></div>
     <div class="bottom-spacer"></div>
   </div>
 </div>
@@ -1021,7 +1008,7 @@ body.night-mode {
 <div id="page-task-complete" class="page">
   <div class="page-scroll">
     <div class="complete-hero">
-      <div class="complete-icon"><svg viewBox="0 0 60 60" fill="none" width="60" height="60"><circle cx="30" cy="30" r="28" stroke="url(#cg1)" stroke-width="2"/><path d="M18 30L26 38L42 22" stroke="#7c5cfc" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="cg1" x1="2" y1="2" x2="58" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#7c5cfc"/><stop offset="100%" stop-color="#3b82f6"/></linearGradient></defs></svg></div>
+      <div class="complete-icon"><svg viewBox="0 0 60 60" fill="none" width="60" height="60"><circle cx="30" cy="30" r="28" stroke="#1B4D3E" stroke-width="2"/><path d="M18 30L26 38L42 22" stroke="#1B4D3E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="complete-title" id="task-complete-title">Task Complete</div>
       <div class="complete-meta" id="task-complete-meta"></div>
     </div>
@@ -1101,7 +1088,7 @@ body.night-mode {
     <div class="patrol-active-header">
       <button class="back-btn" onclick="navigateTo('audits')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
       <div class="patrol-active-title" id="audit-select-title">Lift Audit</div>
-      <div class="patrol-active-meta">SELECT ASSET TO INSPECT</div>
+      <div class="patrol-active-meta">SELECT ASSET</div>
     </div>
     <div class="asset-list" id="asset-select-list"></div>
     <div id="audit-report-section" style="display:none;padding:0 16px 16px">
@@ -1165,15 +1152,15 @@ body.night-mode {
 <div id="page-audit-complete" class="page">
   <div class="page-scroll">
     <div class="complete-hero">
-      <div class="complete-icon"><svg viewBox="0 0 60 60" fill="none" width="60" height="60"><circle cx="30" cy="30" r="28" stroke="url(#cg2)" stroke-width="2"/><path d="M18 30L26 38L42 22" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="cg2" x1="2" y1="2" x2="58" y2="58" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#7c5cfc"/></linearGradient></defs></svg></div>
-      <div class="complete-title" id="complete-audit-title">Audit Complete</div>
+      <div class="complete-icon"><svg viewBox="0 0 60 60" fill="none" width="60" height="60"><circle cx="30" cy="30" r="28" stroke="#1B4D3E" stroke-width="2"/><path d="M18 30L26 38L42 22" stroke="#1B4D3E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="complete-title" id="complete-audit-title">Inspection Complete</div>
       <div class="complete-meta" id="complete-audit-meta"></div>
     </div>
     <div class="summary-card" id="audit-summary-card"></div>
     <div id="audit-complete-status" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-muted);text-align:center;padding:10px 0 4px"></div>
     <div style="padding:0 16px;margin-top:8px">
       <div class="btn-row">
-        <button class="btn-secondary" onclick="auditAnother()">AUDIT ANOTHER</button>
+        <button class="btn-secondary" onclick="auditAnother()">INSPECT ANOTHER</button>
         <button class="btn-primary" onclick="navigateTo('audits')">DONE ›</button>
       </div>
     </div>
@@ -1213,26 +1200,26 @@ body.night-mode {
 
 <nav class="bottomnav">
   <div class="sidebar-header">
-    <div class="sidebar-brand">TESTING</div>
+    <div class="sidebar-brand">PINNACLE INSPECT</div>
     <div class="sidebar-site-name" id="sidebar-site-name-el">Tower 3 ITS</div>
     <div class="sidebar-shift-pill" id="sidebar-shift-pill">DAY SHIFT</div>
   </div>
   <div class="sidebar-nav-label">NAVIGATE</div>
   <button class="bnav-btn active" id="bnav-dashboard" onclick="navigateTo('dashboard')">
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
-    <span>Dashboard</span>
+    <span>Home</span>
   </button>
   <button class="bnav-btn" id="bnav-dayshift" onclick="navigateTo('dayshift')">
-    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <span>Day Shift</span>
-  </button>
-  <button class="bnav-btn" id="bnav-nightshift" onclick="navigateTo('nightshift')">
-    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>Night Shift</span>
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Tasks</span>
   </button>
   <button class="bnav-btn" id="bnav-audits" onclick="navigateTo('audits')">
-    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <span>Audits</span>
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Inspections</span>
+  </button>
+  <button class="bnav-btn" id="bnav-nightshift" onclick="navigateTo('nightshift')">
+    <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span>Issues</span>
   </button>
   <button class="bnav-btn" id="bnav-reports" onclick="navigateTo('reports')">
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -1357,7 +1344,7 @@ function showSyncStatus(msg, ok = true) {
   if (btn) {
     btn.textContent = msg;
     btn.style.color = ok ? 'var(--green)' : 'var(--red)';
-    setTimeout(() => { btn.textContent = '↑ SYNC'; btn.style.color = ''; }, 2500);
+    setTimeout(() => { btn.textContent = '↑ SYNC'; btn.style.background = ''; btn.style.color = ''; }, 2500);
   }
 }
 
@@ -1813,7 +1800,7 @@ function refreshEscalations() {
   const badge = document.getElementById('esc-count');
   if (!list) return;
   if (badge) badge.textContent = STATE.escalations.length;
-  if (!STATE.escalations.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No active escalations</div></div>'; return; }
+  if (!STATE.escalations.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div>'; return; }
   list.innerHTML = STATE.escalations.slice(0,5).map(e => `<div class="escalation-item"><div class="esc-title">${esc(e.text)}</div><div class="esc-meta">${esc(e.location)} · ${esc(e.task)} · ${esc(e.time)}</div><span class="esc-priority ${e.priority}">${e.priority.toUpperCase()}</span></div>`).join('');
 }
 
@@ -2227,7 +2214,7 @@ function refreshAuditSelect() {
   const section = document.getElementById('audit-report-section');
   const statusEl = document.getElementById('audit-report-status');
   if (section) section.style.display = records.length > 0 ? '' : 'none';
-  if (statusEl) statusEl.textContent = `${records.length} asset${records.length!==1?'s':''} audited today — generate a session report below`;
+  if (statusEl) statusEl.textContent = `${records.length} asset${records.length!==1?'s':''} inspected today — generate a session report below`;
 }
 
 function renderTaskSummary(record) {
@@ -2854,7 +2841,7 @@ function refreshAuditList() {
 
   const history = document.getElementById('audit-history');
   if (!STATE.auditRecords.length) {
-    history.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No audits completed today</div></div>';
+    history.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No inspections completed today</div></div>';
   } else {
     history.innerHTML = STATE.auditRecords.map(r => `
       <div class="activity-item">
@@ -2972,7 +2959,7 @@ function completeAudit() {
   syncToSheets({ type:'audit', officer:'', auditTypeName:type.name, asset, site:SITE.name, completedAt:endTime, answers:STATE.auditAnswers.length, noCount });
   syncActivityToSheets(`${type.name} — ${asset} completed`, 'audit');
 
-  document.getElementById('complete-audit-title').textContent = `${type.name} Complete`;
+  document.getElementById('complete-audit-title').textContent = `Inspection Complete`;
   document.getElementById('complete-audit-meta').textContent = `${asset} · ${STATE.auditAnswers.length} questions · ${noCount} issue(s)${skipCount>0?` · ${skipCount} skipped`:''}`;
 
   const card = document.getElementById('audit-summary-card');
@@ -2985,7 +2972,7 @@ function completeAudit() {
     ${skipCount>0?`<div class="summary-row"><span class="summary-label">SKIPPED</span><span class="summary-value" style="color:#fbbf24">${skipCount} question(s)</span></div>`:''}`;
 
   const todayCount = STATE.auditRecords.filter(r => r.auditTypeId === type.id).length;
-  document.getElementById('audit-complete-status').textContent = `${todayCount} asset${todayCount!==1?'s':''} audited today`;
+  document.getElementById('audit-complete-status').textContent = `${todayCount} asset${todayCount!==1?'s':''} inspected today`;
   navigateTo('audit-complete');
 }
 
@@ -3302,7 +3289,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('SYNCED ✓', true); }
   else { showSyncStatus('OFFLINE', false); }
   startSyncPolling();
-  setTimeout(()=>{ if (splash) splash.classList.add('fade-out'); setTimeout(()=>{ if(splash) splash.style.display='none'; }, 600); }, 800);
+  setTimeout(()=>{ if (splash) splash.classList.add('fade-out'); setTimeout(()=>{ if(splash) splash.style.display='none'; }, 700); }, 2000);
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
 
