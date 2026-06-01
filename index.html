@@ -1078,18 +1078,8 @@ body.day-mode, body.night-mode { /* theme is always light */ }
       <div class="complete-meta" id="task-complete-meta"></div>
     </div>
     <div class="summary-card" id="task-summary-card"></div>
-    <div class="field-group" style="padding:0 16px">
-      <label class="field-label">OFFICER NAME (FOR REPORT)</label>
-      <input type="text" class="field-input" id="task-officer-name" placeholder="Enter your full name..."/>
-    </div>
-    <div style="padding:0 16px;margin-top:12px">
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="saveContinueTask()">SAVE &amp; CONTINUE</button>
-        <button class="btn-primary" onclick="generateTaskPDF()">
-          <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          GENERATE PDF
-        </button>
-      </div>
+    <div style="padding:0 16px;margin-top:16px">
+      <button class="btn-primary btn-full" onclick="navigateTo('dayshift')">DONE ›</button>
     </div>
     <div class="bottom-spacer"></div>
   </div>
@@ -1130,16 +1120,8 @@ body.day-mode, body.night-mode { /* theme is always light */ }
           <div class="lobby-time-block"><div class="lobby-timer-label">FINISHED</div><div class="lobby-timer-value" id="lobby-done-end">--:--</div></div>
         </div>
         <div class="complete-meta" style="margin-top:8px" id="lobby-duration-text"></div>
-        <div class="field-group" style="margin-top:16px">
-          <label class="field-label">OFFICER NAME (FOR REPORT)</label>
-          <input type="text" class="field-input" id="lobby-officer-name" placeholder="Enter your full name..."/>
-        </div>
-        <div class="btn-row" style="margin-top:12px">
-          <button class="btn-secondary" onclick="saveContinueLobby()">SAVE &amp; CONTINUE</button>
-          <button class="btn-primary" onclick="generateLobbyPDF()">
-            <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            GENERATE PDF
-          </button>
+        <div style="margin-top:16px">
+          <button class="btn-primary btn-full" onclick="saveContinueLobby()">DONE ›</button>
         </div>
       </div>
     </div>
@@ -1249,7 +1231,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
           <option value="lift">Lift Inspection</option>
           <option value="bathroom">Bathroom Inspection</option>
           <option value="goods-lift-lobby">Goods Lift Lobby</option>
-          <option value="daily">Daily Summary</option>
+          <option value="daily-summary">Daily Summary</option>
         </select>
       </div>
     </div>
@@ -1853,14 +1835,14 @@ function refreshReports() {
   const dateFilter = document.getElementById('reports-date')?.value || '';
 
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90);
-  let allReports = [...(STATE.reports || [])].sort((a,b) => new Date(b.completedAt) - new Date(a.completedAt));
+  let allReports = [...(STATE.reports || [])].sort((a,b) => new Date(b.generatedAt||b.completedAt) - new Date(a.generatedAt||a.completedAt));
 
   allReports = allReports.filter(r => {
-    const d = new Date(r.completedAt);
+    const d = new Date(r.generatedAt || r.completedAt);
     if (d < cutoff) return false;
     if (dateFilter && d.toISOString().slice(0,10) !== dateFilter) return false;
     if (typeFilter && r.type !== typeFilter) return false;
-    if (searchVal && !`${r.typeName} ${r.asset}`.toLowerCase().includes(searchVal)) return false;
+    if (searchVal && !`${r.typeName} ${r.asset||''}`.toLowerCase().includes(searchVal)) return false;
     return true;
   });
 
@@ -1869,10 +1851,10 @@ function refreshReports() {
     return;
   }
 
-  const typeIcons = { lift:'🛗', bathroom:'🚻', 'goods-lift-lobby':'🛗', daily:'📊' };
+  const typeIcons = { lift:'🛗', bathroom:'🚻', 'goods-lift-lobby':'🛗', 'daily-summary':'📊' };
   const groups = {};
   allReports.forEach(r => {
-    const key = new Date(r.completedAt).toLocaleDateString('en-AU', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    const key = new Date(r.generatedAt||r.completedAt).toLocaleDateString('en-AU', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
     if (!groups[key]) groups[key] = [];
     groups[key].push(r);
   });
@@ -1881,16 +1863,17 @@ function refreshReports() {
     <div class="report-date-group">
       <div class="report-date-header">${date}<span>${rpts.length} report${rpts.length!==1?'s':''}</span></div>
       ${rpts.map(r => {
-        const pdf = (STATE.shiftReports||[]).find(p => p.taskLabel && p.taskLabel.includes(r.asset));
+        const timeStr = new Date(r.generatedAt||r.completedAt).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+        const assetInfo = r.assetCount ? `${r.assetCount} asset${r.assetCount!==1?'s':''}` : (r.asset||'');
         return `<div class="report-card">
           <div class="report-card-icon">${typeIcons[r.type]||'📋'}</div>
           <div class="report-card-info">
             <div class="report-card-title">${esc(r.typeName)}</div>
-            <div class="report-card-meta">${esc(r.asset)} · ${new Date(r.completedAt).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})}</div>
+            <div class="report-card-meta">${assetInfo} · ${timeStr}</div>
           </div>
-          ${pdf ? `<button class="report-dl-btn" onclick="downloadReport('${r.id}')">
+          <button class="report-dl-btn" onclick="regenerateReport('${r.id}')">
             <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>PDF
-          </button>` : `<span style="font-size:11px;color:var(--text-muted);padding:0 8px;white-space:nowrap">No PDF</span>`}
+          </button>
         </div>`;
       }).join('')}
     </div>`).join('');
@@ -1912,6 +1895,29 @@ function downloadShiftReport(idx) {
   const link = document.createElement('a');
   link.href = r.dataUri; link.download = r.filename;
   document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+async function regenerateReport(id) {
+  const officerName = document.getElementById('summary-officer-name').value.trim();
+  if (!officerName) { showToast('Enter officer name above to download'); return; }
+  const report = (STATE.reports||[]).find(r => r.id === id);
+  if (!report) { showToast('Report entry not found'); return; }
+
+  if (report.type === 'daily-summary') {
+    if (!STATE.completedTaskIds.length && !STATE.auditRecords.length) {
+      showToast('Data unavailable — report cannot be regenerated'); return;
+    }
+    await generateDailySummaryPDF();
+  } else {
+    const auditType = AUDIT_TYPES.find(a => a.id === report.type);
+    const records = STATE.auditRecords.filter(r => r.auditTypeId === report.type);
+    if (!auditType || records.length === 0) {
+      showToast('Data unavailable — report cannot be regenerated'); return;
+    }
+    STATE.activeAudit = auditType;
+    document.getElementById('audit-report-officer').value = officerName;
+    await generateAuditSessionReport();
+  }
 }
 
 // ═══════════════════════════════════════
@@ -2377,40 +2383,14 @@ function completeFlexibleTask() {
   document.getElementById('task-complete-title').textContent = `${task.label} Complete`;
   document.getElementById('task-complete-meta').textContent = `${task.rooms.length} rooms · ${issues} issue(s) · ${duration}`;
   renderTaskSummary(record);
-  document.getElementById('task-officer-name').value = '';
-  // Auto-sync a lightweight record to sheets immediately (no PDF yet)
-  // Full PDF sync happens when officer taps Generate PDF
   navigateTo('task-complete');
 }
 
-async function saveContinueTask() {
-  const officerName = document.getElementById('task-officer-name').value.trim();
-  if (!officerName) { showToast('Please enter your name'); return; }
-  const record = STATE._completedTaskRecord;
-  if (record) {
-    record.officer = officerName;
-    syncToSheets({ type:'patrol', taskId:record.taskId||'', officer:officerName, taskLabel:record.taskLabel, timeHint:record.timeHint||'', site:SITE.name, startTime:record.startTime, completedAt:record.completedAt, duration:record.duration, roomCount:record.roomCount, issues:record.issues });
-    syncTaskComplete(record.taskId||'', record.taskLabel, record.timeHint||'', officerName, record.completedAt);
-    try {
-      const { doc, filename } = await buildTaskPDFDoc(record, officerName);
-      const pdfBase64 = doc.output('datauristring');
-      syncPDFToSheets(officerName, record.taskLabel, filename, pdfBase64);
-      addToReports(pdfBase64, filename, 'Patrol Report', record.taskLabel);
-    } catch(e) {}
-  }
+function saveContinueTask() {
   navigateTo('dayshift');
 }
 
 function saveContinueLobby() {
-  const officerName = document.getElementById('lobby-officer-name').value.trim();
-  if (!officerName) { showToast('Please enter your name'); return; }
-  const rec = STATE._completedLobbyRecord;
-  if (rec) {
-    rec.officer = officerName;
-    const _lh = STATE.activeLobby ? (STATE.activeLobby.timeHint || STATE.activeLobby.window || '') : '';
-    syncToSheets({ type:'patrol', taskId:STATE.activeLobby?STATE.activeLobby.id:'', officer:officerName, taskLabel:STATE.activeLobby?STATE.activeLobby.label:'Lobby Static', timeHint:_lh, site:SITE.name, startTime:rec.startTime, completedAt:rec.endTime, duration:rec.duration, roomCount:1, issues:0 });
-    if (STATE.activeLobby) syncTaskComplete(STATE.activeLobby.id, STATE.activeLobby.label, _lh, officerName, rec.endTime);
-  }
   navigateTo('dayshift');
 }
 
@@ -2699,7 +2679,6 @@ function completePlantPatrol() {
   document.getElementById('task-complete-title').textContent = `${task.label} Complete`;
   document.getElementById('task-complete-meta').textContent = `${task.timeHint} · ${totalRooms} rooms · ${issues} issue(s) · ${duration}`;
   renderTaskSummary({ ...record, roomCount: totalRooms });
-  document.getElementById('task-officer-name').value = '';
   navigateTo('task-complete');
 }
 
@@ -3032,8 +3011,17 @@ async function generateEODPDF() { // async needed for escalation photo rendering
   try {
     const eodBase64 = doc.output('datauristring');
     syncPDFToSheets(officerName, 'End of Day Shift Report', eodFilename, eodBase64);
-    addToReports(eodBase64, eodFilename, 'Day Shift Report', 'End of Day Report');
   } catch(e) {}
+  if (!STATE.reports) STATE.reports = [];
+  STATE.reports.unshift({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    type: 'daily-summary',
+    typeName: 'Daily Summary',
+    generatedAt: new Date().toISOString(),
+    assetCount: STATE.completedTaskIds.length + STATE.auditRecords.length,
+    pdfData: null,
+  });
+  saveState();
   showToast('Full day report downloaded');
 }
 
@@ -3165,15 +3153,6 @@ function completeAudit() {
   const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, noCount, skipCount, officer:'' };
   STATE._completedAuditRecord = record;
   STATE.auditRecords.push(record);
-  if (!STATE.reports) STATE.reports = [];
-  STATE.reports.unshift({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    type: type.id,
-    typeName: type.name,
-    asset,
-    completedAt: new Date().toISOString(),
-    recordId: endTime,
-  });
   addActivity(`${type.name} — ${asset} completed`, 'audit');
   saveState();
   sbSaveAuditRecord(record);
@@ -3294,8 +3273,17 @@ async function generateAuditSessionReport() {
   try {
     const pdfBase64=doc.output('datauristring');
     syncPDFToSheets(officerName,`${type.name} Session Report`,fn,pdfBase64);
-    addToReports(pdfBase64,fn,'Audit Report',`${type.name} Session Report`);
   } catch(e) {}
+  if (!STATE.reports) STATE.reports = [];
+  STATE.reports.unshift({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    type: type.id,
+    typeName: type.name,
+    generatedAt: new Date().toISOString(),
+    assetCount: records.length,
+    pdfData: null,
+  });
+  saveState();
   showToast('Report downloaded');
 }
 
@@ -3422,8 +3410,17 @@ async function generateDailySummaryPDF() {
   try {
     const pdfBase64 = doc.output('datauristring');
     syncPDFToSheets(officerName, 'Daily Inspection Report', summaryFilename, pdfBase64);
-    addToReports(pdfBase64, summaryFilename, 'Daily Summary', 'Daily Inspection Report');
   } catch(e) {}
+  if (!STATE.reports) STATE.reports = [];
+  STATE.reports.unshift({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    type: 'daily-summary',
+    typeName: 'Daily Summary',
+    generatedAt: new Date().toISOString(),
+    assetCount: STATE.completedTaskIds.length + STATE.auditRecords.length,
+    pdfData: null,
+  });
+  saveState();
   showToast('Daily summary downloaded');
 }
 
