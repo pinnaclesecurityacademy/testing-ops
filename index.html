@@ -767,6 +767,17 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 }
 .report-dl-btn:active { opacity: 0.8; }
 
+/* ── PATROL INCIDENT BUTTON ─────────────── */
+.patrol-incident-btn {
+  position: fixed; bottom: calc(var(--bnav-h) + 14px); left: 14px; z-index: 200;
+  background: #EF4444; color: #fff; border: none; border-radius: 8px;
+  padding: 10px 14px; font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.45); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ── SHIFT TABS ──────────────────────────── */
 .shift-tabs { display: flex; border-bottom: 2px solid var(--border-color); padding: 0 16px; background: #fff; flex-shrink: 0; }
 .shift-tab {
@@ -1077,6 +1088,52 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   </div>
 </div>
 
+<!-- ═══════ PATROL QUESTION ═══════ -->
+<div id="page-patrol-question" class="page">
+  <div class="page-scroll">
+    <div class="patrol-active-header">
+      <button class="back-btn" onclick="patrolQuestionBack()"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
+      <div class="patrol-active-title" id="patrol-q-title">Room Name</div>
+      <div class="patrol-active-meta" id="patrol-q-meta">PATROL</div>
+    </div>
+    <div class="checkpoint-progress">
+      <div class="cp-progress-track"><div class="cp-progress-fill" id="patrol-q-progress-fill"></div></div>
+      <div class="cp-progress-label" id="patrol-q-progress-label">Question 1 of 4</div>
+    </div>
+    <div class="audit-question-card">
+      <div class="aq-number" id="patrol-q-number">01</div>
+      <div class="aq-question" id="patrol-q-question">Is the room secured?</div>
+      <div class="yn-row">
+        <button class="yn-btn yes" id="pq-yes" onclick="setPatrolAnswer('yes')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>YES</button>
+        <button class="yn-btn no" id="pq-no" onclick="setPatrolAnswer('no')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>NO</button>
+        <button class="yn-btn skip" id="pq-skip" onclick="setPatrolAnswer('skip')">SKIP</button>
+      </div>
+      <div class="field-group" id="pq-skip-reason-group" style="display:none">
+        <label class="field-label">REASON FOR SKIPPING — MANDATORY</label>
+        <input type="text" class="field-input" id="pq-skip-reason" placeholder="Reason for skipping..."/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">COMMENTS (OPTIONAL)</label>
+        <textarea class="field-textarea" id="pq-comments" placeholder="Add any relevant comments..."></textarea>
+      </div>
+      <div class="field-group" id="pq-photo-group">
+        <label class="field-label" id="pq-photo-label">PHOTO EVIDENCE</label>
+        <label class="photo-capture-area" for="pq-photo">
+          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tap to open camera</span></div>
+          <div id="pq-photo-preview" class="photo-preview-grid"></div>
+        </label>
+        <input type="file" id="pq-photo" accept="image/*" capture="environment" class="hidden" onchange="handlePatrolPhoto(this)" multiple/>
+      </div>
+      <button class="btn-primary btn-full" id="patrol-q-next-btn" onclick="advancePatrolQuestion()">NEXT QUESTION ›</button>
+    </div>
+    <div class="bottom-spacer"></div>
+  </div>
+  <button class="patrol-incident-btn" onclick="openPatrolIncident()">
+    <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    INCIDENT
+  </button>
+</div>
+
 <!-- ═══════ TASK COMPLETE ═══════ -->
 <div id="page-task-complete" class="page">
   <div class="page-scroll">
@@ -1298,6 +1355,30 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   </div>
 </nav>
 
+<!-- Patrol Incident Modal -->
+<div id="patrol-incident-modal" class="modal-overlay hidden" onclick="closePatrolIncidentModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">Report Incident</div>
+      <button class="modal-close" onclick="closePatrolIncidentModal()">✕</button>
+    </div>
+    <div id="patrol-incident-context" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px"></div>
+    <div class="field-group" style="margin-bottom:12px">
+      <label class="field-label">INCIDENT DESCRIPTION</label>
+      <textarea class="field-textarea" id="patrol-incident-text" placeholder="Describe the incident or issue..."></textarea>
+    </div>
+    <div class="field-group" style="margin-bottom:16px">
+      <label class="field-label">PRIORITY</label>
+      <select class="field-select" id="patrol-incident-priority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High — Urgent</option>
+      </select>
+    </div>
+    <button class="btn-primary btn-full" onclick="submitPatrolIncident()">LOG INCIDENT ›</button>
+  </div>
+</div>
+
 <!-- Issue Status Modal -->
 <div id="issue-modal" class="modal-overlay hidden" onclick="closeIssueModal(event)">
   <div class="modal-sheet">
@@ -1453,38 +1534,99 @@ const DAY_SHIFT_TASKS = [
     id: 'white-level', label: 'White Level Inspection', icon: '⬜', type: 'flexible',
     tag: 'INSPECTION', tagColor: 'blue',
     rooms: [
-      { id: 'entry', name: 'Entry', instruction: 'Check for any suspicious items at entry points', checks: ['Suspicious items check'], photoMandatory: false },
-      { id: 'internal-doors', name: 'Internal Doors', instruction: 'Confirm all internal doors are secured', checks: ['All internal doors secured'], photoMandatory: false },
-      { id: 'lighting', name: 'Lighting', instruction: 'Verify all lighting is operational throughout the level', checks: ['Lighting operational'], photoMandatory: false },
-      { id: 'revolving-doors', name: 'Revolving Doors', instruction: 'Check revolving doors are operational and undamaged', checks: ['Operational', 'No damage'], photoMandatory: false },
-      { id: 'lift-lobby', name: 'Lift Lobby Areas', instruction: 'Check areas are clear, no damage to port readers', checks: ['Areas clear', 'No damage to port readers'], photoMandatory: false },
-      { id: 'amenities', name: 'Amenities', instruction: 'Confirm amenities area is all clear', checks: ['All clear'], photoMandatory: false },
-      { id: 'seating-area', name: 'Seating Area', instruction: 'Inspect seating area for missing items or damage', checks: ['No missing items', 'No visible damage'], photoMandatory: true },
+      { id: 'white-level-check', name: 'White Level', questions: [
+        { text: 'Is the lobby area clean and presentable?', photoRequired: false, photoOptional: false },
+        { text: 'Are all lift port readers operational?', photoRequired: false, photoOptional: false },
+        { text: 'Are all DDA doors functioning correctly?', photoRequired: false, photoOptional: false },
+        { text: 'Are all lobby doors secured?', photoRequired: false, photoOptional: false },
+        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: false, photoOptional: false },
+        { text: 'Is lighting sufficient throughout?', photoRequired: false, photoOptional: false },
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious items observed in the area?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]}
     ]
   },
   {
     id: 'external-patrol', label: 'External Patrol', icon: '🔦', type: 'flexible',
     tag: 'PATROL', tagColor: 'blue',
     rooms: [
-      { id: 'north', name: 'North Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
-      { id: 'east', name: 'East Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
-      { id: 'south', name: 'South Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
-      { id: 'west', name: 'West Perimeter', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
+      { id: 'north', name: 'North Perimeter', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+      ]},
+      { id: 'east', name: 'East Perimeter', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+      ]},
+      { id: 'south', name: 'South Perimeter', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+      ]},
+      { id: 'west', name: 'West Perimeter', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+      ]},
     ]
   },
   {
     id: 'b1-patrol', label: 'B1 Patrol', icon: '🅿️', type: 'flexible',
     tag: 'PATROL', tagColor: 'blue',
     rooms: [
-      { id: 'fire-pump', name: 'Fire Relay Pump Room', instruction: 'Photograph the fire relay pump. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of fire relay pump — MANDATORY' },
-      { id: 'grease', name: 'Retail Grease Arrestor Room', instruction: 'Photograph the grease arrestor. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of grease arrestor — MANDATORY' },
-      { id: 'node1', name: 'Node Room 1', instruction: 'Photograph the node room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of node room — MANDATORY' },
-      { id: 'node2', name: 'Node Room 2', instruction: 'Photograph the node room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of node room — MANDATORY' },
-      { id: 'common', name: 'Common Areas — B1', instruction: 'Photograph the common area. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of common area — MANDATORY' },
-      { id: 'heat', name: 'Heat Exchange Room', instruction: 'Photograph the heat exchange room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of heat exchange room — MANDATORY' },
-      { id: 'switch', name: 'Retail Main Switch Room', instruction: 'Photograph the switchboard. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switchboard — MANDATORY' },
-      { id: 'fire-control', name: 'Fire Control Room', instruction: 'Photograph both fire control panels. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of Panel 1 — MANDATORY', requiresTwoPhotos: true },
-      { id: 'water-meter', name: 'T3 Water Meter & Pump Room', instruction: 'Photograph the water meter and pump room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of water meter & pump room — MANDATORY' },
+      { id: 'node1', name: 'Node Room 1', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any visible damage, faults, or warning lights present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any water ingress, leaks, or moisture present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'node2', name: 'Node Room 2', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any visible damage, faults, or warning lights present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any water ingress, leaks, or moisture present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'fcr', name: 'FCR', questions: [
+        { text: 'Is the FCR door secured?', photoRequired: false, photoOptional: false },
+        { text: 'Is the fire panel showing normal status — no faults or alarms?', photoRequired: true, photoOptional: false },
+        { text: 'Any visible damage or tampering present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'fire-pump', name: 'Fire Relay Pump Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Is the fire relay pump showing no faults or alarms?', photoRequired: false, photoOptional: false },
+        { text: 'Any water leaks or moisture present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'heat', name: 'Heat Exchange Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Is the heat exchange equipment operating normally?', photoRequired: false, photoOptional: false },
+        { text: 'Any water leaks or moisture present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'grease', name: 'T3 Retail Grease Arrester Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any visible leaks present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'switch', name: 'Retail Main Switch Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Are all switchboards and panels showing no faults or alarms?', photoRequired: false, photoOptional: false },
+        { text: 'Any visible damage or tampering present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'water-meter', name: 'Water Meter Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any visible leaks present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
     ]
   },
   {
@@ -1515,11 +1657,41 @@ const DAY_SHIFT_TASKS = [
     id: 'precinct-patrol-1', label: 'Precinct Patrol', icon: '🏙️', type: 'flexible',
     tag: 'PATROL', tagColor: 'blue', timeHint: 'Run 1 of 2',
     rooms: [
-      { id: 't1', name: 'Tower 1 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
-      { id: 't2', name: 'Tower 2 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
-      { id: 't3', name: 'Tower 3 Surrounds', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
-      { id: 'retail', name: 'Retail Areas', instruction: 'Check for graffiti, suspicious packages, doors secured, any damage', checks: ['No graffiti', 'No suspicious packages', 'Doors secured', 'No damage'], photoMandatory: false },
-      { id: 'walkways', name: 'Common Walkways', instruction: 'Check for graffiti, suspicious packages, all clear', checks: ['No graffiti', 'No suspicious packages', 'All clear'], photoMandatory: false },
+      { id: 'exchange-place', name: 'Exchange Place', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'mercantile-walk', name: 'Mercantile Walk', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'shipwright-walk', name: 'Shipwright Walk', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'watermans-quay', name: "Waterman's Quay", questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'scotch-row', name: 'Scotch Row', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'barangaroo-ave', name: 'Barangaroo Avenue', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'sussex-street', name: 'Sussex Street', questions: [
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
     ]
   },
   {
@@ -1529,45 +1701,115 @@ const DAY_SHIFT_TASKS = [
 ];
 
 // Plant room level definitions
+const _PLANT_ROOM_QUESTIONS = {
+  gen: [
+    { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+    { text: 'Is the generator showing any faults or alarms?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+    { text: 'Is the generator warm?', photoRequired: false, photoOptional: false },
+    { text: 'Are the diesel tanks leaking?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+    { text: 'Any unusual smells present?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+  ],
+  risers: [
+    { text: 'Is the riser cupboard secured?', photoRequired: false, photoOptional: false },
+    { text: 'Any visible damage or tampering present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+    { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+  ],
+  sub: [
+    { text: 'Is the substation secured?', photoRequired: false, photoOptional: false },
+  ],
+  sw: [
+    { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+    { text: 'Are all switchboards showing no faults or alarms?', photoRequired: false, photoOptional: false },
+    { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+  ],
+  lamp: [
+    { text: 'Is the lamp board secured?', photoRequired: false, photoOptional: false },
+    { text: 'Any faults or warning lights present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+    { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+  ],
+  balcony: [
+    { text: 'Is the balcony access door secured?', photoRequired: false, photoOptional: false },
+    { text: 'Is the balcony area clear of obstructions?', photoRequired: false, photoOptional: false },
+    { text: 'Any damage, hazards, or safety concerns present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+  ],
+};
+
 const PLANT_LEVELS = [
   {
     id: 'l15', name: 'Level 15', rooms: [
-      { id: 'gen', name: 'Generator Room', instruction: 'Photograph generator screen. Confirm all clear.', checks: ['Generator operational', 'No alarms'], photoMandatory: true, photoHint: 'Photo of generator screen — MANDATORY' },
-      { id: 'risers', name: 'Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'], photoMandatory: true, photoHint: 'Photo of electrical risers — MANDATORY' },
-      { id: 'sub', name: 'Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'], photoMandatory: true, photoHint: 'Photo of substation — MANDATORY' },
-      { id: 'sw', name: 'Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switch room — MANDATORY' },
-      { id: 'lamp', name: 'Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'], photoMandatory: true, photoHint: 'Photo of lamp board — MANDATORY' },
-      { id: 'balcony', name: 'External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'], photoMandatory: true, photoHint: 'Photo of balcony — MANDATORY' },
+      { id: 'gen', name: 'Generator Room', questions: _PLANT_ROOM_QUESTIONS.gen },
+      { id: 'risers', name: 'Electrical Risers', questions: _PLANT_ROOM_QUESTIONS.risers },
+      { id: 'sub', name: 'Substation', questions: _PLANT_ROOM_QUESTIONS.sub },
+      { id: 'sw', name: 'Switch Room', questions: _PLANT_ROOM_QUESTIONS.sw },
+      { id: 'lamp', name: 'Lamp Board', questions: _PLANT_ROOM_QUESTIONS.lamp },
+      { id: 'balcony', name: 'External Balcony', questions: _PLANT_ROOM_QUESTIONS.balcony },
     ]
   },
   {
     id: 'l27', name: 'Level 27', rooms: [
-      { id: 'gen', name: 'Generator Room', instruction: 'Photograph generator screen. Confirm all clear.', checks: ['Generator operational', 'No alarms'], photoMandatory: true, photoHint: 'Photo of generator screen — MANDATORY' },
-      { id: 'risers', name: 'Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'], photoMandatory: true, photoHint: 'Photo of electrical risers — MANDATORY' },
-      { id: 'sub', name: 'Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'], photoMandatory: true, photoHint: 'Photo of substation — MANDATORY' },
-      { id: 'sw', name: 'Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switch room — MANDATORY' },
-      { id: 'lamp', name: 'Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'], photoMandatory: true, photoHint: 'Photo of lamp board — MANDATORY' },
-      { id: 'balcony', name: 'External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'], photoMandatory: true, photoHint: 'Photo of balcony — MANDATORY' },
+      { id: 'gen', name: 'Generator Room', questions: _PLANT_ROOM_QUESTIONS.gen },
+      { id: 'risers', name: 'Electrical Risers', questions: _PLANT_ROOM_QUESTIONS.risers },
+      { id: 'sub', name: 'Substation', questions: _PLANT_ROOM_QUESTIONS.sub },
+      { id: 'sw', name: 'Switch Room', questions: _PLANT_ROOM_QUESTIONS.sw },
+      { id: 'lamp', name: 'Lamp Board', questions: _PLANT_ROOM_QUESTIONS.lamp },
+      { id: 'balcony', name: 'External Balcony', questions: _PLANT_ROOM_QUESTIONS.balcony },
     ]
   },
   {
     id: 'l39', name: 'Level 39', rooms: [
-      { id: 'gen', name: 'Generator Room', instruction: 'Photograph generator screen. Confirm all clear.', checks: ['Generator operational', 'No alarms'], photoMandatory: true, photoHint: 'Photo of generator screen — MANDATORY' },
-      { id: 'risers', name: 'Electrical Risers', instruction: 'Check electrical risers are secured.', checks: ['Risers secured', 'All clear'], photoMandatory: true, photoHint: 'Photo of electrical risers — MANDATORY' },
-      { id: 'sub', name: 'Substation', instruction: 'Confirm substation door is secured.', checks: ['Substation door secured'], photoMandatory: true, photoHint: 'Photo of substation — MANDATORY' },
-      { id: 'sw', name: 'Switch Room', instruction: 'Inspect switch room. Confirm all clear.', checks: ['All clear'], photoMandatory: true, photoHint: 'Photo of switch room — MANDATORY' },
-      { id: 'lamp', name: 'Lamp Board', instruction: 'Test the lamp board. Record result.', checks: ['Lamp board tested'], photoMandatory: true, photoHint: 'Photo of lamp board — MANDATORY' },
-      { id: 'balcony', name: 'External Balcony', instruction: 'Check external balcony. No items, no hazards.', checks: ['Balcony clear', 'No hazards'], photoMandatory: true, photoHint: 'Photo of balcony — MANDATORY' },
+      { id: 'gen', name: 'Generator Room', questions: _PLANT_ROOM_QUESTIONS.gen },
+      { id: 'risers', name: 'Electrical Risers', questions: _PLANT_ROOM_QUESTIONS.risers },
+      { id: 'sub', name: 'Substation', questions: _PLANT_ROOM_QUESTIONS.sub },
+      { id: 'sw', name: 'Switch Room', questions: _PLANT_ROOM_QUESTIONS.sw },
+      { id: 'lamp', name: 'Lamp Board', questions: _PLANT_ROOM_QUESTIONS.lamp },
+      { id: 'balcony', name: 'External Balcony', questions: _PLANT_ROOM_QUESTIONS.balcony },
     ]
   },
   {
     id: 'l40', name: 'Level 40', rooms: [
-      { id: 'solar', name: 'Solar Panels', instruction: 'Check solar panels are clean, nothing loose, all doors secured.', checks: ['Panels clean', 'Nothing loose', 'Doors secured'], photoMandatory: true, photoHint: 'Photo of solar panels — MANDATORY' },
+      { id: 'kitchen', name: 'Kitchen Exhaust', questions: [
+        { text: 'Is the kitchen exhaust area clear and unobstructed?', photoRequired: false, photoOptional: false },
+        { text: 'Any unusual smells or smoke present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any visible damage or hazards?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+      ]},
+      { id: 'goods-lift', name: 'Goods Lift Motor Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any audible alarms present?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'gas', name: 'Gas Meter Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any gas smell or leaks present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'solar', name: 'Solar Panels', questions: [
+        { text: 'Is the access area secured?', photoRequired: false, photoOptional: false },
+        { text: 'Are solar panels visually intact — no visible damage?', photoRequired: false, photoOptional: true },
+        { text: 'Any unusual hazards present?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'external', name: 'External', questions: [
+        { text: 'Is the external area clear of obstructions?', photoRequired: false, photoOptional: false },
+        { text: 'Any damage, hazards, or safety concerns present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
+      { id: 'boiler', name: 'Boiler Room', questions: [
+        { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any audible alarms present?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+        { text: 'Any visible leaks present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
     ]
   },
   {
     id: 'l41', name: 'Level 41 — Rooftop', rooms: [
-      { id: 'roof', name: 'Rooftop', instruction: 'Check solar panels are clean, nothing loose, all doors secured.', checks: ['Panels clean', 'Nothing loose', 'Doors secured'], photoMandatory: true, photoHint: 'Photo of rooftop — MANDATORY' },
+      { id: 'roof', name: 'Rooftop', questions: [
+        { text: 'Is the rooftop clear of unauthorised persons?', photoRequired: false, photoOptional: false },
+        { text: 'Any damage, hazards, or safety concerns present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Are there any loose items on the rooftop area?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+        { text: 'Is the BMU in its correct position?', photoRequired: false, photoOptional: true },
+        { text: 'Are the solar panels free from visible damage?', photoRequired: false, photoOptional: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false, negativeQuestion: true },
+      ]},
     ]
   },
 ];
@@ -1662,6 +1904,13 @@ const STATE = {
   activeLobby: null,
   lobbyStartTime: null,
   lobbyStartedAt: null,
+  // Patrol question flow (flexible + plant rooms)
+  patrolRoomContext: null,
+  patrolRoomDef: null,
+  patrolRoomQuestion: 0,
+  patrolRoomAnswers: [],
+  patrolRoomPhotos: [],
+  _currentPatrolAnswer: null,
   // Audit
   activeAudit: null,
   activeAuditAsset: null,
@@ -1742,8 +1991,8 @@ function saveLobbyState() {
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
-const ALL_PAGES = ['dashboard','dayshift','nightshift','issues','audits','reports','flexible-rooms','room-active','room-complete','plant-levels','plant-level-rooms','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
-const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'dayshift','issues':'issues','audits':'audits','reports':'reports','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-level-rooms':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
+const ALL_PAGES = ['dashboard','dayshift','nightshift','issues','audits','reports','flexible-rooms','room-active','room-complete','plant-levels','plant-level-rooms','plant-room-active','patrol-question','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
+const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'dayshift','issues':'issues','audits':'audits','reports':'reports','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-level-rooms':'dayshift','plant-room-active':'dayshift','patrol-question':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
 
 function navigateTo(page) {
   ALL_PAGES.forEach(p => { const el = document.getElementById(`page-${p}`); if (el) el.classList.remove('active'); });
@@ -2136,7 +2385,7 @@ function renderFlexibleRooms() {
       <div class="room-item-check">${isDone ? '✓' : ''}</div>
       <div style="flex:1">
         <div class="room-item-name">${room.name}</div>
-        <div class="room-item-meta">${isDone ? '✓ Completed' : (room.photoMandatory ? '📷 Photo required' : '📷 Photo optional')}</div>
+        <div class="room-item-meta">${isDone ? '✓ Completed' : room.questions ? `${room.questions.length} question${room.questions.length!==1?'s':''}` : (room.photoMandatory ? '📷 Photo required' : '📷 Photo optional')}</div>
       </div>
       <div class="room-item-arrow" style="color:var(--text-muted);opacity:0.5">${isDone ? lockSvg : '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'}</div>
     </div>`;
@@ -2144,15 +2393,19 @@ function renderFlexibleRooms() {
 }
 
 function startRoom(roomId) {
-  if (STATE.roomResults[roomId]) return; // already completed — locked
+  if (STATE.roomResults[roomId]) return;
   const task = STATE.activeTaskDef;
   const room = task.rooms.find(r => r.id === roomId);
   if (!room) return;
   STATE.activeRoomId = roomId;
-  STATE.taskPhotos = [];
-  STATE.taskPhotos2 = [];
-  renderRoomActive(room);
-  navigateTo('room-active');
+  if (room.questions && room.questions.length) {
+    startPatrolRoomQuestions(room, 'flexible');
+  } else {
+    STATE.taskPhotos = [];
+    STATE.taskPhotos2 = [];
+    renderRoomActive(room);
+    navigateTo('room-active');
+  }
 }
 
 function renderRoomActive(room) {
@@ -2373,6 +2626,152 @@ function auditAnother() {
   navigateTo('audit-select');
 }
 
+// ═══════════════════════════════════════
+// PATROL QUESTION FLOW
+// ═══════════════════════════════════════
+function startPatrolRoomQuestions(room, context) {
+  STATE.patrolRoomContext = context;
+  STATE.patrolRoomDef = room;
+  STATE.patrolRoomQuestion = 0;
+  STATE.patrolRoomAnswers = [];
+  STATE.patrolRoomPhotos = [];
+  STATE._currentPatrolAnswer = null;
+  renderPatrolQuestion();
+  navigateTo('patrol-question');
+}
+
+function renderPatrolQuestion() {
+  const room = STATE.patrolRoomDef;
+  const idx = STATE.patrolRoomQuestion;
+  const q = room.questions[idx];
+  const contextLabel = STATE.patrolRoomContext === 'plant'
+    ? 'PLANT ROOM PATROL'
+    : (STATE.activeTaskDef ? STATE.activeTaskDef.label.toUpperCase() : 'PATROL');
+  document.getElementById('patrol-q-title').textContent = room.name;
+  document.getElementById('patrol-q-meta').textContent = contextLabel;
+  const pct = (idx / room.questions.length) * 100;
+  document.getElementById('patrol-q-progress-fill').style.width = pct + '%';
+  document.getElementById('patrol-q-progress-label').textContent = `Question ${idx+1} of ${room.questions.length}`;
+  document.getElementById('patrol-q-number').textContent = String(idx+1).padStart(2,'0');
+  document.getElementById('patrol-q-question').textContent = q.text;
+  document.getElementById('pq-yes').classList.remove('selected');
+  document.getElementById('pq-no').classList.remove('selected');
+  document.getElementById('pq-skip').classList.remove('selected');
+  document.getElementById('pq-skip-reason-group').style.display = 'none';
+  document.getElementById('pq-skip-reason').value = '';
+  document.getElementById('pq-comments').value = '';
+  document.getElementById('pq-photo-preview').innerHTML = '';
+  STATE.patrolRoomPhotos = [];
+  STATE._currentPatrolAnswer = null;
+  const btn = document.getElementById('patrol-q-next-btn');
+  if (btn) btn.textContent = idx === room.questions.length - 1 ? 'COMPLETE ROOM ›' : 'NEXT QUESTION ›';
+  const photoGroup = document.getElementById('pq-photo-group');
+  if (photoGroup) photoGroup.style.display = (q.photoRequired || q.photoOptional) ? '' : 'none';
+  const photoLabel = document.getElementById('pq-photo-label');
+  if (photoLabel) photoLabel.textContent = q.photoRequired ? 'PHOTO EVIDENCE — MANDATORY' : 'PHOTO EVIDENCE (OPTIONAL)';
+}
+
+function setPatrolAnswer(answer) {
+  STATE._currentPatrolAnswer = answer;
+  document.getElementById('pq-yes').classList.toggle('selected', answer === 'yes');
+  document.getElementById('pq-no').classList.toggle('selected', answer === 'no');
+  document.getElementById('pq-skip').classList.toggle('selected', answer === 'skip');
+  document.getElementById('pq-skip-reason-group').style.display = answer === 'skip' ? '' : 'none';
+}
+
+function handlePatrolPhoto(input) { capturePhotos(input, 'pq-photo-preview', STATE.patrolRoomPhotos); }
+
+function advancePatrolQuestion() {
+  if (!STATE._currentPatrolAnswer) { showToast('Please select YES, NO or SKIP'); return; }
+  const room = STATE.patrolRoomDef;
+  const idx = STATE.patrolRoomQuestion;
+  const q = room.questions[idx];
+  if (STATE._currentPatrolAnswer === 'skip') {
+    const reason = document.getElementById('pq-skip-reason').value.trim();
+    if (!reason) { showToast('Please enter a reason for skipping'); return; }
+    STATE.patrolRoomAnswers.push({ question: q.text, answer: 'skip', negativeQuestion: q.negativeQuestion||false, skipReason: reason, comments: document.getElementById('pq-comments').value.trim(), photos: [...STATE.patrolRoomPhotos], timestamp: nowTime() });
+  } else {
+    if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showToast('Photo is mandatory for this question'); return; }
+    STATE.patrolRoomAnswers.push({ question: q.text, answer: STATE._currentPatrolAnswer, negativeQuestion: q.negativeQuestion||false, skipReason: '', comments: document.getElementById('pq-comments').value.trim(), photos: [...STATE.patrolRoomPhotos], timestamp: nowTime() });
+  }
+  STATE.patrolRoomQuestion++;
+  if (STATE.patrolRoomQuestion >= room.questions.length) completePatrolRoomQuestions();
+  else renderPatrolQuestion();
+}
+
+function completePatrolRoomQuestions() {
+  const room = STATE.patrolRoomDef;
+  const answers = STATE.patrolRoomAnswers;
+  const hasIssue = answers.some(a => a.answer !== 'skip' && (a.negativeQuestion ? a.answer === 'yes' : a.answer === 'no'));
+  const result = { roomName: room.name, timestamp: nowTime(), answers, hasIssue, photos: answers.flatMap(a => a.photos||[]) };
+
+  if (STATE.patrolRoomContext === 'flexible') {
+    const task = STATE.activeTaskDef;
+    STATE.roomResults[STATE.activeRoomId] = result;
+    try {
+      const liteRooms = {};
+      for (const [k, v] of Object.entries(STATE.roomResults)) {
+        liteRooms[k] = { ...v, photos: [], answers: (v.answers||[]).map(a => ({...a, photos:[]})) };
+      }
+      localStorage.setItem(`t_room_results_${task.id}`, JSON.stringify({ rooms: liteRooms, startTime: STATE.taskStartTime }));
+    } catch(e) {}
+    navigateTo('flexible-rooms');
+    renderFlexibleRooms();
+  } else if (STATE.patrolRoomContext === 'plant') {
+    const levelId = STATE.activePlantLevel;
+    if (!STATE.plantLevelResults[levelId]) STATE.plantLevelResults[levelId] = {};
+    STATE.plantLevelResults[levelId][STATE.activePlantRoomId] = result;
+    try {
+      const liteLevels = {};
+      for (const [lid, rooms] of Object.entries(STATE.plantLevelResults)) {
+        liteLevels[lid] = {};
+        for (const [rid, r] of Object.entries(rooms)) {
+          liteLevels[lid][rid] = { ...r, photos: [], answers: (r.answers||[]).map(a => ({...a, photos:[]})) };
+        }
+      }
+      localStorage.setItem(`t_plant_results_${STATE.activePlantTaskId}`, JSON.stringify(liteLevels));
+    } catch(e) {}
+    navigateTo('plant-level-rooms');
+    renderPlantLevelRooms();
+  }
+}
+
+function patrolQuestionBack() {
+  if (STATE.patrolRoomContext === 'plant') navigateTo('plant-level-rooms');
+  else navigateTo('flexible-rooms');
+}
+
+function openPatrolIncident() {
+  const room = STATE.patrolRoomDef;
+  const task = STATE.activeTaskDef;
+  const ctx = document.getElementById('patrol-incident-context');
+  if (ctx) ctx.textContent = `${room ? room.name : ''} · ${STATE.patrolRoomContext === 'plant' ? 'Plant Room Patrol' : (task ? task.label : 'Patrol')}`;
+  document.getElementById('patrol-incident-text').value = '';
+  document.getElementById('patrol-incident-priority').value = 'low';
+  document.getElementById('patrol-incident-modal').classList.remove('hidden');
+}
+
+function closePatrolIncidentModal(event) {
+  if (event && event.target !== document.getElementById('patrol-incident-modal')) return;
+  document.getElementById('patrol-incident-modal').classList.add('hidden');
+}
+
+function submitPatrolIncident() {
+  const text = document.getElementById('patrol-incident-text').value.trim();
+  if (!text) { showToast('Please describe the incident'); return; }
+  const priority = document.getElementById('patrol-incident-priority').value;
+  const room = STATE.patrolRoomDef;
+  const task = STATE.activeTaskDef;
+  const location = room ? room.name : 'Patrol';
+  const taskLabel = STATE.patrolRoomContext === 'plant' ? 'Plant Room Patrol' : (task ? task.label : 'Patrol');
+  STATE.escalations.unshift({ text, location, task: taskLabel, priority, time: nowTime(), photo: null, status: 'open' });
+  addActivity(`Incident: ${text.slice(0,40)}`, 'escalation');
+  syncToSheets({ type:'escalation', location, task:taskLabel, priority, text, officer:'', site:SITE.name, photo:'' });
+  saveState();
+  document.getElementById('patrol-incident-modal').classList.add('hidden');
+  showToast('Incident logged');
+}
+
 function refreshAuditSelect() {
   const type = STATE.activeAudit;
   if (!type) return;
@@ -2499,7 +2898,7 @@ function renderPlantLevelRooms() {
       <div class="room-item-check">${done ? '✓' : ''}</div>
       <div style="flex:1">
         <div class="room-item-name">${room.name}</div>
-        <div class="room-item-meta">📷 Photo mandatory${done ? ' · Done' : ''}</div>
+        <div class="room-item-meta">${done ? '✓ Completed' : room.questions ? `${room.questions.length} question${room.questions.length!==1?'s':''}` : '📷 Photo mandatory'}</div>
       </div>
       <div class="room-item-arrow" style="color:var(--text-muted);opacity:0.5">${done ? plantLockSvg : '<svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'}</div>
     </div>`;
@@ -2513,9 +2912,13 @@ function startPlantRoom(roomId) {
   const room = level.rooms.find(r => r.id === roomId);
   if (!room) return;
   STATE.activePlantRoomId = roomId;
-  STATE.plantRoomPhotos = [];
-  renderPlantRoomActive(level, room);
-  navigateTo('plant-room-active');
+  if (room.questions && room.questions.length) {
+    startPatrolRoomQuestions(room, 'plant');
+  } else {
+    STATE.plantRoomPhotos = [];
+    renderPlantRoomActive(level, room);
+    navigateTo('plant-room-active');
+  }
 }
 
 function renderPlantRoomActive(level, room) {
