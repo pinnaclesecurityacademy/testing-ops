@@ -403,8 +403,7 @@ html, body {
   border-radius: 99px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
 }
 .cp-progress-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted);
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
 }
 
 /* ── CHECKPOINT / ROOM CARD ─────────────── */
@@ -490,13 +489,14 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 
 /* ── AUDIT QUESTION CARD ────────────────── */
 .audit-question-card {
-  margin: 16px; background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 18px;
+  margin: 12px 16px; background: #FFFFFF; border: 1px solid var(--border-color);
+  border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;
+  box-shadow: var(--shadow-sm);
 }
-.aq-number { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--blue); }
+.aq-number { font-size: 12px; font-weight: 600; letter-spacing: 1px; color: var(--text-muted); }
 .aq-question {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 28px; font-weight: 800; color: var(--text-primary); line-height: 1.2;
+  font-family: 'Barlow', sans-serif;
+  font-size: 17px; font-weight: 500; color: var(--text-primary); line-height: 1.5;
 }
 .yn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .yn-btn {
@@ -513,16 +513,24 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 .yn-btn.skip.selected { background: #FEF3C7; border-color: #D97706; color: #92400E; }
 
 /* ── ASSET LIST ─────────────────────────── */
-.asset-list { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-.asset-item {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 16px 18px; display: flex; align-items: center; justify-content: space-between;
-  cursor: pointer; transition: all var(--transition); -webkit-tap-highlight-color: transparent;
+.asset-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; }
+.asset-group-header {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-secondary);
+  text-transform: uppercase; padding: 10px 0 4px;
 }
-.asset-item:active { background: var(--bg-card-hover); border-color: var(--blue); }
-.asset-item-name { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.asset-item {
+  background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 12px;
+  padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), transform var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.asset-item:active { box-shadow: var(--shadow-md); transform: scale(0.99); }
+.asset-item.completed { background: #E8F0ED; border-color: rgba(27,77,62,0.15); cursor: default; box-shadow: none; }
+.asset-item-name { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+.asset-item.completed .asset-item-name { color: var(--text-secondary); }
 .asset-item-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-.asset-item-arrow { color: var(--text-muted); }
+.asset-item-arrow { color: var(--text-muted); flex-shrink: 0; }
+.asset-item-tick { color: #1B4D3E; font-size: 16px; font-weight: 700; flex-shrink: 0; }
 
 /* ── AUDIT TYPE GRID ────────────────────── */
 .audit-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
@@ -1577,8 +1585,8 @@ const AUDIT_TYPES = [
     ],
     questions: [
       { text: 'Is the intercom functioning?', photoRequired: false, photoOptional: false },
-      { text: 'Visual inspection of all display screens including PDI — any issues?', photoRequired: false, photoOptional: true },
-      { text: 'Is the lighting operational?', photoRequired: true, photoOptional: false },
+      { text: 'Visual inspection of all display screens including PDI — any issues?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+      { text: 'Is the lighting operational?', photoRequired: false, photoOptional: true },
       { text: 'Is the lift clean, free of marks and damage?', photoRequired: true, photoOptional: false },
     ],
     photoMandatory: false,
@@ -1586,50 +1594,16 @@ const AUDIT_TYPES = [
   {
     id: 'bathroom', name: 'Bathroom Audit', icon: '🚻', available: true,
     assetGroups: [
-      { group: 'Level 39', assets: ['L39 Unisex'] },
-      { group: 'Level 38', assets: ['L38 Male', 'L38 Male DDA', 'L38 Female', 'L38 Female DDA'] },
-      { group: 'Level 37', assets: ['L37 Male', 'L37 Male DDA', 'L37 Female', 'L37 Female DDA'] },
-      { group: 'Level 36', assets: ['L36 Male', 'L36 Male DDA', 'L36 Female', 'L36 Female DDA'] },
-      { group: 'Level 35', assets: ['L35 Male', 'L35 Male DDA', 'L35 Female', 'L35 Female DDA'] },
-      { group: 'Level 34', assets: ['L34 Male', 'L34 Male DDA', 'L34 Female', 'L34 Female DDA'] },
-      { group: 'Level 33', assets: ['L33 Male', 'L33 Male DDA', 'L33 Female', 'L33 Female DDA'] },
-      { group: 'Level 32', assets: ['L32 Male', 'L32 Male DDA', 'L32 Female', 'L32 Female DDA'] },
-      { group: 'Level 31', assets: ['L31 Male', 'L31 Male DDA', 'L31 Female', 'L31 Female DDA'] },
-      { group: 'Level 30', assets: ['L30 Male', 'L30 Male DDA', 'L30 Female', 'L30 Female DDA'] },
-      { group: 'Level 29', assets: ['L29 Male', 'L29 Male DDA', 'L29 Female', 'L29 Female DDA'] },
-      { group: 'Level 28', assets: ['L28 Male', 'L28 Male DDA', 'L28 Female', 'L28 Female DDA'] },
-      { group: 'Level 27', assets: ['L27 Unisex'] },
-      { group: 'Level 26', assets: ['L26 Male', 'L26 Male DDA', 'L26 Female', 'L26 Female DDA'] },
-      { group: 'Level 25', assets: ['L25 Male', 'L25 Male DDA', 'L25 Female', 'L25 Female DDA'] },
-      { group: 'Level 24', assets: ['L24 Male', 'L24 Male DDA', 'L24 Female', 'L24 Female DDA'] },
-      { group: 'Level 23', assets: ['L23 Male', 'L23 Male DDA', 'L23 Female', 'L23 Female DDA'] },
-      { group: 'Level 22', assets: ['L22 Male', 'L22 Male DDA', 'L22 Female', 'L22 Female DDA'] },
-      { group: 'Level 21', assets: ['L21 Male', 'L21 Male DDA', 'L21 Female', 'L21 Female DDA'] },
-      { group: 'Level 20', assets: ['L20 Male', 'L20 Male DDA', 'L20 Female', 'L20 Female DDA'] },
-      { group: 'Level 19', assets: ['L19 Male', 'L19 Male DDA', 'L19 Female', 'L19 Female DDA'] },
-      { group: 'Level 18', assets: ['L18 Male', 'L18 Male DDA', 'L18 Female', 'L18 Female DDA'] },
-      { group: 'Level 17', assets: ['L17 Male', 'L17 Male DDA', 'L17 Female', 'L17 Female DDA'] },
-      { group: 'Level 16', assets: ['L16 Male', 'L16 Male DDA', 'L16 Female', 'L16 Female DDA'] },
-      { group: 'Level 15', assets: ['L15 Male', 'L15 Male DDA', 'L15 Female', 'L15 Female DDA'] },
-      { group: 'Level 14', assets: ['L14 Male', 'L14 Male DDA', 'L14 Female', 'L14 Female DDA'] },
-      { group: 'Level 13', assets: ['L13 Male', 'L13 Male DDA', 'L13 Female', 'L13 Female DDA'] },
-      { group: 'Level 12', assets: ['L12 Male', 'L12 Male DDA', 'L12 Female', 'L12 Female DDA'] },
-      { group: 'Level 11', assets: ['L11 Male', 'L11 Male DDA', 'L11 Female', 'L11 Female DDA'] },
-      { group: 'Level 10', assets: ['L10 Male', 'L10 Male DDA', 'L10 Female', 'L10 Female DDA'] },
-      { group: 'Level 9', assets: ['L9 Male', 'L9 Male DDA', 'L9 Female', 'L9 Female DDA'] },
-      { group: 'Level 8', assets: ['L8 Male', 'L8 Male DDA', 'L8 Female', 'L8 Female DDA'] },
-      { group: 'Level 7', assets: ['L7 Male', 'L7 Male DDA', 'L7 Female', 'L7 Female DDA'] },
-      { group: 'Level 6', assets: ['L6 Male', 'L6 Male DDA', 'L6 Female', 'L6 Female DDA'] },
-      { group: 'Level 5', assets: ['L5 Male', 'L5 Male DDA', 'L5 Female', 'L5 Female DDA'] },
-      { group: 'Level 4', assets: ['L4 Male', 'L4 Male DDA', 'L4 Female', 'L4 Female DDA'] },
-      { group: 'Level 3', assets: ['L3 Male', 'L3 Male DDA', 'L3 Female', 'L3 Female DDA'] },
+      { group: 'Upper Floors', assets: ['Level 38-39', 'Level 35-37', 'Level 32-34', 'Level 29-31', 'Level 26-28'] },
+      { group: 'Mid Floors', assets: ['Level 23-25', 'Level 20-22', 'Level 17-19', 'Level 14-16', 'Level 11-13'] },
+      { group: 'Lower Floors', assets: ['Level 8-10', 'Level 5-7', 'Level 3-4'] },
     ],
     questions: [
       { text: 'Is the area clean and presentable?', photoRequired: false, photoOptional: false },
       { text: 'Are all fixtures, taps, and hand dryers undamaged?', photoRequired: false, photoOptional: false },
-      { text: 'Is there any visible damage or vandalism?', photoRequired: false, photoOptional: true },
-      { text: 'Are any maintenance issues present?', photoRequired: false, photoOptional: true },
-      { text: 'Are any safety hazards present?', photoRequired: false, photoOptional: true },
+      { text: 'Is there any visible damage or vandalism?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+      { text: 'Are any maintenance issues present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
+      { text: 'Are any safety hazards present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
       { text: 'Is lighting sufficient?', photoRequired: false, photoOptional: false },
       { text: 'Are all doors functioning safely?', photoRequired: false, photoOptional: false },
     ],
@@ -1638,15 +1612,15 @@ const AUDIT_TYPES = [
   {
     id: 'goods-lift-lobby', name: 'Goods Lift Lobby Audit', icon: '🛗', available: true,
     assetGroups: [
-      { group: 'Low Floors', assets: ['Floor 3', 'Floor 5', 'Floor 7', 'Floor 9', 'Floor 10'] },
-      { group: 'Mid Floors', assets: ['Floor 13', 'Floor 16', 'Floor 17', 'Floor 18', 'Floor 19', 'Floor 20', 'Floor 21', 'Floor 22'] },
-      { group: 'High Floors', assets: ['Floor 24', 'Floor 26', 'Floor 28', 'Floor 29', 'Floor 30', 'Floor 31', 'Floor 32', 'Floor 33', 'Floor 34', 'Floor 35', 'Floor 36', 'Floor 37', 'Floor 38'] },
+      { group: 'Lower Floors', assets: ['Floors 3-10'] },
+      { group: 'Mid Floors', assets: ['Floors 11-22'] },
+      { group: 'Upper Floors', assets: ['Floors 23-38'] },
     ],
     questions: [
       { text: 'Is the goods lift lobby clear of obstructions?', photoRequired: false, photoOptional: false },
-      { text: 'Are there any items blocking the riser doors?', photoRequired: false, photoOptional: false },
+      { text: 'Are there any items blocking the riser doors?', photoRequired: false, photoOptional: false, negativeQuestion: true },
       { text: 'Is the area clean and presentable?', photoRequired: true, photoOptional: false },
-      { text: 'Are there any safety hazards present?', photoRequired: false, photoOptional: false },
+      { text: 'Are there any safety hazards present?', photoRequired: false, photoOptional: true, negativeQuestion: true },
     ],
     photoMandatory: false,
   },
@@ -2402,6 +2376,7 @@ function auditAnother() {
 function refreshAuditSelect() {
   const type = STATE.activeAudit;
   if (!type) return;
+  renderAuditAssetList(type);
   const records = STATE.auditRecords.filter(r => r.auditTypeId === type.id);
   const section = document.getElementById('audit-report-section');
   const statusEl = document.getElementById('audit-report-status');
@@ -3063,20 +3038,29 @@ function startAudit(typeId) {
   STATE.auditAnswers = [];
   STATE.aqPhotos = [];
   document.getElementById('audit-select-title').textContent = type.name;
-
-  const list = document.getElementById('asset-select-list');
-  // Group display
-  list.innerHTML = type.assetGroups.map(g => `
-    <div style="margin-bottom:12px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-muted);padding:4px 0 8px 0">${g.group.toUpperCase()}</div>
-      ${g.assets.map(asset => `
-        <div class="asset-item" onclick="selectAuditAsset('${asset.replace(/'/g,"\\'")}')">
-          <div><div class="asset-item-name">${asset}</div><div class="asset-item-sub">${g.group}</div></div>
-          <div class="asset-item-arrow"><svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
-        </div>`).join('')}
-    </div>`).join('');
+  renderAuditAssetList(type);
   refreshAuditSelect();
   navigateTo('audit-select');
+}
+
+function renderAuditAssetList(type) {
+  const done = new Set(STATE.auditRecords.filter(r => r.auditTypeId === type.id).map(r => r.asset));
+  const list = document.getElementById('asset-select-list');
+  const chevron = `<svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+  list.innerHTML = type.assetGroups.map(g => `
+    <div>
+      <div class="asset-group-header">${g.group}</div>
+      ${g.assets.map(asset => done.has(asset)
+        ? `<div class="asset-item completed">
+            <div><div class="asset-item-name">${asset}</div><div class="asset-item-sub">Completed</div></div>
+            <span class="asset-item-tick">✓</span>
+           </div>`
+        : `<div class="asset-item" onclick="selectAuditAsset('${asset.replace(/'/g,"\\'")}')">
+            <div><div class="asset-item-name">${asset}</div><div class="asset-item-sub">${g.group}</div></div>
+            <div class="asset-item-arrow">${chevron}</div>
+           </div>`
+      ).join('')}
+    </div>`).join('');
 }
 
 function selectAuditAsset(assetName) {
@@ -3134,10 +3118,10 @@ function advanceAuditQuestion() {
   if (STATE._currentAuditAnswer === 'skip') {
     const reason = document.getElementById('aq-skip-reason').value.trim();
     if (!reason) { showToast('Please enter a reason for skipping'); return; }
-    STATE.auditAnswers.push({ question: q.text, answer: 'skip', skipReason: reason, comments: document.getElementById('aq-comments').value.trim(), photos: [...STATE.aqPhotos], timestamp: nowTime() });
+    STATE.auditAnswers.push({ question: q.text, answer: 'skip', negativeQuestion: q.negativeQuestion||false, skipReason: reason, comments: document.getElementById('aq-comments').value.trim(), photos: [...STATE.aqPhotos], timestamp: nowTime() });
   } else {
     if (q.photoRequired && STATE.aqPhotos.length === 0) { showToast('Photo is mandatory for this question'); return; }
-    STATE.auditAnswers.push({ question: q.text, answer: STATE._currentAuditAnswer, skipReason: '', comments: document.getElementById('aq-comments').value.trim(), photos: [...STATE.aqPhotos], timestamp: nowTime() });
+    STATE.auditAnswers.push({ question: q.text, answer: STATE._currentAuditAnswer, negativeQuestion: q.negativeQuestion||false, skipReason: '', comments: document.getElementById('aq-comments').value.trim(), photos: [...STATE.aqPhotos], timestamp: nowTime() });
   }
   STATE.currentQuestion++;
   if (STATE.currentQuestion >= type.questions.length) completeAudit();
@@ -3147,7 +3131,7 @@ function advanceAuditQuestion() {
 function completeAudit() {
   const type = STATE.activeAudit;
   const asset = STATE.activeAuditAsset;
-  const noCount = STATE.auditAnswers.filter(a=>a.answer==='no').length;
+  const noCount = STATE.auditAnswers.filter(a => a.answer !== 'skip' && (a.negativeQuestion ? a.answer === 'yes' : a.answer === 'no')).length;
   const skipCount = STATE.auditAnswers.filter(a=>a.answer==='skip').length;
   const endTime = nowTime();
   const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, noCount, skipCount, officer:'' };
@@ -3236,10 +3220,11 @@ async function generateAuditSessionReport() {
 
     for(const [i,ans] of record.answers.entries()){
       if(y>248){doc.addPage();y=20;}
-      const isNo=ans.answer==='no', isSkip=ans.answer==='skip';
-      doc.setFillColor(isNo?50:isSkip?45:22,isNo?20:isSkip?38:22,isNo?20:isSkip?5:32);
+      const isSkip=ans.answer==='skip';
+      const isIssue = !isSkip && (ans.negativeQuestion ? ans.answer==='yes' : ans.answer==='no');
+      doc.setFillColor(isIssue?50:isSkip?45:22,isIssue?20:isSkip?38:22,isIssue?20:isSkip?5:32);
       doc.roundedRect(M,y,W-M*2,9,2,2,'F');
-      doc.setTextColor(isNo?239:isSkip?251:59,isNo?68:isSkip?191:130,isNo?68:isSkip?36:246);
+      doc.setTextColor(isIssue?239:isSkip?251:59,isIssue?68:isSkip?191:130,isIssue?68:isSkip?36:246);
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.text(`Q${String(i+1).padStart(2,'0')}  ${ans.answer.toUpperCase()}`,M+4,y+6.5);
       doc.setTextColor(200,200,220); doc.setFont('helvetica','normal'); doc.setFontSize(8);
