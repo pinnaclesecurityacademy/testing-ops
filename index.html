@@ -759,6 +759,58 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 }
 .report-dl-btn:active { opacity: 0.8; }
 
+/* ── SHIFT TABS ──────────────────────────── */
+.shift-tabs { display: flex; border-bottom: 2px solid var(--border-color); padding: 0 16px; background: #fff; flex-shrink: 0; }
+.shift-tab {
+  padding: 12px 14px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600;
+  color: #6B7280; border: none; background: none; cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s; -webkit-tap-highlight-color: transparent;
+}
+.shift-tab.active { color: #1B4D3E; border-bottom-color: #1B4D3E; }
+
+/* ── ISSUE STATUS ────────────────────────── */
+.issue-status-pill {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 99px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px; flex-shrink: 0;
+}
+.issue-status-pill.open { background: #FEE2E2; color: #991B1B; }
+.issue-status-pill.being-rectified { background: #FEF3C7; color: #92400E; }
+.issue-status-pill.closed { background: #D1FAE5; color: #065F46; }
+
+/* ── MODAL OVERLAY ───────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,0.45);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.modal-overlay.hidden { display: none; }
+.modal-sheet {
+  background: #fff; border-radius: 16px 16px 0 0; padding: 20px 16px 32px;
+  width: 100%; max-width: 600px; box-shadow: var(--shadow-lg);
+}
+.modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; }
+.modal-title { font-size: 15px; font-weight: 600; color: var(--text-primary); flex: 1; margin-right: 12px; }
+.modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); line-height: 1; padding: 0; }
+
+/* ── REPORT CARDS (new) ──────────────────── */
+.reports-filter-bar { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border-color); background: #fff; }
+.reports-filter-row { display: flex; gap: 8px; }
+.reports-filter-row .field-input, .reports-filter-row .field-select { flex: 1; }
+.report-date-group { padding: 0 16px 8px; }
+.report-date-header {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  color: var(--text-muted); padding: 14px 0 8px; border-bottom: 1px solid var(--border-color);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.report-card {
+  background: #fff; border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px; margin-top: 8px; box-shadow: var(--shadow-sm);
+}
+.report-card-icon { font-size: 26px; flex-shrink: 0; }
+.report-card-info { flex: 1; min-width: 0; }
+.report-card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.report-card-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
 </style>
 </head>
 <body>
@@ -818,38 +870,72 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   </div>
 </div>
 
-<!-- ═══════ DAY SHIFT ═══════ -->
+<!-- ═══════ TASKS (with shift tabs) ═══════ -->
 <div id="page-dayshift" class="page">
   <div class="page-scroll">
-    <div class="page-header"><div class="page-header-title">DAY SHIFT INSPECTIONS</div><div class="page-header-sub" id="dayshift-sub">Complete tasks in order</div></div>
-    <div class="shift-progress-bar"><div class="shift-progress-fill" id="shift-progress-fill" style="width:0%"></div></div>
-    <div class="shift-task-list" id="shift-task-list"></div>
-    <div id="eod-section" style="display:none">
-      <div class="eod-banner">
-        <div class="eod-title">🎉 SHIFT COMPLETE</div>
-        <div class="eod-sub">All tasks done. Generate your full day shift report.</div>
-        <div class="field-group" style="width:100%">
-          <label class="field-label">OFFICER NAME</label>
-          <input type="text" class="field-input" id="eod-officer-name" placeholder="Enter your full name..."/>
+    <div class="page-header"><div class="page-header-title">TASKS</div></div>
+    <div class="shift-tabs">
+      <button class="shift-tab active" id="shift-tab-day" onclick="switchShiftTab('day')">Day Shift</button>
+      <button class="shift-tab" id="shift-tab-night" onclick="switchShiftTab('night')">Night Shift</button>
+      <button class="shift-tab" id="shift-tab-weekend" onclick="switchShiftTab('weekend')">Weekend Shift</button>
+    </div>
+    <!-- Day Shift content -->
+    <div id="shift-content-day">
+      <div class="shift-progress-bar"><div class="shift-progress-fill" id="shift-progress-fill" style="width:0%"></div></div>
+      <div id="dayshift-sub" style="padding:8px 16px 4px;font-size:13px;color:var(--text-secondary)">Complete tasks in order</div>
+      <div class="shift-task-list" id="shift-task-list"></div>
+      <div id="eod-section" style="display:none">
+        <div class="eod-banner">
+          <div class="eod-title">🎉 SHIFT COMPLETE</div>
+          <div class="eod-sub">All tasks done. Generate your full day shift report.</div>
+          <div class="field-group" style="width:100%">
+            <label class="field-label">OFFICER NAME</label>
+            <input type="text" class="field-input" id="eod-officer-name" placeholder="Enter your full name..."/>
+          </div>
+          <button class="btn-primary btn-full" onclick="generateEODPDF()">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            GENERATE FULL DAY REPORT
+          </button>
         </div>
-        <button class="btn-primary btn-full" onclick="generateEODPDF()">
-          <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          GENERATE FULL DAY REPORT
-        </button>
+      </div>
+    </div>
+    <!-- Night Shift placeholder -->
+    <div id="shift-content-night" style="display:none">
+      <div style="padding:48px 16px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">🌙</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary)">NIGHT SHIFT</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:8px">Coming soon</div>
+      </div>
+    </div>
+    <!-- Weekend Shift placeholder -->
+    <div id="shift-content-weekend" style="display:none">
+      <div style="padding:48px 16px;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">📅</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary)">WEEKEND SHIFT</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:8px">Coming soon</div>
       </div>
     </div>
     <div class="bottom-spacer"></div>
   </div>
 </div>
 
-<!-- ═══════ NIGHT SHIFT ═══════ -->
+<!-- ═══════ NIGHT SHIFT (kept for internal nav, not in bottom nav) ═══════ -->
 <div id="page-nightshift" class="page">
   <div class="page-scroll">
-    <div class="page-header"><div class="page-header-title">NIGHT SHIFT INSPECTIONS</div><div class="page-header-sub">Coming soon</div></div>
-    <div style="padding:48px 16px;text-align:center">
-      <div style="font-size:48px;margin-bottom:16px">🌙</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary);letter-spacing:1px">NIGHT SHIFT WORKFLOW</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:8px">Will be configured once night shift patrol data is provided.</div>
+    <div class="page-header"><div class="page-header-title">NIGHT SHIFT</div><div class="page-header-sub">Coming soon</div></div>
+    <div class="bottom-spacer"></div>
+  </div>
+</div>
+
+<!-- ═══════ ISSUES ═══════ -->
+<div id="page-issues" class="page">
+  <div class="page-scroll">
+    <div class="page-header">
+      <div class="page-header-title">ISSUES</div>
+      <div class="page-header-sub" id="issues-sub">Open issues requiring attention</div>
+    </div>
+    <div id="issues-list" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+      <div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div>
     </div>
     <div class="bottom-spacer"></div>
   </div>
@@ -1152,11 +1238,24 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   <div class="page-scroll">
     <div class="page-header">
       <div class="page-header-title">REPORTS</div>
-      <div class="page-header-sub">PDFs generated this shift</div>
+      <div class="page-header-sub">Inspection reports — last 90 days</div>
     </div>
-    <div style="padding:16px 16px 0">
-      <div class="field-group" style="margin-bottom:12px">
-        <label class="field-label">OFFICER NAME</label>
+    <div class="reports-filter-bar">
+      <input type="search" class="field-input" id="reports-search" placeholder="Search by type or asset..." oninput="refreshReports()"/>
+      <div class="reports-filter-row">
+        <input type="date" class="field-input" id="reports-date" oninput="refreshReports()"/>
+        <select class="field-select" id="reports-type" onchange="refreshReports()">
+          <option value="">All Types</option>
+          <option value="lift">Lift Inspection</option>
+          <option value="bathroom">Bathroom Inspection</option>
+          <option value="goods-lift-lobby">Goods Lift Lobby</option>
+          <option value="daily">Daily Summary</option>
+        </select>
+      </div>
+    </div>
+    <div style="padding:12px 16px 0">
+      <div class="field-group" style="margin-bottom:10px">
+        <label class="field-label">OFFICER NAME (FOR DAILY SUMMARY)</label>
         <input type="text" class="field-input" id="summary-officer-name" placeholder="Enter your full name..."/>
       </div>
       <button class="btn-primary btn-full hidden" id="daily-summary-btn" onclick="generateDailySummaryPDF()">
@@ -1164,12 +1263,8 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         GENERATE DAILY SUMMARY
       </button>
     </div>
-    <div class="section-header" style="margin-top:16px">
-      <span class="section-title">GENERATED REPORTS</span>
-      <span class="section-badge" id="reports-count">0</span>
-    </div>
-    <div id="reports-list">
-      <div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports generated yet this shift</div></div>
+    <div id="reports-list" style="padding-top:8px">
+      <div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports found</div></div>
     </div>
     <div class="bottom-spacer"></div>
   </div>
@@ -1196,7 +1291,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>Inspections</span>
   </button>
-  <button class="bnav-btn" id="bnav-nightshift" onclick="navigateTo('nightshift')">
+  <button class="bnav-btn" id="bnav-issues" onclick="navigateTo('issues')">
     <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>Issues</span>
   </button>
@@ -1212,6 +1307,30 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <div class="sidebar-status" id="sidebar-site-status"></div>
   </div>
 </nav>
+
+<!-- Issue Status Modal -->
+<div id="issue-modal" class="modal-overlay hidden" onclick="closeIssueModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-issue-title">Update Issue Status</div>
+      <button class="modal-close" onclick="closeIssueModal()">✕</button>
+    </div>
+    <div id="modal-issue-detail" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px"></div>
+    <div class="field-group" style="margin-bottom:12px">
+      <label class="field-label">STATUS</label>
+      <select class="field-select" id="modal-issue-status">
+        <option value="open">Open</option>
+        <option value="being-rectified">Being Rectified</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <div class="field-group" style="margin-bottom:16px">
+      <label class="field-label">NOTE (OPTIONAL)</label>
+      <textarea class="field-textarea" id="modal-issue-note" placeholder="Add a note..." style="min-height:60px"></textarea>
+    </div>
+    <button class="btn-primary btn-full" onclick="saveIssueStatus()">SAVE STATUS ›</button>
+  </div>
+</div>
 
 </div><!-- /main -->
 </div><!-- /app -->
@@ -1240,6 +1359,7 @@ async function sbSaveState() {
       audit_records: STATE.auditRecords,
       escalations: STATE.escalations,
       activity: STATE.activity,
+      reports: STATE.reports,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'site_id' });
     if (error) console.warn('Supabase save error:', error.message);
@@ -1298,8 +1418,9 @@ async function sbLoadState() {
     STATE.completedTaskIds = data.completed_task_ids || [];
     STATE.taskRecords = data.task_records || [];
     STATE.auditRecords = data.audit_records || [];
-    STATE.escalations = data.escalations || [];
+    STATE.escalations = (data.escalations || []).map(e => ({ status: 'open', ...e }));
     STATE.activity = data.activity || [];
+    STATE.reports = data.reports || [];
     if (data.lobby && data.lobby.taskId) {
       STATE.activeLobby = DAY_SHIFT_TASKS.find(t => t.id === data.lobby.taskId);
       STATE.lobbyStartTime = data.lobby.startTime;
@@ -1603,6 +1724,7 @@ const STATE = {
   _completedLobbyRecord: null,
   // Reports
   shiftReports: [], // { filename, reportType, taskLabel, timestamp, dataUri }
+  reports: [],      // { id, type, typeName, asset, completedAt, recordId }
 };
 
 // ═══════════════════════════════════════
@@ -1623,6 +1745,7 @@ function loadState() {
     STATE.auditRecords = load('t_audits', []);
     STATE.escalations = load('t_escs', []);
     STATE.activity = load('t_activity', []);
+    STATE.reports = load('t_reports', []);
     const lobby = load('t_lobby', null);
     if (lobby && lobby.taskId) {
       STATE.activeLobby = DAY_SHIFT_TASKS.find(t => t.id === lobby.taskId);
@@ -1640,6 +1763,7 @@ function saveState() {
     localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
     localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
     localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
+    localStorage.setItem('t_reports', JSON.stringify(STATE.reports));
     localStorage.setItem('t_date', new Date().toDateString());
   } catch(e) {}
 }
@@ -1662,8 +1786,8 @@ function saveLobbyState() {
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
-const ALL_PAGES = ['dashboard','dayshift','nightshift','audits','reports','flexible-rooms','room-active','room-complete','plant-levels','plant-level-rooms','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
-const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'nightshift','audits':'audits','reports':'reports','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-level-rooms':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
+const ALL_PAGES = ['dashboard','dayshift','nightshift','issues','audits','reports','flexible-rooms','room-active','room-complete','plant-levels','plant-level-rooms','plant-room-active','plant-complete','lobby-static','task-complete','audit-select','audit-active','audit-complete'];
+const BNAV_MAP = { 'dashboard':'dashboard','dayshift':'dayshift','nightshift':'dayshift','issues':'issues','audits':'audits','reports':'reports','flexible-rooms':'dayshift','room-active':'dayshift','room-complete':'dayshift','plant-levels':'dayshift','plant-level-rooms':'dayshift','plant-room-active':'dayshift','plant-complete':'dayshift','lobby-static':'dayshift','task-complete':'dayshift','audit-select':'audits','audit-active':'audits','audit-complete':'audits' };
 
 function navigateTo(page) {
   ALL_PAGES.forEach(p => { const el = document.getElementById(`page-${p}`); if (el) el.classList.remove('active'); });
@@ -1676,7 +1800,20 @@ function navigateTo(page) {
   if (page === 'dashboard') refreshDashboard();
   if (page === 'dayshift') refreshDayShift();
   if (page === 'audits') refreshAuditList();
+  if (page === 'issues') refreshIssues();
   if (page === 'reports') refreshReports();
+}
+
+// ═══════════════════════════════════════
+// SHIFT TABS
+// ═══════════════════════════════════════
+function switchShiftTab(tab) {
+  ['day','night','weekend'].forEach(t => {
+    const content = document.getElementById(`shift-content-${t}`);
+    const btn = document.getElementById(`shift-tab-${t}`);
+    if (content) content.style.display = t === tab ? '' : 'none';
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
 }
 
 // ═══════════════════════════════════════
@@ -1707,41 +1844,74 @@ function addToReports(dataUri, filename, reportType, taskLabel) {
 function refreshReports() {
   const list = document.getElementById('reports-list');
   const summaryBtn = document.getElementById('daily-summary-btn');
-  const countBadge = document.getElementById('reports-count');
   const hasCompleted = STATE.completedTaskIds.length > 0;
   if (summaryBtn) summaryBtn.classList.toggle('hidden', !hasCompleted);
-  const reports = STATE.shiftReports || [];
-  if (countBadge) countBadge.textContent = reports.length;
   if (!list) return;
-  if (!reports.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports generated yet this shift</div></div>';
+
+  const searchVal = (document.getElementById('reports-search')?.value || '').toLowerCase().trim();
+  const typeFilter = document.getElementById('reports-type')?.value || '';
+  const dateFilter = document.getElementById('reports-date')?.value || '';
+
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90);
+  let allReports = [...(STATE.reports || [])].sort((a,b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+  allReports = allReports.filter(r => {
+    const d = new Date(r.completedAt);
+    if (d < cutoff) return false;
+    if (dateFilter && d.toISOString().slice(0,10) !== dateFilter) return false;
+    if (typeFilter && r.type !== typeFilter) return false;
+    if (searchVal && !`${r.typeName} ${r.asset}`.toLowerCase().includes(searchVal)) return false;
+    return true;
+  });
+
+  if (!allReports.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports found</div></div>';
     return;
   }
-  const typeIcons = { 'Patrol Report':'🗂️', 'Audit Report':'📋', 'Lobby Static Report':'🏛️', 'Daily Summary':'📊', 'Day Shift Report':'📊' };
-  list.innerHTML = reports.map((r, i) => `
-    <div class="report-item">
-      <div class="report-type-icon">${typeIcons[r.reportType] || '📄'}</div>
-      <div class="report-info">
-        <div class="report-title">${esc(r.taskLabel || r.reportType)}</div>
-        <div class="report-meta">${esc(r.reportType)} · ${esc(r.timestamp)}</div>
-      </div>
-      <button class="report-dl-btn" onclick="downloadShiftReport(${i})">
-        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        DOWNLOAD
-      </button>
+
+  const typeIcons = { lift:'🛗', bathroom:'🚻', 'goods-lift-lobby':'🛗', daily:'📊' };
+  const groups = {};
+  allReports.forEach(r => {
+    const key = new Date(r.completedAt).toLocaleDateString('en-AU', {weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+
+  list.innerHTML = Object.entries(groups).map(([date, rpts]) => `
+    <div class="report-date-group">
+      <div class="report-date-header">${date}<span>${rpts.length} report${rpts.length!==1?'s':''}</span></div>
+      ${rpts.map(r => {
+        const pdf = (STATE.shiftReports||[]).find(p => p.taskLabel && p.taskLabel.includes(r.asset));
+        return `<div class="report-card">
+          <div class="report-card-icon">${typeIcons[r.type]||'📋'}</div>
+          <div class="report-card-info">
+            <div class="report-card-title">${esc(r.typeName)}</div>
+            <div class="report-card-meta">${esc(r.asset)} · ${new Date(r.completedAt).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+          ${pdf ? `<button class="report-dl-btn" onclick="downloadReport('${r.id}')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>PDF
+          </button>` : `<span style="font-size:11px;color:var(--text-muted);padding:0 8px;white-space:nowrap">No PDF</span>`}
+        </div>`;
+      }).join('')}
     </div>`).join('');
+}
+
+function downloadReport(id) {
+  const r = (STATE.reports||[]).find(x => x.id === id);
+  if (!r) return;
+  const pdf = (STATE.shiftReports||[]).find(p => p.taskLabel && p.taskLabel.includes(r.asset));
+  if (!pdf?.dataUri) { showToast('Generate a session report first'); return; }
+  const link = document.createElement('a');
+  link.href = pdf.dataUri; link.download = pdf.filename;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function downloadShiftReport(idx) {
   const r = (STATE.shiftReports || [])[idx];
-  if (!r) return;
-  if (!r.dataUri) { showToast('Report data not available — regenerate PDF'); return; }
+  if (!r?.dataUri) { showToast('Report data not available — regenerate PDF'); return; }
   const link = document.createElement('a');
-  link.href = r.dataUri;
-  link.download = r.filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  link.href = r.dataUri; link.download = r.filename;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 // ═══════════════════════════════════════
@@ -1778,9 +1948,72 @@ function refreshEscalations() {
   const list = document.getElementById('escalations-list');
   const badge = document.getElementById('esc-count');
   if (!list) return;
-  if (badge) badge.textContent = STATE.escalations.length;
+  const open = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
+  if (badge) badge.textContent = open.length;
   if (!STATE.escalations.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div>'; return; }
-  list.innerHTML = STATE.escalations.slice(0,5).map(e => `<div class="escalation-item"><div class="esc-title">${esc(e.text)}</div><div class="esc-meta">${esc(e.location)} · ${esc(e.task)} · ${esc(e.time)}</div><span class="esc-priority ${e.priority}">${e.priority.toUpperCase()}</span></div>`).join('');
+  list.innerHTML = open.slice(0,5).map(e => {
+    const pc = e.priority === 'medium' ? ' priority-medium' : e.priority === 'low' ? ' priority-low' : '';
+    return `<div class="escalation-item${pc}"><div class="esc-title">${esc(e.text)}</div><div class="esc-meta">${esc(e.location)} · ${esc(e.task)} · ${esc(e.time)}</div><span class="esc-priority ${e.priority}">${e.priority.toUpperCase()}</span></div>`;
+  }).join('');
+}
+
+function refreshIssues() {
+  const list = document.getElementById('issues-list');
+  if (!list) return;
+  const sub = document.getElementById('issues-sub');
+  const escs = STATE.escalations;
+  const openCount = escs.filter(e => (e.status||'open') !== 'closed').length;
+  if (sub) sub.textContent = `${openCount} open issue${openCount!==1?'s':''} · ${escs.length} total`;
+  if (!escs.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No issues logged</div></div>'; return; }
+  list.innerHTML = escs.map((e, i) => {
+    const status = e.status || 'open';
+    const pc = e.priority === 'medium' ? ' priority-medium' : e.priority === 'low' ? ' priority-low' : '';
+    const statusLabel = status === 'open' ? 'Open' : status === 'being-rectified' ? 'Being Rectified' : 'Closed';
+    return `<div class="escalation-item${pc}" onclick="showIssueStatusModal(${i})" style="cursor:pointer">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+        <div class="esc-title">${esc(e.text)}</div>
+        <span class="issue-status-pill ${status}">${statusLabel}</span>
+      </div>
+      <div class="esc-meta">${esc(e.location)} · ${esc(e.task)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+        <span class="esc-priority ${e.priority}">${(e.priority||'').toUpperCase()}</span>
+        <span style="font-size:11px;color:var(--text-muted)">${esc(e.time)}</span>
+      </div>
+      ${e.statusNote ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;padding-top:6px;border-top:1px solid var(--border-color)">📝 ${esc(e.statusNote)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+let _modalIssueIdx = -1;
+function showIssueStatusModal(idx) {
+  _modalIssueIdx = idx;
+  const e = STATE.escalations[idx];
+  if (!e) return;
+  document.getElementById('modal-issue-title').textContent = e.text.length > 60 ? e.text.slice(0,60)+'…' : e.text;
+  document.getElementById('modal-issue-detail').textContent = `${e.location} · ${(e.priority||'').toUpperCase()} priority · Raised ${e.time}`;
+  document.getElementById('modal-issue-status').value = e.status || 'open';
+  document.getElementById('modal-issue-note').value = '';
+  document.getElementById('issue-modal').classList.remove('hidden');
+}
+
+function closeIssueModal(event) {
+  if (event && event.target !== document.getElementById('issue-modal')) return;
+  document.getElementById('issue-modal').classList.add('hidden');
+  _modalIssueIdx = -1;
+}
+
+function saveIssueStatus() {
+  if (_modalIssueIdx < 0) return;
+  const status = document.getElementById('modal-issue-status').value;
+  const note = document.getElementById('modal-issue-note').value.trim();
+  STATE.escalations[_modalIssueIdx].status = status;
+  if (note) STATE.escalations[_modalIssueIdx].statusNote = note;
+  document.getElementById('issue-modal').classList.add('hidden');
+  _modalIssueIdx = -1;
+  saveState();
+  refreshIssues();
+  refreshEscalations();
+  showToast('Issue status updated');
 }
 
 function refreshActivity() {
@@ -2096,7 +2329,7 @@ function confirmRoom() {
 
   const escPhoto = STATE.taskPhotos.length > 0 ? STATE.taskPhotos[0] : null;
   [...checks, ...obsChecks].filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
-    STATE.escalations.unshift({ text: c.reportText, location: room.name, task: task.label, time: result.timestamp, priority: c.priority, photo: escPhoto });
+    STATE.escalations.unshift({ text: c.reportText, location: room.name, task: task.label, time: result.timestamp, priority: c.priority, photo: escPhoto, status: 'open' });
     addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
     syncToSheets({ type:'escalation', location:room.name, task:task.label, priority:c.priority, text:c.reportText, officer:'', site:SITE.name, photo: escPhoto || '' });
     syncActivityToSheets(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
@@ -2412,7 +2645,7 @@ function confirmPlantRoom() {
 
   const plantEscPhoto = STATE.plantRoomPhotos.length > 0 ? STATE.plantRoomPhotos[0] : null;
   checks.filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
-    STATE.escalations.unshift({ text: c.reportText, location: `${level.name} — ${room.name}`, task: task ? task.label : 'Plant Room Patrol', time: nowTime(), priority: c.priority, photo: plantEscPhoto });
+    STATE.escalations.unshift({ text: c.reportText, location: `${level.name} — ${room.name}`, task: task ? task.label : 'Plant Room Patrol', time: nowTime(), priority: c.priority, photo: plantEscPhoto, status: 'open' });
     addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
     syncToSheets({ type:'escalation', location:`${level.name} — ${room.name}`, task:task?task.label:'Plant Room Patrol', priority:c.priority, text:c.reportText, officer:'', site:SITE.name, photo: plantEscPhoto || '' });
     syncActivityToSheets(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
@@ -2932,6 +3165,15 @@ function completeAudit() {
   const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, noCount, skipCount, officer:'' };
   STATE._completedAuditRecord = record;
   STATE.auditRecords.push(record);
+  if (!STATE.reports) STATE.reports = [];
+  STATE.reports.unshift({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    type: type.id,
+    typeName: type.name,
+    asset,
+    completedAt: new Date().toISOString(),
+    recordId: endTime,
+  });
   addActivity(`${type.name} — ${asset} completed`, 'audit');
   saveState();
   sbSaveAuditRecord(record);

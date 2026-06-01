@@ -1,17 +1,15 @@
-const CACHE = `pinnacle-inspect-${Date.now()}`;
+const CACHE = 'pinnacle-inspect-v' + Date.now();
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+self.addEventListener('install', event => {
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => caches.delete(cacheName))
-      );
-    })
+    caches.keys().then(cacheNames =>
+      Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)))
+    ).then(() => self.clients.claim())
   );
 });
 
