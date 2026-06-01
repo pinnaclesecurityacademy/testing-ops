@@ -80,21 +80,6 @@ html, body {
 
 .hidden { display: none !important; }
 
-/* ── SPLASH ─────────────────────────────── */
-.splash {
-  position: fixed; inset: 0; z-index: 9999;
-  background: #0D1B3E;
-  display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.6s ease, visibility 0.6s ease;
-}
-.splash.fade-out { opacity: 0; visibility: hidden; }
-.splash-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 24px; }
-.splash-logo { width: 280px; max-width: 70vw; height: auto; display: block; }
-.splash-tagline {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px; font-weight: 600; letter-spacing: 3px; color: #C9A84C;
-  text-transform: uppercase;
-}
 
 /* ── MAIN LAYOUT ────────────────────────── */
 .main {
@@ -778,14 +763,6 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 </head>
 <body>
 <div id="app">
-
-<!-- SPLASH -->
-<div id="splash" class="splash">
-  <div class="splash-inner">
-    <img src="pinnacle-inspect-logo.png" alt="Pinnacle Inspect" class="splash-logo"/>
-    <span class="splash-tagline">INSPECT • VERIFY • ASSURE</span>
-  </div>
-</div>
 
 <!-- MAIN -->
 <div id="main" class="main hidden">
@@ -3280,7 +3257,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateClock();
   setInterval(updateClock, 30000);
   applyShiftTheme();
-  const splash = document.getElementById('splash');
   const main = document.getElementById('main');
   loadState();
   if (main) main.classList.remove('hidden');
@@ -3291,7 +3267,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('SYNCED ✓', true); }
   else { showSyncStatus('OFFLINE', false); }
   startSyncPolling();
-  setTimeout(()=>{ if (splash) splash.classList.add('fade-out'); setTimeout(()=>{ if(splash) splash.style.display='none'; }, 700); }, 2000);
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
 

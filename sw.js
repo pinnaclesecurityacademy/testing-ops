@@ -1,13 +1,20 @@
-const CACHE = 'testing-ops-v7';
+const CACHE = `pinnacle-inspect-${Date.now()}`;
 const ASSETS = ['/', '/index.html', '/manifest.json'];
+
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-  ).then(() => self.clients.claim()));
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => caches.delete(cacheName))
+      );
+    })
+  );
 });
+
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('supabase.co')) { return; }
   if (e.request.method !== 'GET') return;
