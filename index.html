@@ -1187,6 +1187,14 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         <textarea class="field-textarea" id="pq-na-comments" placeholder="Additional comments (optional)..." style="display:none;margin-top:8px;min-height:56px"></textarea>
         <button class="btn-secondary btn-full" style="margin-top:10px" onclick="confirmPatrolNa()">CONFIRM N/A ›</button>
       </div>
+      <div class="field-group" id="pq-photo-group" style="display:none;margin-top:14px">
+        <label class="field-label" id="pq-photo-label">PHOTO EVIDENCE</label>
+        <label class="photo-capture-area" for="pq-photo">
+          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span id="pq-photo-hint">Tap to open camera</span></div>
+          <div id="pq-photo-preview" class="photo-preview-grid"></div>
+        </label>
+        <input type="file" id="pq-photo" accept="image/*" capture="environment" class="hidden" onchange="handlePatrolQPhoto(this)" multiple/>
+      </div>
     </div>
     <div class="bottom-spacer"></div>
   </div>
@@ -1311,6 +1319,14 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         </div>
         <textarea class="field-textarea" id="aq-na-comments" placeholder="Additional comments (optional)..." style="display:none;margin-top:8px;min-height:56px"></textarea>
         <button class="btn-secondary btn-full" style="margin-top:10px" onclick="confirmAuditNa()">CONFIRM N/A ›</button>
+      </div>
+      <div class="field-group" id="aq-photo-group" style="display:none;margin-top:14px">
+        <label class="field-label" id="aq-photo-label">PHOTO EVIDENCE</label>
+        <label class="photo-capture-area" for="aq-photo">
+          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span id="aq-photo-hint">Tap to open camera</span></div>
+          <div id="aq-photo-preview" class="photo-preview-grid"></div>
+        </label>
+        <input type="file" id="aq-photo" accept="image/*" capture="environment" class="hidden" onchange="handleAuditPhoto(this)" multiple/>
       </div>
     </div>
     <div class="bottom-spacer"></div>
@@ -1659,11 +1675,11 @@ const DAY_SHIFT_TASKS = [
     tag: 'INSPECTION', tagColor: 'blue',
     rooms: [
       { id: 'white-level-check', name: 'White Level', questions: [
-        { text: 'Is the lobby area clean and presentable?', photoRequired: false, photoOptional: false },
+        { text: 'Is the lobby area clean and presentable?', photoRequired: true, photoOptional: false },
         { text: 'Are all lift port readers operational?', photoRequired: false, photoOptional: false },
         { text: 'Are all DDA doors functioning correctly?', photoRequired: false, photoOptional: false },
         { text: 'Are all lobby doors secured?', photoRequired: false, photoOptional: false },
-        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: false, photoOptional: false },
+        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: true, photoOptional: false },
         { text: 'Is lighting sufficient throughout?', photoRequired: false, photoOptional: false },
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
         { text: 'Any suspicious items observed in the area?', photoRequired: false, photoOptional: true, negativeQuestion: true },
@@ -1984,11 +2000,11 @@ function buildNightShiftTasks() {
     { id: 'ns-lobby-static', name: 'Lobby Static', type: 'static', duration: 60, time: '18:00-19:00' },
     { id: 'ns-white-level', name: 'White Level Inspection', type: 'room-questions', time: '18:00-19:00',
       rooms: [{ name: 'White Level', questions: [
-        { text: 'Is the lobby area clean and presentable?', photoRequired: false, photoOptional: false },
+        { text: 'Is the lobby area clean and presentable?', photoRequired: true, photoOptional: false },
         { text: 'Are all lift port readers operational?', photoRequired: false, photoOptional: false },
         { text: 'Are all DDA doors functioning correctly?', photoRequired: false, photoOptional: false },
         { text: 'Are all lobby doors secured?', photoRequired: false, photoOptional: false },
-        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: false, photoOptional: false },
+        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: true, photoOptional: false },
         { text: 'Is lighting sufficient throughout?', photoRequired: false, photoOptional: false },
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true },
         { text: 'Any suspicious items observed in the area?', photoRequired: false, photoOptional: true },
@@ -3088,6 +3104,7 @@ function confirmRoom() {
   } catch(e) {
     console.warn('[Patrol] Failed to persist room progress:', e);
   }
+  saveState();
   navigateTo('flexible-rooms');
   renderFlexibleRooms();
 }
@@ -3170,6 +3187,16 @@ function renderPatrolQuestion() {
   const naComments = document.getElementById('pq-na-comments');
   naComments.value = ''; naComments.style.display = 'none';
   STATE._patrolNaReason = '';
+  // Photo evidence — reset and show/hide based on this question's photo flags
+  STATE.patrolRoomPhotos = [];
+  const pPrev = document.getElementById('pq-photo-preview'); if (pPrev) pPrev.innerHTML = '';
+  const pGroup = document.getElementById('pq-photo-group');
+  if (q.photoRequired || q.photoOptional) {
+    pGroup.style.display = '';
+    document.getElementById('pq-photo-label').textContent = q.photoRequired ? 'PHOTO EVIDENCE — REQUIRED' : 'PHOTO EVIDENCE — OPTIONAL';
+  } else {
+    pGroup.style.display = 'none';
+  }
 }
 
 // Record an answer for the current patrol/plant question and advance.
@@ -3185,7 +3212,11 @@ function recordPatrolAnswer(answer, extra) {
   else renderPatrolQuestion();
 }
 
-function recordPatrolPass() { recordPatrolAnswer('pass'); }
+function recordPatrolPass() {
+  const q = STATE.patrolRoomDef.questions[STATE.patrolRoomQuestion];
+  if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  recordPatrolAnswer('pass', { photos: [...STATE.patrolRoomPhotos] });
+}
 
 function togglePatrolNa() {
   const g = document.getElementById('pq-na-group');
@@ -3207,8 +3238,12 @@ function confirmPatrolNa() {
   if (!reason) { showToast('Please select a reason'); return; }
   const comments = document.getElementById('pq-na-comments').value.trim();
   if (reason === 'Other' && !comments) { showToast('Please describe the reason'); return; }
-  recordPatrolAnswer('na', { reason, comments });
+  const q = STATE.patrolRoomDef.questions[STATE.patrolRoomQuestion];
+  if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  recordPatrolAnswer('na', { reason, comments, photos: [...STATE.patrolRoomPhotos] });
 }
+
+function handlePatrolQPhoto(input) { capturePhotos(input, 'pq-photo-preview', STATE.patrolRoomPhotos); }
 
 // ── Finding workflow (shared by inspection questions and audits) ──
 function openFindingModal(context) {
@@ -3286,6 +3321,7 @@ function completePatrolRoomQuestions() {
       }
       localStorage.setItem(`t_room_results_${task.id}`, JSON.stringify({ rooms: liteRooms, startTime: STATE.taskStartTime }));
     } catch(e) {}
+    saveState();
     navigateTo('flexible-rooms');
     renderFlexibleRooms();
   } else if (STATE.patrolRoomContext === 'plant') {
@@ -3302,6 +3338,7 @@ function completePatrolRoomQuestions() {
       }
       localStorage.setItem(`t_plant_results_${STATE.activePlantTaskId}`, JSON.stringify(liteLevels));
     } catch(e) {}
+    saveState();
     navigateTo('plant-level-rooms');
     renderPlantLevelRooms();
   }
@@ -3598,6 +3635,7 @@ function confirmPlantRoom() {
   };
   // Persist mid-patrol progress immediately
   try { localStorage.setItem(`t_plant_results_${STATE.activePlantTaskId}`, JSON.stringify(STATE.plantLevelResults)); } catch(e) {}
+  saveState();
 
   renderPlantLevelRooms();
   navigateTo('plant-level-rooms');
@@ -4115,6 +4153,16 @@ function renderAuditQuestion() {
   const naComments = document.getElementById('aq-na-comments');
   naComments.value = ''; naComments.style.display = 'none';
   STATE._auditNaReason = '';
+  // Photo evidence — reset and show/hide based on this question's photo flags
+  STATE.aqPhotos = [];
+  const aPrev = document.getElementById('aq-photo-preview'); if (aPrev) aPrev.innerHTML = '';
+  const aGroup = document.getElementById('aq-photo-group');
+  if (photoRequired || photoOptional) {
+    aGroup.style.display = '';
+    document.getElementById('aq-photo-label').textContent = photoRequired ? 'PHOTO EVIDENCE — REQUIRED' : 'PHOTO EVIDENCE — OPTIONAL';
+  } else {
+    aGroup.style.display = 'none';
+  }
 }
 
 // Record an answer for the current audit question and advance.
@@ -4130,7 +4178,11 @@ function recordAuditAnswer(answer, extra) {
   else renderAuditQuestion();
 }
 
-function recordAuditPass() { recordAuditAnswer('pass'); }
+function recordAuditPass() {
+  const q = STATE.activeAudit.questions[STATE.currentQuestion];
+  if (q.photoRequired && STATE.aqPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  recordAuditAnswer('pass', { photos: [...STATE.aqPhotos] });
+}
 
 function toggleAuditNa() {
   const g = document.getElementById('aq-na-group');
@@ -4152,7 +4204,9 @@ function confirmAuditNa() {
   if (!reason) { showToast('Please select a reason'); return; }
   const comments = document.getElementById('aq-na-comments').value.trim();
   if (reason === 'Other' && !comments) { showToast('Please describe the reason'); return; }
-  recordAuditAnswer('na', { reason, comments });
+  const q = STATE.activeAudit.questions[STATE.currentQuestion];
+  if (q.photoRequired && STATE.aqPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  recordAuditAnswer('na', { reason, comments, photos: [...STATE.aqPhotos] });
 }
 
 function completeAudit() {
