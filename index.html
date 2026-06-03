@@ -170,7 +170,7 @@ html, body {
   transition: color var(--transition); -webkit-tap-highlight-color: transparent;
 }
 .bnav-btn.active { color: var(--accent-green); }
-.bnav-btn span { font-size: 10px; }
+.bnav-btn span { font-size: 12px; }
 
 /* ── STATUS BAND ────────────────────────── */
 .status-band {
@@ -202,8 +202,7 @@ html, body {
 .stat-card.primary { border-left: 3px solid var(--accent-green); }
 .stat-card.secondary { border-left: 3px solid var(--accent-gold); }
 .stat-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 6px;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 6px;
 }
 .stat-value {
   font-family: 'Barlow Condensed', sans-serif;
@@ -224,8 +223,7 @@ html, body {
   padding: 12px 16px 8px;
 }
 .section-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--text-muted);
+  font-size: 18px; font-weight: 600; color: var(--text-primary);
 }
 .section-badge {
   background: var(--purple-dim); color: var(--purple);
@@ -767,16 +765,53 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 }
 .report-dl-btn:active { opacity: 0.8; }
 
-/* ── PATROL INCIDENT BUTTON ─────────────── */
-.patrol-incident-btn {
-  position: fixed; bottom: calc(var(--bnav-h) + 14px); left: 14px; z-index: 200;
-  background: #EF4444; color: #fff; border: none; border-radius: 8px;
-  padding: 10px 14px; font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px; font-weight: 700; letter-spacing: 1px;
-  display: flex; align-items: center; gap: 6px;
-  box-shadow: 0 4px 12px rgba(239,68,68,0.45); cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+/* ── PASS / ISSUE / N/A BUTTONS ──────────── */
+.pq-btn-stack { display: flex; flex-direction: column; gap: 10px; }
+.pq-btn {
+  width: 100%; border: none; border-radius: 12px; cursor: pointer;
+  font-family: 'Barlow', sans-serif; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: opacity 0.15s, transform 0.1s; -webkit-tap-highlight-color: transparent;
 }
+.pq-btn:active { opacity: 0.85; transform: scale(0.98); }
+.pq-btn-pass { height: 64px; font-size: 18px; background: #1B4D3E; color: #fff; }
+.pq-btn-pass.selected { box-shadow: 0 0 0 3px rgba(27,77,62,0.3); }
+.pq-btn-issue { height: 64px; font-size: 18px; background: #F97316; color: #fff; }
+.pq-btn-na { height: 56px; font-size: 16px; background: #FEF3C7; color: #92400E; }
+.pq-btn-na.selected { background: #FDE68A; }
+/* N/A reason pills */
+.na-reason-group { padding: 12px 0 4px; }
+.na-reason-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.na-pill {
+  padding: 8px 14px; border-radius: 20px; border: 1.5px solid #E5E7EB;
+  background: #fff; font-size: 14px; font-weight: 500; color: #6B7280; cursor: pointer;
+  transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.na-pill.selected { background: #FEF3C7; border-color: #D97706; color: #92400E; }
+/* Finding modal category/priority pills */
+.finding-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.finding-pill {
+  padding: 8px 14px; border-radius: 20px; border: 1.5px solid #E5E7EB;
+  background: #fff; font-size: 14px; font-weight: 500; color: #6B7280; cursor: pointer;
+  transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.finding-pill.selected { background: #E8F0ED; border-color: #1B4D3E; color: #1B4D3E; }
+.finding-pill.pri-low.selected { background: #F3F4F6; border-color: #6B7280; color: #374151; }
+.finding-pill.pri-medium.selected { background: #FEF3C7; border-color: #D97706; color: #92400E; }
+.finding-pill.pri-high.selected { background: #FFEDD5; border-color: #F97316; color: #9A3412; }
+.finding-pill.pri-urgent.selected { background: #FEE2E2; border-color: #EF4444; color: #991B1B; }
+.finding-alert-banner {
+  background: #FEE2E2; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; font-weight: 600; color: #991B1B;
+  margin-bottom: 14px; display: none;
+}
+/* Dashboard 5-card grid */
+.dash-stats-5 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px 0; }
+.dash-stats-5 .stat-card-wide { grid-column: 1 / -1; }
+/* Dashboard greeting */
+.dash-greeting { padding: 20px 16px 8px; }
+.dash-greeting-text { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+.dash-greeting-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
 
 /* ── SHIFT TABS ──────────────────────────── */
 .shift-tabs { display: flex; border-bottom: 2px solid var(--border-color); padding: 0 16px; background: #fff; flex-shrink: 0; }
@@ -851,37 +886,46 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 <!-- ═══════ DASHBOARD ═══════ -->
 <div id="page-dashboard" class="page active">
   <div class="page-scroll">
-    <div class="status-band">
-      <div class="status-item"><span class="status-dot green"></span><span>SITE ACTIVE</span></div>
-      <div class="status-divider"></div>
-      <div class="status-item" id="dash-date"></div>
-      <div class="status-divider"></div>
-      <div class="status-item" id="shift-indicator">SHIFT: DAY</div>
+    <div class="dash-greeting">
+      <div class="dash-greeting-text" id="dash-greeting">Good morning</div>
+      <div class="dash-greeting-sub"><span id="dash-site">Tower 3 ITS</span> · <span id="dash-date"></span></div>
     </div>
-    <div class="dash-stats">
-      <div class="stat-card primary" onclick="navigateTo('dayshift')">
-        <div class="stat-label">DAY SHIFT</div>
-        <div class="stat-value" id="stat-dayshift">0<span>/11</span></div>
-        <div class="stat-sub">Tasks completed</div>
-        <div class="stat-progress"><div class="stat-progress-fill" id="dayshift-progress" style="width:0%"></div></div>
-        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" width="32" height="32"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+    <div class="dash-stats-5">
+      <div class="stat-card" onclick="navigateTo('dayshift')">
+        <div class="stat-label">Expected Today</div>
+        <div class="stat-value" id="stat-expected" style="font-size:36px;font-weight:700;color:var(--text-primary)">0</div>
+        <div class="stat-icon" style="color:#6B7280"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
       </div>
-      <div class="stat-card secondary" onclick="navigateTo('audits')">
-        <div class="stat-label">INSPECTIONS TODAY</div>
-        <div class="stat-value" id="stat-audits">0<span>/4</span></div>
-        <div class="stat-sub">Tap to start inspection</div>
-        <div class="stat-progress"><div class="stat-progress-fill" id="audit-progress" style="width:0%"></div></div>
-        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" width="32" height="32"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M9 7h6M9 11h6M9 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      <div class="stat-card" onclick="navigateTo('dayshift')">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="stat-completed" style="font-size:36px;font-weight:700;color:#1B4D3E">0</div>
+        <div class="stat-icon" style="color:#1B4D3E"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="stat-card" onclick="navigateTo('dayshift')">
+        <div class="stat-label">Outstanding</div>
+        <div class="stat-value" id="stat-outstanding" style="font-size:36px;font-weight:700;color:#F59E0B">0</div>
+        <div class="stat-icon" style="color:#F59E0B"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="stat-card" onclick="navigateTo('issues')">
+        <div class="stat-label">Open Issues</div>
+        <div class="stat-value" id="stat-issues" style="font-size:36px;font-weight:700;color:#EF4444">0</div>
+        <div class="stat-icon" style="color:#EF4444"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="stat-card stat-card-wide">
+        <div class="stat-label">Compliance Score</div>
+        <div class="stat-value" id="stat-compliance" style="font-size:36px;font-weight:700;color:#1B4D3E">—</div>
+        <div class="stat-progress" style="margin-top:8px"><div class="stat-progress-fill" id="compliance-progress" style="width:0%"></div></div>
+        <div class="stat-icon" style="color:#1B4D3E"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
     </div>
-    <div class="section-header"><span class="section-title">OPEN ISSUES</span><span class="section-badge" id="esc-count">0</span></div>
+    <div class="section-header"><span class="section-title">Open Issues</span><span class="section-badge" id="esc-count">0</span></div>
     <div id="escalations-list" class="escalation-list"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div></div>
-    <div class="section-header"><span class="section-title">RECENT ACTIVITY</span></div>
+    <div class="section-header"><span class="section-title">Recent Activity</span></div>
     <div id="activity-feed" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div></div>
-    <div class="section-header"><span class="section-title">QUICK START</span></div>
+    <div class="section-header"><span class="section-title">Quick Start</span></div>
     <div class="quick-start-grid">
       <button class="qs-btn patrol" onclick="startQuickPatrol('White Level Inspection')"><div class="qs-icon">⬜</div><div class="qs-label">White Level</div></button>
-      <button class="qs-btn patrol" onclick="startQuickPatrol('External Patrol')"><div class="qs-icon">🔦</div><div class="qs-label">External Patrol</div></button>
+      <button class="qs-btn patrol" onclick="startQuickPatrol('External Inspection')"><div class="qs-icon">🔦</div><div class="qs-label">External Inspection</div></button>
       <button class="qs-btn patrol" onclick="startRoverTask('plant-room-morning')"><div class="qs-icon">⚙️</div><div class="qs-label">Plant Room</div></button>
       <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')"><div class="qs-icon">🛗</div><div class="qs-label">Lift Inspection</div></button>
     </div>
@@ -1030,13 +1074,13 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   <div class="page-scroll">
     <div class="patrol-active-header">
       <button class="back-btn" onclick="navigateTo('dayshift')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
-      <div class="patrol-active-title" id="plant-levels-title">Plant Room Patrol</div>
+      <div class="patrol-active-title" id="plant-levels-title">Plant Room Inspection</div>
       <div class="patrol-active-meta" id="plant-levels-meta"></div>
     </div>
     <div class="room-selector-page">
       <div class="room-selector-intro">Select a level to begin. Complete rooms in any order. All photos mandatory.</div>
       <div id="plant-levels-list"></div>
-      <button class="btn-primary btn-full hidden" id="plant-complete-btn" onclick="completePlantPatrol()">COMPLETE PATROL ›</button>
+      <button class="btn-primary btn-full hidden" id="plant-complete-btn" onclick="completePlantPatrol()">COMPLETE INSPECTION ›</button>
     </div>
     <div class="bottom-spacer"></div>
   </div>
@@ -1094,7 +1138,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <div class="patrol-active-header">
       <button class="back-btn" onclick="patrolQuestionBack()"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>BACK</button>
       <div class="patrol-active-title" id="patrol-q-title">Room Name</div>
-      <div class="patrol-active-meta" id="patrol-q-meta">PATROL</div>
+      <div class="patrol-active-meta" id="patrol-q-meta">INSPECTION</div>
     </div>
     <div class="checkpoint-progress">
       <div class="cp-progress-track"><div class="cp-progress-fill" id="patrol-q-progress-fill"></div></div>
@@ -1103,35 +1147,30 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <div class="audit-question-card">
       <div class="aq-number" id="patrol-q-number">01</div>
       <div class="aq-question" id="patrol-q-question">Is the room secured?</div>
-      <div class="yn-row">
-        <button class="yn-btn yes" id="pq-yes" onclick="setPatrolAnswer('yes')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>YES</button>
-        <button class="yn-btn no" id="pq-no" onclick="setPatrolAnswer('no')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>NO</button>
-        <button class="yn-btn skip" id="pq-skip" onclick="setPatrolAnswer('skip')">SKIP</button>
+      <div class="pq-btn-stack">
+        <button class="pq-btn pq-btn-pass" id="pq-pass" onclick="recordPatrolPass()">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>PASS
+        </button>
+        <button class="pq-btn pq-btn-issue" id="pq-issue" onclick="openFindingModal('patrol')">
+          ⚠ ISSUE FOUND
+        </button>
+        <button class="pq-btn pq-btn-na" id="pq-na" onclick="togglePatrolNa()">N/A — Not Applicable</button>
       </div>
-      <div class="field-group" id="pq-skip-reason-group" style="display:none">
-        <label class="field-label">REASON FOR SKIPPING — MANDATORY</label>
-        <input type="text" class="field-input" id="pq-skip-reason" placeholder="Reason for skipping..."/>
+      <div id="pq-na-group" class="na-reason-group" style="display:none">
+        <label class="field-label">REASON — MANDATORY</label>
+        <div class="na-reason-pills" id="pq-na-pills">
+          <button class="na-pill" onclick="selectPatrolNaReason(this,'Access issue')">Access issue</button>
+          <button class="na-pill" onclick="selectPatrolNaReason(this,'Weather conditions')">Weather conditions</button>
+          <button class="na-pill" onclick="selectPatrolNaReason(this,'Under maintenance')">Under maintenance</button>
+          <button class="na-pill" onclick="selectPatrolNaReason(this,'Higher priority')">Higher priority</button>
+          <button class="na-pill" onclick="selectPatrolNaReason(this,'Other')">Other</button>
+        </div>
+        <textarea class="field-textarea" id="pq-na-comments" placeholder="Additional comments (optional)..." style="display:none;margin-top:8px;min-height:56px"></textarea>
+        <button class="btn-secondary btn-full" style="margin-top:10px" onclick="confirmPatrolNa()">CONFIRM N/A ›</button>
       </div>
-      <div class="field-group">
-        <label class="field-label">COMMENTS (OPTIONAL)</label>
-        <textarea class="field-textarea" id="pq-comments" placeholder="Add any relevant comments..."></textarea>
-      </div>
-      <div class="field-group" id="pq-photo-group">
-        <label class="field-label" id="pq-photo-label">PHOTO EVIDENCE</label>
-        <label class="photo-capture-area" for="pq-photo">
-          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tap to open camera</span></div>
-          <div id="pq-photo-preview" class="photo-preview-grid"></div>
-        </label>
-        <input type="file" id="pq-photo" accept="image/*" capture="environment" class="hidden" onchange="handlePatrolPhoto(this)" multiple/>
-      </div>
-      <button class="btn-primary btn-full" id="patrol-q-next-btn" onclick="advancePatrolQuestion()">NEXT QUESTION ›</button>
     </div>
     <div class="bottom-spacer"></div>
   </div>
-  <button class="patrol-incident-btn" onclick="openPatrolIncident()">
-    <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    INCIDENT
-  </button>
 </div>
 
 <!-- ═══════ TASK COMPLETE ═══════ -->
@@ -1233,28 +1272,27 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <div class="audit-question-card">
       <div class="aq-number" id="aq-number">01</div>
       <div class="aq-question" id="aq-question">Is the intercom functioning?</div>
-      <div class="yn-row">
-        <button class="yn-btn yes" id="yn-yes" onclick="setAuditAnswer('yes')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>YES</button>
-        <button class="yn-btn no" id="yn-no" onclick="setAuditAnswer('no')"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>NO</button>
-        <button class="yn-btn skip" id="yn-skip" onclick="setAuditAnswer('skip')">SKIP</button>
+      <div class="pq-btn-stack">
+        <button class="pq-btn pq-btn-pass" id="aq-pass" onclick="recordAuditPass()">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>PASS
+        </button>
+        <button class="pq-btn pq-btn-issue" id="aq-issue" onclick="openFindingModal('audit')">
+          ⚠ ISSUE FOUND
+        </button>
+        <button class="pq-btn pq-btn-na" id="aq-na" onclick="toggleAuditNa()">N/A — Not Applicable</button>
       </div>
-      <div class="field-group" id="aq-skip-reason-group" style="display:none">
-        <label class="field-label">REASON FOR SKIPPING — MANDATORY</label>
-        <input type="text" class="field-input" id="aq-skip-reason" placeholder="Reason for skipping..."/>
+      <div id="aq-na-group" class="na-reason-group" style="display:none">
+        <label class="field-label">REASON — MANDATORY</label>
+        <div class="na-reason-pills" id="aq-na-pills">
+          <button class="na-pill" onclick="selectAuditNaReason(this,'Access issue')">Access issue</button>
+          <button class="na-pill" onclick="selectAuditNaReason(this,'Out of service')">Out of service</button>
+          <button class="na-pill" onclick="selectAuditNaReason(this,'Under maintenance')">Under maintenance</button>
+          <button class="na-pill" onclick="selectAuditNaReason(this,'Not present')">Not present</button>
+          <button class="na-pill" onclick="selectAuditNaReason(this,'Other')">Other</button>
+        </div>
+        <textarea class="field-textarea" id="aq-na-comments" placeholder="Additional comments (optional)..." style="display:none;margin-top:8px;min-height:56px"></textarea>
+        <button class="btn-secondary btn-full" style="margin-top:10px" onclick="confirmAuditNa()">CONFIRM N/A ›</button>
       </div>
-      <div class="field-group">
-        <label class="field-label">COMMENTS (OPTIONAL)</label>
-        <textarea class="field-textarea" id="aq-comments" placeholder="Add any relevant comments..."></textarea>
-      </div>
-      <div class="field-group" id="aq-photo-group">
-        <label class="field-label" id="aq-photo-label">PHOTO EVIDENCE</label>
-        <label class="photo-capture-area" for="aq-photo">
-          <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tap to open camera</span></div>
-          <div id="aq-photo-preview" class="photo-preview-grid"></div>
-        </label>
-        <input type="file" id="aq-photo" accept="image/*" capture="environment" class="hidden" onchange="handleAuditPhoto(this)" multiple/>
-      </div>
-      <button class="btn-primary btn-full" id="audit-next-btn" onclick="advanceAuditQuestion()">NEXT QUESTION ›</button>
     </div>
     <div class="bottom-spacer"></div>
   </div>
@@ -1376,6 +1414,38 @@ body.day-mode, body.night-mode { /* theme is always light */ }
       </select>
     </div>
     <button class="btn-primary btn-full" onclick="submitPatrolIncident()">LOG INCIDENT ›</button>
+  </div>
+</div>
+
+<!-- Finding Modal (ISSUE workflow for inspection & audit questions) -->
+<div id="finding-modal" class="modal-overlay hidden" onclick="closeFindingModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">⚠ Log Finding</div>
+      <button class="modal-close" onclick="closeFindingModal()">✕</button>
+    </div>
+    <div id="finding-context" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px"></div>
+    <div class="field-group" style="margin-bottom:12px">
+      <label class="field-label">WHAT DID YOU FIND? — MANDATORY</label>
+      <textarea class="field-textarea" id="finding-text" placeholder="Describe the issue or finding..."></textarea>
+    </div>
+    <div class="field-group" style="margin-bottom:12px">
+      <label class="field-label">PRIORITY</label>
+      <select class="field-select" id="finding-priority">
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High — Urgent</option>
+      </select>
+    </div>
+    <div class="field-group" style="margin-bottom:16px">
+      <label class="field-label">PHOTO EVIDENCE (OPTIONAL)</label>
+      <label class="photo-capture-area" for="finding-photo">
+        <div class="photo-placeholder"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M9 6l1-2h4l1 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Tap to open camera</span></div>
+        <div id="finding-photo-preview" class="photo-preview-grid"></div>
+      </label>
+      <input type="file" id="finding-photo" accept="image/*" capture="environment" class="hidden" onchange="handleFindingPhoto(this)" multiple/>
+    </div>
+    <button class="btn-primary btn-full" onclick="submitFinding()">LOG FINDING ›</button>
   </div>
 </div>
 
@@ -1548,8 +1618,8 @@ const DAY_SHIFT_TASKS = [
     ]
   },
   {
-    id: 'external-patrol', label: 'External Patrol', icon: '🔦', type: 'flexible',
-    tag: 'PATROL', tagColor: 'blue',
+    id: 'external-patrol', label: 'External Inspection', icon: '🔦', type: 'flexible',
+    tag: 'INSPECTION', tagColor: 'blue',
     rooms: [
       { id: 'north', name: 'North Perimeter', questions: [
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
@@ -1578,8 +1648,8 @@ const DAY_SHIFT_TASKS = [
     ]
   },
   {
-    id: 'b1-patrol', label: 'B1 Patrol', icon: '🅿️', type: 'flexible',
-    tag: 'PATROL', tagColor: 'blue',
+    id: 'b1-patrol', label: 'B1 Inspection', icon: '🅿️', type: 'flexible',
+    tag: 'INSPECTION', tagColor: 'blue',
     rooms: [
       { id: 'node1', name: 'Node Room 1', questions: [
         { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
@@ -1630,7 +1700,7 @@ const DAY_SHIFT_TASKS = [
     ]
   },
   {
-    id: 'plant-room-morning', label: 'Plant Room Patrol', icon: '⚙️', type: 'plant',
+    id: 'plant-room-morning', label: 'Plant Room Inspection', icon: '⚙️', type: 'plant',
     tag: 'CRITICAL', tagColor: 'red', timeHint: 'Morning',
   },
   {
@@ -1638,7 +1708,7 @@ const DAY_SHIFT_TASKS = [
     tag: 'STATIC', tagColor: 'blue', timeHint: '08:00 – 09:00', window: '08:00 – 09:00',
   },
   {
-    id: 'plant-room-midday', label: 'Plant Room Patrol', icon: '⚙️', type: 'plant',
+    id: 'plant-room-midday', label: 'Plant Room Inspection', icon: '⚙️', type: 'plant',
     tag: 'CRITICAL', tagColor: 'red', timeHint: 'Midday',
   },
   {
@@ -1646,7 +1716,7 @@ const DAY_SHIFT_TASKS = [
     tag: 'STATIC', tagColor: 'blue', timeHint: '13:00 – 14:00', window: '13:00 – 14:00',
   },
   {
-    id: 'plant-room-afternoon', label: 'Plant Room Patrol', icon: '⚙️', type: 'plant',
+    id: 'plant-room-afternoon', label: 'Plant Room Inspection', icon: '⚙️', type: 'plant',
     tag: 'CRITICAL', tagColor: 'red', timeHint: 'Afternoon',
   },
   {
@@ -1654,8 +1724,8 @@ const DAY_SHIFT_TASKS = [
     tag: 'STATIC', tagColor: 'blue', timeHint: '17:00 – 18:00', window: '17:00 – 18:00',
   },
   {
-    id: 'precinct-patrol-1', label: 'Precinct Patrol', icon: '🏙️', type: 'flexible',
-    tag: 'PATROL', tagColor: 'blue', timeHint: 'Run 1 of 2',
+    id: 'precinct-patrol-1', label: 'Precinct Inspection', icon: '🏙️', type: 'flexible',
+    tag: 'INSPECTION', tagColor: 'blue', timeHint: 'Run 1 of 2',
     rooms: [
       { id: 'exchange-place', name: 'Exchange Place', questions: [
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
@@ -1695,8 +1765,8 @@ const DAY_SHIFT_TASKS = [
     ]
   },
   {
-    id: 'precinct-patrol-2', label: 'Precinct Patrol', icon: '🏙️', type: 'flexible',
-    tag: 'PATROL', tagColor: 'blue', timeHint: 'Run 2 of 2', stepsRef: 'precinct-patrol-1',
+    id: 'precinct-patrol-2', label: 'Precinct Inspection', icon: '🏙️', type: 'flexible',
+    tag: 'INSPECTION', tagColor: 'blue', timeHint: 'Run 2 of 2', stepsRef: 'precinct-patrol-1',
   },
 ];
 
@@ -2645,8 +2715,8 @@ function renderPatrolQuestion() {
   const idx = STATE.patrolRoomQuestion;
   const q = room.questions[idx];
   const contextLabel = STATE.patrolRoomContext === 'plant'
-    ? 'PLANT ROOM PATROL'
-    : (STATE.activeTaskDef ? STATE.activeTaskDef.label.toUpperCase() : 'PATROL');
+    ? 'PLANT ROOM INSPECTION'
+    : (STATE.activeTaskDef ? STATE.activeTaskDef.label.toUpperCase() : 'INSPECTION');
   document.getElementById('patrol-q-title').textContent = room.name;
   document.getElementById('patrol-q-meta').textContent = contextLabel;
   const pct = (idx / room.questions.length) * 100;
@@ -2654,55 +2724,119 @@ function renderPatrolQuestion() {
   document.getElementById('patrol-q-progress-label').textContent = `Question ${idx+1} of ${room.questions.length}`;
   document.getElementById('patrol-q-number').textContent = String(idx+1).padStart(2,'0');
   document.getElementById('patrol-q-question').textContent = q.text;
-  document.getElementById('pq-yes').classList.remove('selected');
-  document.getElementById('pq-no').classList.remove('selected');
-  document.getElementById('pq-skip').classList.remove('selected');
-  document.getElementById('pq-skip-reason-group').style.display = 'none';
-  document.getElementById('pq-skip-reason').value = '';
-  document.getElementById('pq-comments').value = '';
-  document.getElementById('pq-photo-preview').innerHTML = '';
-  STATE.patrolRoomPhotos = [];
-  STATE._currentPatrolAnswer = null;
-  const btn = document.getElementById('patrol-q-next-btn');
-  if (btn) btn.textContent = idx === room.questions.length - 1 ? 'COMPLETE ROOM ›' : 'NEXT QUESTION ›';
-  const photoGroup = document.getElementById('pq-photo-group');
-  if (photoGroup) photoGroup.style.display = (q.photoRequired || q.photoOptional) ? '' : 'none';
-  const photoLabel = document.getElementById('pq-photo-label');
-  if (photoLabel) photoLabel.textContent = q.photoRequired ? 'PHOTO EVIDENCE — MANDATORY' : 'PHOTO EVIDENCE (OPTIONAL)';
+  // Reset PASS / ISSUE / N/A controls
+  document.getElementById('pq-pass').classList.remove('selected');
+  document.getElementById('pq-issue').classList.remove('selected');
+  document.getElementById('pq-na').classList.remove('selected');
+  document.getElementById('pq-na-group').style.display = 'none';
+  document.querySelectorAll('#pq-na-pills .na-pill').forEach(p => p.classList.remove('selected'));
+  const naComments = document.getElementById('pq-na-comments');
+  naComments.value = ''; naComments.style.display = 'none';
+  STATE._patrolNaReason = '';
 }
 
-function setPatrolAnswer(answer) {
-  STATE._currentPatrolAnswer = answer;
-  document.getElementById('pq-yes').classList.toggle('selected', answer === 'yes');
-  document.getElementById('pq-no').classList.toggle('selected', answer === 'no');
-  document.getElementById('pq-skip').classList.toggle('selected', answer === 'skip');
-  document.getElementById('pq-skip-reason-group').style.display = answer === 'skip' ? '' : 'none';
-}
-
-function handlePatrolPhoto(input) { capturePhotos(input, 'pq-photo-preview', STATE.patrolRoomPhotos); }
-
-function advancePatrolQuestion() {
-  if (!STATE._currentPatrolAnswer) { showToast('Please select YES, NO or SKIP'); return; }
+// Record an answer for the current patrol/plant question and advance.
+function recordPatrolAnswer(answer, extra) {
   const room = STATE.patrolRoomDef;
   const idx = STATE.patrolRoomQuestion;
   const q = room.questions[idx];
-  if (STATE._currentPatrolAnswer === 'skip') {
-    const reason = document.getElementById('pq-skip-reason').value.trim();
-    if (!reason) { showToast('Please enter a reason for skipping'); return; }
-    STATE.patrolRoomAnswers.push({ question: q.text, answer: 'skip', negativeQuestion: q.negativeQuestion||false, skipReason: reason, comments: document.getElementById('pq-comments').value.trim(), photos: [...STATE.patrolRoomPhotos], timestamp: nowTime() });
-  } else {
-    if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showToast('Photo is mandatory for this question'); return; }
-    STATE.patrolRoomAnswers.push({ question: q.text, answer: STATE._currentPatrolAnswer, negativeQuestion: q.negativeQuestion||false, skipReason: '', comments: document.getElementById('pq-comments').value.trim(), photos: [...STATE.patrolRoomPhotos], timestamp: nowTime() });
-  }
+  STATE.patrolRoomAnswers.push(Object.assign({
+    question: q.text, answer, finding: '', priority: '', reason: '', comments: '', photos: [], timestamp: nowTime()
+  }, extra || {}));
   STATE.patrolRoomQuestion++;
   if (STATE.patrolRoomQuestion >= room.questions.length) completePatrolRoomQuestions();
   else renderPatrolQuestion();
 }
 
+function recordPatrolPass() { recordPatrolAnswer('pass'); }
+
+function togglePatrolNa() {
+  const g = document.getElementById('pq-na-group');
+  const show = g.style.display === 'none' || !g.style.display;
+  g.style.display = show ? '' : 'none';
+  document.getElementById('pq-na').classList.toggle('selected', show);
+  if (!show) { STATE._patrolNaReason = ''; document.querySelectorAll('#pq-na-pills .na-pill').forEach(p => p.classList.remove('selected')); }
+}
+
+function selectPatrolNaReason(el, reason) {
+  STATE._patrolNaReason = reason;
+  document.querySelectorAll('#pq-na-pills .na-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('pq-na-comments').style.display = reason === 'Other' ? '' : 'none';
+}
+
+function confirmPatrolNa() {
+  const reason = STATE._patrolNaReason;
+  if (!reason) { showToast('Please select a reason'); return; }
+  const comments = document.getElementById('pq-na-comments').value.trim();
+  if (reason === 'Other' && !comments) { showToast('Please describe the reason'); return; }
+  recordPatrolAnswer('na', { reason, comments });
+}
+
+// ── Finding workflow (shared by inspection questions and audits) ──
+function openFindingModal(context) {
+  STATE._findingContext = context;
+  STATE._findingPhotos = [];
+  let ctxText = '';
+  if (context === 'patrol') {
+    const room = STATE.patrolRoomDef;
+    const task = STATE.activeTaskDef;
+    const label = STATE.patrolRoomContext === 'plant' ? 'Plant Room Inspection' : (task ? task.label : 'Inspection');
+    const q = room.questions[STATE.patrolRoomQuestion];
+    ctxText = `${room.name} · ${label}\n${q ? q.text : ''}`;
+  } else if (context === 'audit') {
+    const type = STATE.activeAudit;
+    const q = type.questions[STATE.currentQuestion];
+    ctxText = `${STATE.activeAuditAsset} · ${type.name}\n${q ? q.text : ''}`;
+  }
+  const ctx = document.getElementById('finding-context');
+  if (ctx) ctx.textContent = ctxText;
+  document.getElementById('finding-text').value = '';
+  document.getElementById('finding-priority').value = 'medium';
+  document.getElementById('finding-photo-preview').innerHTML = '';
+  document.getElementById('finding-modal').classList.remove('hidden');
+}
+
+function closeFindingModal(event) {
+  if (event && event.target !== document.getElementById('finding-modal')) return;
+  document.getElementById('finding-modal').classList.add('hidden');
+}
+
+function handleFindingPhoto(input) { capturePhotos(input, 'finding-photo-preview', STATE._findingPhotos); }
+
+function submitFinding() {
+  const text = document.getElementById('finding-text').value.trim();
+  if (!text) { showToast('Please describe the finding'); return; }
+  const priority = document.getElementById('finding-priority').value;
+  const photos = [...(STATE._findingPhotos || [])];
+  const extra = { finding: text, priority, photos };
+  document.getElementById('finding-modal').classList.add('hidden');
+
+  if (STATE._findingContext === 'patrol') {
+    const room = STATE.patrolRoomDef;
+    const task = STATE.activeTaskDef;
+    const location = room ? room.name : 'Inspection';
+    const taskLabel = STATE.patrolRoomContext === 'plant' ? 'Plant Room Inspection' : (task ? task.label : 'Inspection');
+    STATE.escalations.unshift({ text, location, task: taskLabel, priority, time: nowTime(), photo: photos[0] || null, status: 'open' });
+    addActivity(`Issue: ${text.slice(0,40)}`, 'escalation');
+    syncToSheets({ type:'escalation', location, task:taskLabel, priority, text, officer:'', site:SITE.name, photo: photos[0] || '' });
+    saveState();
+    recordPatrolAnswer('issue', extra);
+  } else if (STATE._findingContext === 'audit') {
+    const type = STATE.activeAudit;
+    const location = STATE.activeAuditAsset || type.name;
+    STATE.escalations.unshift({ text, location, task: type.name, priority, time: nowTime(), photo: photos[0] || null, status: 'open' });
+    addActivity(`Issue: ${text.slice(0,40)}`, 'escalation');
+    syncToSheets({ type:'escalation', location, task:type.name, priority, text, officer:'', site:SITE.name, photo: photos[0] || '' });
+    saveState();
+    recordAuditAnswer('issue', extra);
+  }
+}
+
 function completePatrolRoomQuestions() {
   const room = STATE.patrolRoomDef;
   const answers = STATE.patrolRoomAnswers;
-  const hasIssue = answers.some(a => a.answer !== 'skip' && (a.negativeQuestion ? a.answer === 'yes' : a.answer === 'no'));
+  const hasIssue = answers.some(a => a.answer === 'issue');
   const result = { roomName: room.name, timestamp: nowTime(), answers, hasIssue, photos: answers.flatMap(a => a.photos||[]) };
 
   if (STATE.patrolRoomContext === 'flexible') {
@@ -2745,7 +2879,7 @@ function openPatrolIncident() {
   const room = STATE.patrolRoomDef;
   const task = STATE.activeTaskDef;
   const ctx = document.getElementById('patrol-incident-context');
-  if (ctx) ctx.textContent = `${room ? room.name : ''} · ${STATE.patrolRoomContext === 'plant' ? 'Plant Room Patrol' : (task ? task.label : 'Patrol')}`;
+  if (ctx) ctx.textContent = `${room ? room.name : ''} · ${STATE.patrolRoomContext === 'plant' ? 'Plant Room Inspection' : (task ? task.label : 'Inspection')}`;
   document.getElementById('patrol-incident-text').value = '';
   document.getElementById('patrol-incident-priority').value = 'low';
   document.getElementById('patrol-incident-modal').classList.remove('hidden');
@@ -2762,8 +2896,8 @@ function submitPatrolIncident() {
   const priority = document.getElementById('patrol-incident-priority').value;
   const room = STATE.patrolRoomDef;
   const task = STATE.activeTaskDef;
-  const location = room ? room.name : 'Patrol';
-  const taskLabel = STATE.patrolRoomContext === 'plant' ? 'Plant Room Patrol' : (task ? task.label : 'Patrol');
+  const location = room ? room.name : 'Inspection';
+  const taskLabel = STATE.patrolRoomContext === 'plant' ? 'Plant Room Inspection' : (task ? task.label : 'Inspection');
   STATE.escalations.unshift({ text, location, task: taskLabel, priority, time: nowTime(), photo: null, status: 'open' });
   addActivity(`Incident: ${text.slice(0,40)}`, 'escalation');
   syncToSheets({ type:'escalation', location, task:taskLabel, priority, text, officer:'', site:SITE.name, photo:'' });
@@ -2786,6 +2920,14 @@ function refreshAuditSelect() {
 function renderTaskSummary(record) {
   const card = document.getElementById('task-summary-card');
   if (!card) return;
+  let pass = 0, issue = 0, na = 0;
+  Object.values(record.roomResults || {}).forEach(rd => {
+    (rd.answers || []).forEach(a => {
+      if (a.answer === 'pass') pass++;
+      else if (a.answer === 'issue') issue++;
+      else if (a.answer === 'na') na++;
+    });
+  });
   card.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:center;gap:20px;padding:12px 0 14px;border-bottom:1px solid var(--border);margin-bottom:4px">
       <div style="text-align:center">
@@ -2802,7 +2944,9 @@ function renderTaskSummary(record) {
     ${record.timeHint ? `<div class="summary-row"><span class="summary-label">RUN</span><span class="summary-value">${record.timeHint}</span></div>` : ''}
     <div class="summary-row"><span class="summary-label">DURATION</span><span class="summary-value">${record.duration}</span></div>
     <div class="summary-row"><span class="summary-label">ROOMS</span><span class="summary-value good">${record.roomCount} completed</span></div>
-    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${record.issues > 0 ? 'bad' : 'good'}">${record.issues} flagged</span></div>
+    <div class="summary-row"><span class="summary-label">PASS</span><span class="summary-value good">${pass}</span></div>
+    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${issue > 0 ? 'bad' : 'good'}">${issue} flagged</span></div>
+    ${na > 0 ? `<div class="summary-row"><span class="summary-label">N/A</span><span class="summary-value" style="color:#92400E">${na}</span></div>` : ''}
     <div class="summary-row"><span class="summary-label">SITE</span><span class="summary-value">${SITE.name}</span></div>`;
 }
 
@@ -2833,7 +2977,7 @@ function renderPlantLevels() {
   const metaEl = document.getElementById('plant-levels-meta');
   const listEl = document.getElementById('plant-levels-list');
   const completeBtn = document.getElementById('plant-complete-btn');
-  if (titleEl) titleEl.textContent = task ? task.label : 'Plant Room Patrol';
+  if (titleEl) titleEl.textContent = task ? task.label : 'Plant Room Inspection';
   if (metaEl) metaEl.textContent = (task && task.timeHint ? task.timeHint : '') + ' — select a level to begin';
 
   const allDone = PLANT_LEVELS.every(l => STATE.plantLevelResults[l.id] && Object.keys(STATE.plantLevelResults[l.id]).length === l.rooms.length);
@@ -3003,9 +3147,9 @@ function confirmPlantRoom() {
 
   const plantEscPhoto = STATE.plantRoomPhotos.length > 0 ? STATE.plantRoomPhotos[0] : null;
   checks.filter(c => c.status === 'reportable' && c.reportText).forEach(c => {
-    STATE.escalations.unshift({ text: c.reportText, location: `${level.name} — ${room.name}`, task: task ? task.label : 'Plant Room Patrol', time: nowTime(), priority: c.priority, photo: plantEscPhoto, status: 'open' });
+    STATE.escalations.unshift({ text: c.reportText, location: `${level.name} — ${room.name}`, task: task ? task.label : 'Plant Room Inspection', time: nowTime(), priority: c.priority, photo: plantEscPhoto, status: 'open' });
     addActivity(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
-    syncToSheets({ type:'escalation', location:`${level.name} — ${room.name}`, task:task?task.label:'Plant Room Patrol', priority:c.priority, text:c.reportText, officer:'', site:SITE.name, photo: plantEscPhoto || '' });
+    syncToSheets({ type:'escalation', location:`${level.name} — ${room.name}`, task:task?task.label:'Plant Room Inspection', priority:c.priority, text:c.reportText, officer:'', site:SITE.name, photo: plantEscPhoto || '' });
     syncActivityToSheets(`Escalation: ${c.reportText.slice(0,40)}`, 'escalation');
   });
 
@@ -3207,7 +3351,7 @@ async function buildTaskPDFDoc(record, officerName) {
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
   doc.text('SECURITY OPERATIONS', M, 17);
   doc.setFontSize(10); doc.setTextColor(150,150,180);
-  doc.text('PATROL / INSPECTION REPORT', M, 26);
+  doc.text('INSPECTION REPORT', M, 26);
   doc.setTextColor(124,92,252); doc.setFontSize(9);
   doc.text(SITE.name.toUpperCase(), W-M, 17, {align:'right'});
   doc.setTextColor(150,150,180); doc.setFontSize(8);
@@ -3241,17 +3385,39 @@ async function buildTaskPDFDoc(record, officerName) {
     doc.setTextColor(100,100,130);doc.text(rd.timestamp||'',W-M-4,y+5.5,{align:'right'});
     y += 11;
 
-    const allChecks = [...(rd.checks || []), ...(rd.obsChecks || [])];
-    for (const c of allChecks) {
-      if (y>265){doc.addPage();y=20;}
-      const isNtr=c.status==='ntr',isRep=c.status==='reportable';
-      doc.setTextColor(isNtr?27:isRep?239:107,isNtr?77:isRep?68:114,isNtr?62:isRep?68:128);
-      doc.setFontSize(7.5);doc.setFont('helvetica','normal');
-      doc.text(`${isNtr?'✓':isRep?'⚠':'○'} ${c.label}${isNtr?' — Nothing to Report':isRep?' — REPORTABLE':''}`,M+4,y);
-      y+=5;
-      if (isRep&&c.reportText){doc.setTextColor(239,68,68);doc.setFontSize(7);doc.text(`   [${c.priority.toUpperCase()}]: ${c.reportText}`,M+4,y);y+=5;}
+    if (rd.answers && rd.answers.length) {
+      for (const ans of rd.answers) {
+        if (y>262){doc.addPage();y=20;}
+        const isIssue=ans.answer==='issue', isNa=ans.answer==='na';
+        doc.setTextColor(isIssue?239:isNa?146:27,isIssue?68:isNa?64:77,isIssue?68:isNa?14:62);
+        doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+        const mark=isIssue?'⚠ ISSUE':isNa?'— N/A':'✓ PASS';
+        doc.text(mark,M+4,y);
+        doc.setTextColor(70,70,90);doc.setFont('helvetica','normal');
+        const qLines=doc.splitTextToSize(ans.question,W-M*2-26);doc.text(qLines,M+26,y);
+        y+=Math.max(5,qLines.length*4);
+        if (isIssue&&ans.finding){doc.setTextColor(239,68,68);doc.setFontSize(7);const fl=doc.splitTextToSize(`   Finding [${(ans.priority||'').toUpperCase()}]: ${ans.finding}`,W-M*2-8);doc.text(fl,M+4,y);y+=fl.length*4+1;}
+        if (isNa&&ans.reason){doc.setTextColor(146,64,14);doc.setFontSize(7);const sl=doc.splitTextToSize(`   N/A reason: ${ans.reason}${ans.comments?' — '+ans.comments:''}`,W-M*2-8);doc.text(sl,M+4,y);y+=sl.length*4+1;}
+        for (const photo of (ans.photos||[]).slice(0,2)) {
+          if (y>235){doc.addPage();y=20;}
+          const added=await addPhotoToPDF(doc,photo,M+4,y,55,45);
+          if (added) y+=added+2;
+        }
+      }
+      y+=2;
+    } else {
+      const allChecks = [...(rd.checks || []), ...(rd.obsChecks || [])];
+      for (const c of allChecks) {
+        if (y>265){doc.addPage();y=20;}
+        const isNtr=c.status==='ntr',isRep=c.status==='reportable';
+        doc.setTextColor(isNtr?27:isRep?239:107,isNtr?77:isRep?68:114,isNtr?62:isRep?68:128);
+        doc.setFontSize(7.5);doc.setFont('helvetica','normal');
+        doc.text(`${isNtr?'✓':isRep?'⚠':'○'} ${c.label}${isNtr?' — Nothing to Report':isRep?' — REPORTABLE':''}`,M+4,y);
+        y+=5;
+        if (isRep&&c.reportText){doc.setTextColor(239,68,68);doc.setFontSize(7);doc.text(`   [${c.priority.toUpperCase()}]: ${c.reportText}`,M+4,y);y+=5;}
+      }
+      if (allChecks.length) y+=2;
     }
-    if (allChecks.length) y+=2;
 
     if (rd.notes){doc.setTextColor(180,180,200);doc.setFontSize(7.5);const l=doc.splitTextToSize(`Notes: ${rd.notes}`,W-M*2-8);doc.text(l,M+4,y);y+=l.length*4+3;}
 
@@ -3292,7 +3458,7 @@ async function generateTaskPDF() {
   try {
     const pdfBase64 = doc.output('datauristring');
     syncPDFToSheets(officerName, record.taskLabel, filename, pdfBase64);
-    addToReports(pdfBase64, filename, 'Patrol Report', record.taskLabel);
+    addToReports(pdfBase64, filename, 'Inspection Report', record.taskLabel);
   } catch(e) {}
   showToast('PDF downloaded');
 }
@@ -3348,7 +3514,15 @@ async function generateEODPDF() { // async needed for escalation photo rendering
     if (record.issues > 0) {
       const rooms = record.roomResults || {};
       Object.values(rooms).forEach(rd => {
-        if (rd.hasIssue && rd.checks) {
+        if (!rd.hasIssue) return;
+        if (rd.answers && rd.answers.length) {
+          rd.answers.filter(a=>a.answer==='issue').forEach(a => {
+            if (y>265){doc.addPage();y=20;}
+            doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,9,2,2,'F');
+            doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
+            doc.text(`⚠ ${rd.roomName}: ${a.finding||a.question}`, M+6, y+6); y+=12;
+          });
+        } else if (rd.checks) {
           rd.checks.filter(c=>c.status==='reportable'&&c.reportText).forEach(c => {
             if (y>265){doc.addPage();y=20;}
             doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,9,2,2,'F');
@@ -3426,7 +3600,7 @@ function refreshAuditList() {
         <div class="activity-dot audit"></div>
         <div class="activity-content">
           <div class="activity-title">${esc(r.auditTypeName)} — ${esc(r.asset)}</div>
-          <div class="activity-time">${esc(r.completedAt)} · ${r.noCount} issue(s)</div>
+          <div class="activity-time">${esc(r.completedAt)} · ${r.issueCount||0} issue(s)</div>
         </div>
       </div>`).join('');
   }
@@ -3488,75 +3662,82 @@ function renderAuditQuestion() {
   document.getElementById('audit-progress-label').textContent = `Question ${idx+1} of ${type.questions.length}`;
   document.getElementById('aq-number').textContent = String(idx+1).padStart(2,'0');
   document.getElementById('aq-question').textContent = q.text;
-  document.getElementById('yn-yes').classList.remove('selected');
-  document.getElementById('yn-no').classList.remove('selected');
-  document.getElementById('yn-skip').classList.remove('selected');
-  document.getElementById('aq-skip-reason-group').style.display = 'none';
-  document.getElementById('aq-skip-reason').value = '';
-  document.getElementById('aq-comments').value = '';
-  document.getElementById('aq-photo-preview').innerHTML = '';
-  STATE.aqPhotos = [];
-  STATE._currentAuditAnswer = null;
-  const btn = document.getElementById('audit-next-btn');
-  if (btn) btn.textContent = idx===type.questions.length-1?'COMPLETE AUDIT ›':'NEXT QUESTION ›';
-  const photoGroup = document.getElementById('aq-photo-group');
-  if (photoGroup) photoGroup.style.display = (photoRequired || photoOptional) ? '' : 'none';
-  const photoLabel = document.getElementById('aq-photo-label');
-  if (photoLabel) photoLabel.textContent = photoRequired ? 'PHOTO EVIDENCE — MANDATORY' : 'PHOTO EVIDENCE (OPTIONAL)';
+  // Reset PASS / ISSUE / N/A controls
+  document.getElementById('aq-pass').classList.remove('selected');
+  document.getElementById('aq-issue').classList.remove('selected');
+  document.getElementById('aq-na').classList.remove('selected');
+  document.getElementById('aq-na-group').style.display = 'none';
+  document.querySelectorAll('#aq-na-pills .na-pill').forEach(p => p.classList.remove('selected'));
+  const naComments = document.getElementById('aq-na-comments');
+  naComments.value = ''; naComments.style.display = 'none';
+  STATE._auditNaReason = '';
 }
 
-function setAuditAnswer(answer) {
-  STATE._currentAuditAnswer = answer;
-  document.getElementById('yn-yes').classList.toggle('selected', answer==='yes');
-  document.getElementById('yn-no').classList.toggle('selected', answer==='no');
-  document.getElementById('yn-skip').classList.toggle('selected', answer==='skip');
-  document.getElementById('aq-skip-reason-group').style.display = answer==='skip' ? '' : 'none';
-}
-
-function advanceAuditQuestion() {
-  if (!STATE._currentAuditAnswer) { showToast('Please select YES, NO or SKIP'); return; }
+// Record an answer for the current audit question and advance.
+function recordAuditAnswer(answer, extra) {
   const type = STATE.activeAudit;
   const idx = STATE.currentQuestion;
   const q = type.questions[idx];
-  if (STATE._currentAuditAnswer === 'skip') {
-    const reason = document.getElementById('aq-skip-reason').value.trim();
-    if (!reason) { showToast('Please enter a reason for skipping'); return; }
-    STATE.auditAnswers.push({ question: q.text, answer: 'skip', negativeQuestion: q.negativeQuestion||false, skipReason: reason, comments: document.getElementById('aq-comments').value.trim(), photos: [...STATE.aqPhotos], timestamp: nowTime() });
-  } else {
-    if (q.photoRequired && STATE.aqPhotos.length === 0) { showToast('Photo is mandatory for this question'); return; }
-    STATE.auditAnswers.push({ question: q.text, answer: STATE._currentAuditAnswer, negativeQuestion: q.negativeQuestion||false, skipReason: '', comments: document.getElementById('aq-comments').value.trim(), photos: [...STATE.aqPhotos], timestamp: nowTime() });
-  }
+  STATE.auditAnswers.push(Object.assign({
+    question: q.text, answer, finding: '', priority: '', reason: '', comments: '', photos: [], timestamp: nowTime()
+  }, extra || {}));
   STATE.currentQuestion++;
   if (STATE.currentQuestion >= type.questions.length) completeAudit();
   else renderAuditQuestion();
 }
 
+function recordAuditPass() { recordAuditAnswer('pass'); }
+
+function toggleAuditNa() {
+  const g = document.getElementById('aq-na-group');
+  const show = g.style.display === 'none' || !g.style.display;
+  g.style.display = show ? '' : 'none';
+  document.getElementById('aq-na').classList.toggle('selected', show);
+  if (!show) { STATE._auditNaReason = ''; document.querySelectorAll('#aq-na-pills .na-pill').forEach(p => p.classList.remove('selected')); }
+}
+
+function selectAuditNaReason(el, reason) {
+  STATE._auditNaReason = reason;
+  document.querySelectorAll('#aq-na-pills .na-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('aq-na-comments').style.display = reason === 'Other' ? '' : 'none';
+}
+
+function confirmAuditNa() {
+  const reason = STATE._auditNaReason;
+  if (!reason) { showToast('Please select a reason'); return; }
+  const comments = document.getElementById('aq-na-comments').value.trim();
+  if (reason === 'Other' && !comments) { showToast('Please describe the reason'); return; }
+  recordAuditAnswer('na', { reason, comments });
+}
+
 function completeAudit() {
   const type = STATE.activeAudit;
   const asset = STATE.activeAuditAsset;
-  const noCount = STATE.auditAnswers.filter(a => a.answer !== 'skip' && (a.negativeQuestion ? a.answer === 'yes' : a.answer === 'no')).length;
-  const skipCount = STATE.auditAnswers.filter(a=>a.answer==='skip').length;
+  const issueCount = STATE.auditAnswers.filter(a => a.answer === 'issue').length;
+  const naCount = STATE.auditAnswers.filter(a => a.answer === 'na').length;
+  const passCount = STATE.auditAnswers.filter(a => a.answer === 'pass').length;
   const endTime = nowTime();
-  const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, noCount, skipCount, officer:'' };
+  const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, issueCount, naCount, passCount, officer:'' };
   STATE._completedAuditRecord = record;
   STATE.auditRecords.push(record);
   addActivity(`${type.name} — ${asset} completed`, 'audit');
   saveState();
   sbSaveAuditRecord(record);
-  syncToSheets({ type:'audit', officer:'', auditTypeName:type.name, asset, site:SITE.name, completedAt:endTime, answers:STATE.auditAnswers.length, noCount });
+  syncToSheets({ type:'audit', officer:'', auditTypeName:type.name, asset, site:SITE.name, completedAt:endTime, answers:STATE.auditAnswers.length, passCount, issueCount, naCount });
   syncActivityToSheets(`${type.name} — ${asset} completed`, 'audit');
 
   document.getElementById('complete-audit-title').textContent = `Inspection Complete`;
-  document.getElementById('complete-audit-meta').textContent = `${asset} · ${STATE.auditAnswers.length} questions · ${noCount} issue(s)${skipCount>0?` · ${skipCount} skipped`:''}`;
+  document.getElementById('complete-audit-meta').textContent = `${asset} · ${STATE.auditAnswers.length} questions · ${issueCount} issue(s)${naCount>0?` · ${naCount} N/A`:''}`;
 
   const card = document.getElementById('audit-summary-card');
   card.innerHTML = `
-    <div class="summary-row"><span class="summary-label">AUDIT TYPE</span><span class="summary-value">${type.name}</span></div>
+    <div class="summary-row"><span class="summary-label">INSPECTION TYPE</span><span class="summary-value">${type.name}</span></div>
     <div class="summary-row"><span class="summary-label">ASSET</span><span class="summary-value">${asset}</span></div>
     <div class="summary-row"><span class="summary-label">COMPLETED</span><span class="summary-value">${endTime}</span></div>
-    <div class="summary-row"><span class="summary-label">QUESTIONS</span><span class="summary-value good">${STATE.auditAnswers.length} completed</span></div>
-    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${noCount>0?'bad':'good'}">${noCount} identified</span></div>
-    ${skipCount>0?`<div class="summary-row"><span class="summary-label">SKIPPED</span><span class="summary-value" style="color:#fbbf24">${skipCount} question(s)</span></div>`:''}`;
+    <div class="summary-row"><span class="summary-label">PASS</span><span class="summary-value good">${passCount}</span></div>
+    <div class="summary-row"><span class="summary-label">ISSUES</span><span class="summary-value ${issueCount>0?'bad':'good'}">${issueCount}</span></div>
+    ${naCount>0?`<div class="summary-row"><span class="summary-label">N/A</span><span class="summary-value" style="color:#92400E">${naCount}</span></div>`:''}`;
 
   const todayCount = STATE.auditRecords.filter(r => r.auditTypeId === type.id).length;
   document.getElementById('audit-complete-status').textContent = `${todayCount} asset${todayCount!==1?'s':''} inspected today`;
@@ -3601,12 +3782,12 @@ async function generateAuditSessionReport() {
   y+=26;
 
   // Session totals bar
-  const totalNo=records.reduce((s,r)=>s+r.noCount,0);
-  const totalSkip=records.reduce((s,r)=>s+(r.skipCount||0),0);
+  const totalNo=records.reduce((s,r)=>s+(r.issueCount||0),0);
+  const totalSkip=records.reduce((s,r)=>s+(r.naCount||0),0);
   const totalQ=records.reduce((s,r)=>s+r.answers.length,0);
   doc.setFillColor(totalNo>0?60:20,totalNo>0?20:60,20); doc.roundedRect(M,y,W-M*2,9,2,2,'F');
   doc.setTextColor(255,255,255); doc.setFontSize(8); doc.setFont('helvetica','bold');
-  doc.text(`SESSION: ${records.length} ASSETS · ${totalQ} QUESTIONS · ${totalNo} ISSUES${totalSkip>0?` · ${totalSkip} SKIPPED`:''}`,M+4,y+6.5);
+  doc.text(`SESSION: ${records.length} ASSETS · ${totalQ} QUESTIONS · ${totalNo} ISSUES${totalSkip>0?` · ${totalSkip} N/A`:''}`,M+4,y+6.5);
   y+=15;
 
   // Per-asset sections
@@ -3616,24 +3797,26 @@ async function generateAuditSessionReport() {
     doc.setFillColor(28,28,46); doc.roundedRect(M,y,W-M*2,14,2,2,'F');
     doc.setTextColor(59,130,246); doc.setFontSize(11); doc.setFont('helvetica','bold');
     doc.text(record.asset,M+4,y+9.5);
-    const nc=record.noCount, sc=record.skipCount||0;
+    const nc=record.issueCount||0, sc=record.naCount||0;
     doc.setTextColor(150,150,170); doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text(`${record.completedAt} · ${record.answers.length}Q · ${nc} issue(s)${sc>0?` · ${sc} skipped`:''}`,W-M-4,y+9.5,{align:'right'});
+    doc.text(`${record.completedAt} · ${record.answers.length}Q · ${nc} issue(s)${sc>0?` · ${sc} N/A`:''}`,W-M-4,y+9.5,{align:'right'});
     y+=18;
 
     for(const [i,ans] of record.answers.entries()){
       if(y>248){doc.addPage();y=20;}
-      const isSkip=ans.answer==='skip';
-      const isIssue = !isSkip && (ans.negativeQuestion ? ans.answer==='yes' : ans.answer==='no');
-      doc.setFillColor(isIssue?50:isSkip?45:22,isIssue?20:isSkip?38:22,isIssue?20:isSkip?5:32);
+      const isIssue=ans.answer==='issue';
+      const isNa=ans.answer==='na';
+      doc.setFillColor(isIssue?50:isNa?45:22,isIssue?20:isNa?38:22,isIssue?20:isNa?5:32);
       doc.roundedRect(M,y,W-M*2,9,2,2,'F');
-      doc.setTextColor(isIssue?239:isSkip?251:59,isIssue?68:isSkip?191:130,isIssue?68:isSkip?36:246);
+      doc.setTextColor(isIssue?239:isNa?251:27,isIssue?68:isNa?191:77,isIssue?68:isNa?36:62);
       doc.setFontSize(7); doc.setFont('helvetica','bold');
-      doc.text(`Q${String(i+1).padStart(2,'0')}  ${ans.answer.toUpperCase()}`,M+4,y+6.5);
+      const mark=isIssue?'⚠ ISSUE':isNa?'— N/A':'✓ PASS';
+      doc.text(`Q${String(i+1).padStart(2,'0')}  ${mark}`,M+4,y+6.5);
       doc.setTextColor(200,200,220); doc.setFont('helvetica','normal'); doc.setFontSize(8);
-      const qLines=doc.splitTextToSize(ans.question,W-M*2-30); doc.text(qLines,M+22,y+6.5);
+      const qLines=doc.splitTextToSize(ans.question,W-M*2-32); doc.text(qLines,M+26,y+6.5);
       y+=qLines.length>1?12+(qLines.length-1)*4:13;
-      if(isSkip&&ans.skipReason){doc.setTextColor(251,191,36);doc.setFontSize(7.5);const sl=doc.splitTextToSize(`Skip reason: ${ans.skipReason}`,W-M*2-8);doc.text(sl,M+4,y);y+=sl.length*4+3;}
+      if(isIssue&&ans.finding){doc.setTextColor(239,68,68);doc.setFontSize(7.5);const fl=doc.splitTextToSize(`Finding [${(ans.priority||'').toUpperCase()}]: ${ans.finding}`,W-M*2-8);doc.text(fl,M+4,y);y+=fl.length*4+3;}
+      if(isNa&&ans.reason){doc.setTextColor(251,191,36);doc.setFontSize(7.5);const sl=doc.splitTextToSize(`N/A reason: ${ans.reason}`,W-M*2-8);doc.text(sl,M+4,y);y+=sl.length*4+3;}
       if(ans.comments){doc.setTextColor(150,150,170);doc.setFontSize(7.5);const cl=doc.splitTextToSize(`Comment: ${ans.comments}`,W-M*2-8);doc.text(cl,M+4,y);y+=cl.length*4+3;}
       for(const photo of (ans.photos||[]).slice(0,2)){
         if(y>235){doc.addPage();y=20;}
@@ -3652,7 +3835,7 @@ async function generateAuditSessionReport() {
   doc.text('SESSION SUMMARY',M+4,y+7);
   doc.setTextColor(220,220,240); doc.setFontSize(8.5); doc.setFont('helvetica','normal');
   const sw=(W-M*2)/3;
-  [[`Assets audited: ${records.length}`,0],[`Issues flagged: ${totalNo}`,1],[`Questions skipped: ${totalSkip}`,2]].forEach(([t,i])=>doc.text(t,M+i*sw+4,y+16));
+  [[`Assets inspected: ${records.length}`,0],[`Issues flagged: ${totalNo}`,1],[`N/A responses: ${totalSkip}`,2]].forEach(([t,i])=>doc.text(t,M+i*sw+4,y+16));
   y+=28;
 
   addFooter(doc,W,M);
@@ -3730,19 +3913,7 @@ async function generateDailySummaryPDF() {
     if (record && record.roomResults) {
       for (const [, rd] of Object.entries(record.roomResults)) {
         if (!rd.hasIssue) continue;
-        const issueChecks = [...(rd.checks||[]),...(rd.obsChecks||[])].filter(c=>c.status==='reportable'&&c.reportText);
-        for (const c of issueChecks) {
-          if (y>260){doc.addPage();y=20;}
-          doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,10,2,2,'F');
-          doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','normal');
-          const issLine = doc.splitTextToSize(`✕  ${rd.roomName}: [${c.priority.toUpperCase()}] ${c.reportText}`, W-M*2-12);
-          doc.text(issLine[0], M+6, y+7); y += 13;
-          if (rd.photos && rd.photos.length>0) {
-            if (y>240){doc.addPage();y=20;}
-            const added = await addPhotoToPDF(doc, rd.photos[0], M+6, y, 50, 40);
-            if (added) y += added+4;
-          }
-        }
+        y = await renderSummaryRoomIssues(doc, rd, M, W, y);
       }
     }
 
@@ -3751,19 +3922,7 @@ async function generateDailySummaryPDF() {
       for (const [, lr] of Object.entries(record.levelResults)) {
         for (const [, rd] of Object.entries(lr)) {
           if (!rd.hasIssue) continue;
-          const issueChecks = (rd.checks||[]).filter(c=>c.status==='reportable'&&c.reportText);
-          for (const c of issueChecks) {
-            if (y>260){doc.addPage();y=20;}
-            doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,10,2,2,'F');
-            doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','normal');
-            const issLine = doc.splitTextToSize(`✕  ${rd.roomName}: [${c.priority.toUpperCase()}] ${c.reportText}`, W-M*2-12);
-            doc.text(issLine[0], M+6, y+7); y += 13;
-            if (rd.photos && rd.photos.length>0) {
-              if (y>240){doc.addPage();y=20;}
-              const added = await addPhotoToPDF(doc, rd.photos[0], M+6, y, 50, 40);
-              if (added) y += added+4;
-            }
-          }
+          y = await renderSummaryRoomIssues(doc, rd, M, W, y);
         }
       }
     }
@@ -3810,6 +3969,26 @@ async function generateDailySummaryPDF() {
   });
   saveState();
   showToast('Daily summary downloaded');
+}
+
+// Render a room's flagged issues into a summary/daily PDF; returns updated y.
+async function renderSummaryRoomIssues(doc, rd, M, W, y) {
+  const issues = (rd.answers && rd.answers.length)
+    ? rd.answers.filter(a => a.answer === 'issue').map(a => ({ text: `[${(a.priority||'').toUpperCase()}] ${a.finding||a.question}`, photo: (a.photos||[])[0] }))
+    : [...(rd.checks||[]),...(rd.obsChecks||[])].filter(c=>c.status==='reportable'&&c.reportText).map(c => ({ text: `[${c.priority.toUpperCase()}] ${c.reportText}`, photo: (rd.photos||[])[0] }));
+  for (const iss of issues) {
+    if (y>260){doc.addPage();y=20;}
+    doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,10,2,2,'F');
+    doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    const issLine = doc.splitTextToSize(`✕  ${rd.roomName}: ${iss.text}`, W-M*2-12);
+    doc.text(issLine[0], M+6, y+7); y += 13;
+    if (iss.photo) {
+      if (y>240){doc.addPage();y=20;}
+      const added = await addPhotoToPDF(doc, iss.photo, M+6, y, 50, 40);
+      if (added) y += added+4;
+    }
+  }
+  return y;
 }
 
 function addFooter(doc, W, M) {
