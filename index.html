@@ -2040,14 +2040,6 @@ function buildNightShiftTasks() {
       ]
     },
     { id: 'ns-b1-inspection', name: 'B1 Inspection', type: 'room-questions', time: '20:30-21:00', rooms: B1_ROOMS },
-    { id: 'ns-carpark-inspection', name: 'Carpark Inspection', type: 'room-questions', time: '21:30-21:40',
-      rooms: [{ name: 'B1 & B2 Carpark', questions: [
-        { text: 'Any unauthorised vehicles on ITS reserved spots?', photoRequired: false, photoOptional: true },
-        { text: 'Any suspicious persons or activity observed?', photoRequired: false, photoOptional: true },
-        { text: 'Any damage or hazards present?', photoRequired: false, photoOptional: true },
-        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
-      ]}]
-    },
     { id: 'ns-c2-inspection', name: 'C2 Accenture Inspection', type: 'room-questions', time: '21:40-22:00',
       rooms: [
         { name: 'C2 Plant Room L1', questions: [
@@ -2079,7 +2071,6 @@ function buildNightShiftTasks() {
       ]
     },
     { id: 'ns-plant-inspection-2', name: '2nd Plant Room Inspection', type: 'room-questions', time: '23:00-00:00', rooms: PLANT_ROOMS_INTERNAL },
-    { id: 'ns-lift-inspection', name: 'Lift Inspection', type: 'inspection-link', time: '01:00-01:20', inspectionTypeId: 'lift' },
     { id: 'ns-external-inspection', name: 'External Inspection', type: 'room-questions', time: '01:30-01:45', rooms: EXTERNAL_ROOMS },
     { id: 'ns-static-2', name: 'Static Post', type: 'static', duration: 75, time: '01:45-03:00' },
     { id: 'ns-plant-inspection-3', name: '3rd Plant Room Inspection', type: 'room-questions', time: '03:00-03:30', rooms: PLANT_ROOMS_INTERNAL },
@@ -2087,11 +2078,6 @@ function buildNightShiftTasks() {
     { id: 'ns-final-external', name: 'Final External Inspection', type: 'room-questions', time: '05:10-05:20', rooms: EXTERNAL_ROOMS },
   ];
 
-  // Wednesday only: Bathroom Inspection after the Full Building Inspection
-  if (isWednesday) {
-    const i = raw.findIndex(t => t.id === 'ns-full-inspection');
-    raw.splice(i + 1, 0, { id: 'ns-bathroom', name: 'Bathroom Inspection', type: 'inspection-link', time: '23:00-01:00', inspectionTypeId: 'bathroom' });
-  }
   // Monday only: Goods Lift Lobby Inspection after the 2nd Plant Room Inspection
   if (isMonday) {
     const i = raw.findIndex(t => t.id === 'ns-plant-inspection-2');
@@ -2793,9 +2779,7 @@ function renderShiftTasks(shift) {
   list.innerHTML = tasks.map((task, idx) => {
     const isDone = isTaskDone(task);
     const prog = !isDone ? getTaskProgress(task) : null;
-    const meta = (prog && prog.done > 0)
-      ? `${prog.done}/${prog.total} rooms · ${task.timeHint || task.window || ''}`
-      : (task.timeHint || task.window || '');
+    const meta = (prog && prog.done > 0) ? `${prog.done}/${prog.total} rooms` : '';
     return `<div class="shift-task-card ${isDone ? 'done' : ''}" ${isDone ? 'style="cursor:default"' : `onclick="startRoverTask('${task.id}')"`}>
       <div class="stc-left">
         <div class="stc-num">${String(idx+1).padStart(2,'0')}</div>
@@ -2828,7 +2812,7 @@ function refreshSidebarShiftList() {
     const isDone = STATE.completedTaskIds.includes(task.id);
     return `<div class="sidebar-task-item ${isDone ? 'done locked' : ''}" ${isDone ? '' : `onclick="startRoverTask('${task.id}')"`}>
       <span class="sidebar-task-icon">${task.icon}</span>
-      <span class="sidebar-task-name">${task.label}${task.timeHint ? ' · ' + task.timeHint : ''}</span>
+      <span class="sidebar-task-name">${task.label}</span>
       ${isDone ? '<span class="sidebar-task-check">✓</span>' : ''}
     </div>`;
   }).join('');
