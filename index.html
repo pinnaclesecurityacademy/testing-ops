@@ -249,6 +249,9 @@ html, body {
 .esc-priority.high { background: #FEE2E2; color: #991B1B; }
 .esc-priority.medium { background: #FEF3C7; color: #92400E; }
 .esc-priority.low { background: #DBEAFE; color: #1E40AF; }
+.esc-priority.pass { background: #D1FAE5; color: #065F46; }
+.esc-priority.issue { background: #FEE2E2; color: #991B1B; }
+.esc-priority.na { background: #E5E7EB; color: #374151; }
 
 /* ── ACTIVITY FEED ──────────────────────── */
 .activity-feed { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; }
@@ -906,9 +909,9 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         <div class="stat-value" id="stat-outstanding" style="font-size:36px;font-weight:700;color:#F59E0B">0</div>
         <div class="stat-icon" style="color:#F59E0B"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
       </div>
-      <div class="stat-card" onclick="navigateTo('issues')">
-        <div class="stat-label">Open Issues</div>
-        <div class="stat-value" id="stat-issues" style="font-size:36px;font-weight:700;color:#EF4444">0</div>
+      <div class="stat-card" onclick="openMissedModal()">
+        <div class="stat-label">Missed</div>
+        <div class="stat-value" id="stat-missed" style="font-size:36px;font-weight:700;color:#EF4444">0</div>
         <div class="stat-icon" style="color:#EF4444"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
       </div>
       <div class="stat-card stat-card-wide">
@@ -917,6 +920,10 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         <div class="stat-progress" style="margin-top:8px"><div class="stat-progress-fill" id="compliance-progress" style="width:0%"></div></div>
         <div class="stat-icon" style="color:#1B4D3E"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       </div>
+    </div>
+    <div id="missed-section" style="display:none">
+      <div class="section-header"><span class="section-title">⚠ Missed Inspections</span><span class="section-badge" id="missed-count">0</span></div>
+      <div id="missed-list" class="escalation-list"></div>
     </div>
     <div class="section-header"><span class="section-title">Open Issues</span><span class="section-badge" id="esc-count">0</span></div>
     <div id="escalations-list" class="escalation-list"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div></div>
@@ -962,12 +969,24 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         </div>
       </div>
     </div>
-    <!-- Night Shift placeholder -->
+    <!-- Night Shift content -->
     <div id="shift-content-night" style="display:none">
-      <div style="padding:48px 16px;text-align:center">
-        <div style="font-size:48px;margin-bottom:16px">🌙</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text-secondary)">NIGHT SHIFT</div>
-        <div style="font-size:13px;color:var(--text-muted);margin-top:8px">Coming soon</div>
+      <div class="shift-progress-bar"><div class="shift-progress-fill" id="shift-progress-fill-night" style="width:0%"></div></div>
+      <div id="nightshift-sub" style="padding:8px 16px 4px;font-size:13px;color:var(--text-secondary)">Complete tasks in order</div>
+      <div class="shift-task-list" id="shift-task-list-night"></div>
+      <div id="eod-section-night" style="display:none">
+        <div class="eod-banner">
+          <div class="eod-title">🌙 SHIFT COMPLETE</div>
+          <div class="eod-sub">All night tasks done. Generate your full night shift report.</div>
+          <div class="field-group" style="width:100%">
+            <label class="field-label">OFFICER NAME</label>
+            <input type="text" class="field-input" id="eod-officer-name-night" placeholder="Enter your full name..."/>
+          </div>
+          <button class="btn-primary btn-full" onclick="generateEODPDF('night')">
+            <svg viewBox="0 0 24 24" fill="none" width="18" height="18" style="margin-right:8px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            GENERATE FULL NIGHT REPORT
+          </button>
+        </div>
       </div>
     </div>
     <!-- Weekend Shift placeholder -->
@@ -1351,6 +1370,18 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <div id="reports-list" style="padding-top:8px">
       <div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports found</div></div>
     </div>
+
+    <!-- Past Reports (Supabase audit_history) -->
+    <div class="report-date-group" style="margin-top:16px">
+      <div class="report-date-header">PAST REPORTS<span>Inspection history</span></div>
+      <div style="padding:10px 16px 4px">
+        <label class="field-label">SELECT DATE</label>
+        <input type="date" class="field-input" id="past-reports-date" onchange="loadPastReports()"/>
+      </div>
+      <div id="past-reports-list" style="padding:8px 16px 0">
+        <div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Select a date to view inspections</div></div>
+      </div>
+    </div>
     <div class="bottom-spacer"></div>
   </div>
 </div>
@@ -1414,6 +1445,29 @@ body.day-mode, body.night-mode { /* theme is always light */ }
       </select>
     </div>
     <button class="btn-primary btn-full" onclick="submitPatrolIncident()">LOG INCIDENT ›</button>
+  </div>
+</div>
+
+<!-- Missed Inspections Modal -->
+<div id="missed-modal" class="modal-overlay hidden" onclick="closeMissedModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">⚠ Missed Inspections</div>
+      <button class="modal-close" onclick="closeMissedModal()">✕</button>
+    </div>
+    <div id="missed-modal-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</div>
+
+<!-- Inspection Details Modal (past reports Q&A breakdown) -->
+<div id="past-detail-modal" class="modal-overlay hidden" onclick="closePastDetail(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title" id="past-detail-title">Inspection Details</div>
+      <button class="modal-close" onclick="closePastDetail()">✕</button>
+    </div>
+    <div id="past-detail-meta" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"></div>
+    <div id="past-detail-body" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
@@ -1884,6 +1938,176 @@ const PLANT_LEVELS = [
   },
 ];
 
+// ═══════════════════════════════════════
+// SHARED ROOM SETS (reused by night shift)
+// ═══════════════════════════════════════
+const B1_ROOMS = DAY_SHIFT_TASKS.find(t => t.id === 'b1-patrol').rooms;
+const EXTERNAL_ROOMS = DAY_SHIFT_TASKS.find(t => t.id === 'external-patrol').rooms;
+const PRECINCT_ROOMS = DAY_SHIFT_TASKS.find(t => t.id === 'precinct-patrol-1').rooms;
+const PLANT_ROOMS_INTERNAL = ['l15','l27','l39'].flatMap(lid => {
+  const lvl = PLANT_LEVELS.find(l => l.id === lid);
+  return lvl.rooms.map(r => ({ id: lid + '-' + r.id, name: lvl.name + ' — ' + r.name, questions: r.questions }));
+});
+
+// Give a rooms array stable ids (used for inline night-shift room sets)
+function _withRoomIds(rooms) {
+  return rooms.map((r, i) => ({
+    id: r.id || ('rm-' + i + '-' + (r.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')),
+    name: r.name, questions: r.questions,
+  }));
+}
+
+const _NIGHT_ICONS = {
+  'Lobby Static':'🏛️', 'White Level Inspection':'⬜', 'Lobby & External Inspection':'🚪',
+  'Full Building Inspection':'🏢', 'B1 Inspection':'🅿️', 'Carpark Inspection':'🚗',
+  'C2 Accenture Inspection':'🏢', '2nd Plant Room Inspection':'⚙️', 'Lift Inspection':'🛗',
+  'External Inspection':'🔦', 'Static Post':'🪑', '3rd Plant Room Inspection':'⚙️',
+  'Precinct Inspection':'🏙️', 'Final External Inspection':'🔦',
+  'Goods Lift Lobby Inspection':'🛗', 'Bathroom Inspection':'🚻',
+};
+
+// Normalize a night-shift task definition into the shared engine schema
+function _normalizeNightTask(t) {
+  const base = { id: t.id, label: t.name, icon: _NIGHT_ICONS[t.name] || '🌙', timeHint: t.time, window: t.time, tagColor: 'blue' };
+  if (t.type === 'static') return { ...base, type: 'lobby', tag: 'STATIC', durationMins: t.duration };
+  if (t.type === 'inspection-link') return { ...base, type: 'audit-link', tag: 'INSPECTION', auditTypeId: t.inspectionTypeId };
+  return { ...base, type: 'flexible', tag: 'INSPECTION', rooms: _withRoomIds(t.rooms) };
+}
+
+function buildNightShiftTasks() {
+  const dow = new Date().getDay(); // 0 Sun … 6 Sat
+  const isWeekend = dow === 0 || dow === 6;
+  const isMonday = dow === 1;
+  const isWednesday = dow === 3;
+
+  let raw = [
+    { id: 'ns-lobby-static', name: 'Lobby Static', type: 'static', duration: 60, time: '18:00-19:00' },
+    { id: 'ns-white-level', name: 'White Level Inspection', type: 'room-questions', time: '18:00-19:00',
+      rooms: [{ name: 'White Level', questions: [
+        { text: 'Is the lobby area clean and presentable?', photoRequired: false, photoOptional: false },
+        { text: 'Are all lift port readers operational?', photoRequired: false, photoOptional: false },
+        { text: 'Are all DDA doors functioning correctly?', photoRequired: false, photoOptional: false },
+        { text: 'Are all lobby doors secured?', photoRequired: false, photoOptional: false },
+        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: false, photoOptional: false },
+        { text: 'Is lighting sufficient throughout?', photoRequired: false, photoOptional: false },
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true },
+        { text: 'Any suspicious items observed in the area?', photoRequired: false, photoOptional: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
+      ]}]
+    },
+    { id: 'ns-lobby-external', name: 'Lobby & External Inspection', type: 'room-questions', time: '19:00-19:20',
+      rooms: [{ name: 'Lobby & External', questions: [
+        { text: 'Are all revolving doors stopped on schedule and in correct position?', photoRequired: false, photoOptional: false },
+        { text: 'Are all DDA doors secured?', photoRequired: false, photoOptional: false },
+        { text: 'Are all lobby and external doors secured?', photoRequired: false, photoOptional: false },
+        { text: 'Are emergency lights functioning as per schedule?', photoRequired: false, photoOptional: false },
+        { text: 'Are external fire stairs doors secured?', photoRequired: false, photoOptional: false },
+        { text: 'Is the FCR door secured?', photoRequired: false, photoOptional: false },
+        { text: 'Are all contractor entries secured?', photoRequired: false, photoOptional: false },
+        { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
+      ]}]
+    },
+    { id: 'ns-full-inspection', name: 'Full Building Inspection', type: 'room-questions', time: '19:20-20:30',
+      rooms: [
+        { name: 'Plant Rooms', questions: [
+          { text: 'All plant rooms inspected and secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any faults, alarms, or hazards present?', photoRequired: false, photoOptional: true },
+        ]},
+        { name: 'External Balconies', questions: [
+          { text: 'All balcony access doors secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any damage or hazards present?', photoRequired: false, photoOptional: true },
+        ]},
+        { name: 'Rooftop', questions: [
+          { text: 'Rooftop clear of unauthorised persons?', photoRequired: false, photoOptional: false },
+          { text: 'Any damage, hazards, or loose items present?', photoRequired: false, photoOptional: true },
+        ]},
+        { name: 'Tenancies', questions: [
+          { text: 'All tenancy doors secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true },
+          { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
+        ]},
+        { name: 'Generator Rooms', questions: [
+          { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+          { text: 'Is the generator showing any faults or alarms?', photoRequired: false, photoOptional: true },
+          { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false },
+        ]},
+        { name: 'Lift Motor Rooms', questions: [
+          { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any audible alarms present?', photoRequired: false, photoOptional: false },
+          { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false },
+        ]},
+      ]
+    },
+    { id: 'ns-b1-inspection', name: 'B1 Inspection', type: 'room-questions', time: '20:30-21:00', rooms: B1_ROOMS },
+    { id: 'ns-carpark-inspection', name: 'Carpark Inspection', type: 'room-questions', time: '21:30-21:40',
+      rooms: [{ name: 'B1 & B2 Carpark', questions: [
+        { text: 'Any unauthorised vehicles on ITS reserved spots?', photoRequired: false, photoOptional: true },
+        { text: 'Any suspicious persons or activity observed?', photoRequired: false, photoOptional: true },
+        { text: 'Any damage or hazards present?', photoRequired: false, photoOptional: true },
+        { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
+      ]}]
+    },
+    { id: 'ns-c2-inspection', name: 'C2 Accenture Inspection', type: 'room-questions', time: '21:40-22:00',
+      rooms: [
+        { name: 'C2 Plant Room L1', questions: [
+          { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any faults, alarms, or hazards present?', photoRequired: false, photoOptional: true },
+        ]},
+        { name: 'C2 Plant Room L7', questions: [
+          { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any faults, alarms, or hazards present?', photoRequired: false, photoOptional: true },
+        ]},
+        { name: 'C2 Roof Hatch', questions: [
+          { text: 'Is the roof hatch secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any damage or hazards present?', photoRequired: false, photoOptional: true },
+        ]},
+        { name: 'C2 FCR', questions: [
+          { text: 'Is the FCR door secured?', photoRequired: false, photoOptional: false },
+          { text: 'Is the fire panel showing normal status?', photoRequired: true, photoOptional: false },
+          { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false },
+        ]},
+        { name: 'C2 Fire Stairs', questions: [
+          { text: 'Are all fire stairs doors secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any damage, hazards, or obstructions present?', photoRequired: false, photoOptional: true },
+        ]},
+        { name: 'C2 External', questions: [
+          { text: 'All external doors secured?', photoRequired: false, photoOptional: false },
+          { text: 'Any damage, hazards, or suspicious activity?', photoRequired: false, photoOptional: true },
+          { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
+        ]},
+      ]
+    },
+    { id: 'ns-plant-inspection-2', name: '2nd Plant Room Inspection', type: 'room-questions', time: '23:00-00:00', rooms: PLANT_ROOMS_INTERNAL },
+    { id: 'ns-lift-inspection', name: 'Lift Inspection', type: 'inspection-link', time: '01:00-01:20', inspectionTypeId: 'lift' },
+    { id: 'ns-external-inspection', name: 'External Inspection', type: 'room-questions', time: '01:30-01:45', rooms: EXTERNAL_ROOMS },
+    { id: 'ns-static-2', name: 'Static Post', type: 'static', duration: 75, time: '01:45-03:00' },
+    { id: 'ns-plant-inspection-3', name: '3rd Plant Room Inspection', type: 'room-questions', time: '03:00-03:30', rooms: PLANT_ROOMS_INTERNAL },
+    { id: 'ns-precinct-inspection', name: 'Precinct Inspection', type: 'room-questions', time: '04:00-05:00', rooms: PRECINCT_ROOMS },
+    { id: 'ns-final-external', name: 'Final External Inspection', type: 'room-questions', time: '05:10-05:20', rooms: EXTERNAL_ROOMS },
+  ];
+
+  // Wednesday only: Bathroom Inspection after the Full Building Inspection
+  if (isWednesday) {
+    const i = raw.findIndex(t => t.id === 'ns-full-inspection');
+    raw.splice(i + 1, 0, { id: 'ns-bathroom', name: 'Bathroom Inspection', type: 'inspection-link', time: '23:00-01:00', inspectionTypeId: 'bathroom' });
+  }
+  // Monday only: Goods Lift Lobby Inspection after the 2nd Plant Room Inspection
+  if (isMonday) {
+    const i = raw.findIndex(t => t.id === 'ns-plant-inspection-2');
+    raw.splice(i + 1, 0, { id: 'ns-goods-lift', name: 'Goods Lift Lobby Inspection', type: 'inspection-link', time: '00:00-00:20', inspectionTypeId: 'goods-lift-lobby' });
+  }
+  // Saturday / Sunday: drop the opening lobby static + white level
+  if (isWeekend) raw = raw.filter(t => t.id !== 'ns-lobby-static' && t.id !== 'ns-white-level');
+
+  return raw.map(_normalizeNightTask);
+}
+
+const NIGHT_SHIFT_TASKS = buildNightShiftTasks();
+
+function getShiftTasks(shift) { return shift === 'night' ? NIGHT_SHIFT_TASKS : DAY_SHIFT_TASKS; }
+function findTaskDef(id) { return DAY_SHIFT_TASKS.find(t => t.id === id) || NIGHT_SHIFT_TASKS.find(t => t.id === id) || null; }
+
 // Audit types
 const AUDIT_TYPES = [
   {
@@ -2076,19 +2300,21 @@ function navigateTo(page) {
   if (page === 'dayshift') refreshDayShift();
   if (page === 'audits') refreshAuditList();
   if (page === 'issues') refreshIssues();
-  if (page === 'reports') refreshReports();
+  if (page === 'reports') { refreshReports(); initPastReports(); }
 }
 
 // ═══════════════════════════════════════
 // SHIFT TABS
 // ═══════════════════════════════════════
 function switchShiftTab(tab) {
+  STATE.activeShiftTab = tab;
   ['day','night','weekend'].forEach(t => {
     const content = document.getElementById(`shift-content-${t}`);
     const btn = document.getElementById(`shift-tab-${t}`);
     if (content) content.style.display = t === tab ? '' : 'none';
     if (btn) btn.classList.toggle('active', t === tab);
   });
+  if (tab === 'day' || tab === 'night') renderShiftTasks(tab);
 }
 
 // ═══════════════════════════════════════
@@ -2198,19 +2424,132 @@ async function regenerateReport(id) {
 
   if (report.type === 'daily-summary') {
     if (!STATE.completedTaskIds.length && !STATE.auditRecords.length) {
-      showToast('Data unavailable — report cannot be regenerated'); return;
+      showToast('Unable to regenerate — source data unavailable'); return;
     }
     await generateDailySummaryPDF();
   } else {
     const auditType = AUDIT_TYPES.find(a => a.id === report.type);
     const records = STATE.auditRecords.filter(r => r.auditTypeId === report.type);
     if (!auditType || records.length === 0) {
-      showToast('Data unavailable — report cannot be regenerated'); return;
+      showToast('Unable to regenerate — source data unavailable'); return;
     }
     STATE.activeAudit = auditType;
     document.getElementById('audit-report-officer').value = officerName;
     await generateAuditSessionReport();
   }
+}
+
+// ═══════════════════════════════════════
+// PAST REPORTS (Supabase audit_history history)
+// ═══════════════════════════════════════
+let _pastReportsCache = [];
+
+// Initialise the past-reports date picker: default today, range last 90 days
+function initPastReports() {
+  const dateEl = document.getElementById('past-reports-date');
+  if (!dateEl) return;
+  const today = new Date();
+  const min = new Date(); min.setDate(min.getDate() - 90);
+  const iso = d => d.toISOString().slice(0, 10);
+  dateEl.max = iso(today);
+  dateEl.min = iso(min);
+  if (!dateEl.value) { dateEl.value = iso(today); loadPastReports(); }
+}
+
+function _answerCounts(answers) {
+  let pass = 0, issue = 0, na = 0;
+  (answers || []).forEach(a => {
+    if (a.answer === 'pass') pass++;
+    else if (a.answer === 'issue') issue++;
+    else if (a.answer === 'na') na++;
+  });
+  return { pass, issue, na };
+}
+
+async function loadPastReports() {
+  const dateEl = document.getElementById('past-reports-date');
+  const listEl = document.getElementById('past-reports-list');
+  if (!dateEl || !listEl) return;
+  const dateVal = dateEl.value;
+  if (!dateVal) { listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Select a date to view inspections</div></div>'; return; }
+  listEl.innerHTML = '<div class="empty-state"><div class="empty-text">Loading…</div></div>';
+  const start = dateVal + 'T00:00:00.000Z';
+  const end = dateVal + 'T23:59:59.999Z';
+  try {
+    const { data, error } = await _sb.from('audit_history')
+      .select('*')
+      .eq('site_id', SB_SITE_ID)
+      .gte('completed_at', start)
+      .lte('completed_at', end)
+      .order('completed_at', { ascending: true });
+    if (error) throw error;
+    _pastReportsCache = data || [];
+    if (!_pastReportsCache.length) {
+      listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No inspections recorded for this date</div></div>';
+      return;
+    }
+    listEl.innerHTML = _pastReportsCache.map((row, i) => {
+      const rec = row.record || {};
+      const answers = row.answers || rec.answers || [];
+      const c = _answerCounts(answers);
+      const time = new Date(row.completed_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+      const typeName = row.audit_type || rec.auditTypeName || 'Inspection';
+      const asset = row.asset || rec.asset || '';
+      return `<div class="report-card">
+        <div class="report-card-icon">📋</div>
+        <div class="report-card-info">
+          <div class="report-card-title">${esc(typeName)}${asset ? ' — ' + esc(asset) : ''}</div>
+          <div class="report-card-meta">${time} · ${c.pass} pass · ${c.issue} issue · ${c.na} N/A</div>
+        </div>
+        <button class="report-dl-btn" onclick="openPastReportDetail(${i})">View Details</button>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-text">Unable to load — ' + esc(e.message || 'connection error') + '</div></div>';
+  }
+}
+
+function openPastReportDetail(idx) {
+  const row = _pastReportsCache[idx];
+  if (!row) return;
+  const rec = row.record || {};
+  const answers = row.answers || rec.answers || [];
+  const c = _answerCounts(answers);
+  const typeName = row.audit_type || rec.auditTypeName || 'Inspection';
+  const asset = row.asset || rec.asset || '';
+  const time = new Date(row.completed_at).toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const by = row.completed_by || rec.officer || '';
+
+  document.getElementById('past-detail-title').textContent = `${typeName}${asset ? ' — ' + asset : ''}`;
+  document.getElementById('past-detail-meta').innerHTML =
+    `${esc(time)}${by ? ' · ' + esc(by) : ''}<br>${c.pass} pass · ${c.issue} issue · ${c.na} N/A`;
+
+  const body = document.getElementById('past-detail-body');
+  if (!answers.length) {
+    body.innerHTML = '<div class="empty-state"><div class="empty-text">No question details recorded</div></div>';
+  } else {
+    body.innerHTML = answers.map(a => {
+      const status = a.answer === 'pass' ? 'pass' : a.answer === 'issue' ? 'issue' : 'na';
+      const label = status === 'pass' ? 'PASS' : status === 'issue' ? 'ISSUE' : 'N/A';
+      const pc = status === 'issue' ? ' priority-medium' : '';
+      const extra = a.finding ? `Finding: ${a.finding}` : a.reason ? `Reason: ${a.reason}` : '';
+      const comments = a.comments ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">${esc(a.comments)}</div>` : '';
+      return `<div class="escalation-item${pc}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="esc-title" style="font-size:13px">${esc(a.question || a.text || '')}</div>
+          <span class="esc-priority ${status}">${label}</span>
+        </div>
+        ${extra ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${esc(extra)}</div>` : ''}
+        ${comments}
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('past-detail-modal').classList.remove('hidden');
+}
+
+function closePastDetail(event) {
+  if (event && event.target !== document.getElementById('past-detail-modal')) return;
+  document.getElementById('past-detail-modal').classList.add('hidden');
 }
 
 // ═══════════════════════════════════════
@@ -2227,20 +2566,100 @@ function updateClock() {
 // ═══════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════
+// Parse the trailing HH:MM out of a schedule string (e.g. "19:20-20:30" or "08:00 – 09:00")
+function _parseEndMinutes(str) {
+  if (!str) return null;
+  const matches = String(str).match(/(\d{1,2}):(\d{2})/g);
+  if (!matches || !matches.length) return null;
+  const last = matches[matches.length - 1];
+  const [h, m] = last.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// Tasks whose scheduled window has passed and which were not completed (incl. captured N/A reasons)
+function getMissedItems(shift) {
+  const tasks = getShiftTasks(shift);
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const items = [];
+  for (const task of tasks) {
+    if (isTaskDone(task)) continue;
+    const endMins = _parseEndMinutes(task.timeHint || task.window);
+    if (endMins === null || nowMins < endMins) continue; // not yet due — that's "outstanding"
+    // Pull any captured N/A reasons from saved partial progress
+    let reason = 'No reason recorded';
+    try {
+      const saved = JSON.parse(localStorage.getItem('t_room_results_' + task.id) || 'null');
+      const rooms = saved ? (saved.rooms || saved) : {};
+      const naReasons = [];
+      Object.values(rooms).forEach(rd => (rd.answers || []).forEach(a => { if (a.answer === 'na' && a.reason) naReasons.push(a.reason); }));
+      if (naReasons.length) reason = [...new Set(naReasons)].join(', ');
+      else if (Object.keys(rooms).length) reason = 'Not completed — partially inspected';
+      else reason = 'Not completed — scheduled window passed';
+    } catch (e) {}
+    items.push({ name: task.label, time: task.timeHint || task.window || '', reason });
+  }
+  return items;
+}
+
 function refreshDashboard() {
-  const total = DAY_SHIFT_TASKS.length;
-  const done = STATE.completedTaskIds.length;
-  const el = document.getElementById('stat-dayshift');
-  const prog = document.getElementById('dayshift-progress');
-  if (el) el.innerHTML = `${done}<span>/${total}</span>`;
-  if (prog) prog.style.width = `${Math.min(100,(done/total)*100)}%`;
-  const ac = STATE.auditRecords.length;
-  const ae = document.getElementById('stat-audits');
-  const ap = document.getElementById('audit-progress');
-  if (ae) ae.innerHTML = `${ac}<span>/4</span>`;
-  if (ap) ap.style.width = `${Math.min(100,(ac/4)*100)}%`;
+  const shift = getShift(); // time-of-day shift (day/night)
+  const tasks = getShiftTasks(shift);
+  const sessionExpected = shift === 'day' ? SITE.auditsTarget : 0; // night inspection-links are within tasks
+  const sessionCompleted = shift === 'day' ? Math.min(SITE.auditsTarget, STATE.auditRecords.length) : 0;
+
+  const taskDone = tasks.filter(isTaskDone).length;
+  const expected = tasks.length + sessionExpected;
+  const completed = taskDone + sessionCompleted;
+  const missed = getMissedItems(shift);
+  const outstanding = Math.max(0, expected - completed - missed.length);
+  const compliance = expected ? Math.round((completed / expected) * 100) : 0;
+
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setVal('stat-expected', expected);
+  setVal('stat-completed', completed);
+  setVal('stat-outstanding', outstanding);
+  setVal('stat-missed', missed.length);
+
+  const compEl = document.getElementById('stat-compliance');
+  const compColor = compliance >= 90 ? '#1B4D3E' : compliance >= 70 ? '#F59E0B' : '#EF4444';
+  if (compEl) { compEl.textContent = compliance + '%'; compEl.style.color = compColor; }
+  const compBar = document.getElementById('compliance-progress');
+  if (compBar) { compBar.style.width = compliance + '%'; compBar.style.background = compColor; }
+
+  // Missed section
+  const section = document.getElementById('missed-section');
+  const list = document.getElementById('missed-list');
+  const badge = document.getElementById('missed-count');
+  if (badge) badge.textContent = missed.length;
+  if (section) section.style.display = missed.length ? 'block' : 'none';
+  if (list) list.innerHTML = missed.map(m => `
+    <div class="escalation-item priority-medium">
+      <div class="esc-title">${esc(m.name)}</div>
+      <div class="esc-meta">${esc(m.time)} · ${esc(m.reason)}</div>
+    </div>`).join('');
+
   refreshEscalations();
   refreshActivity();
+}
+
+let _missedCache = [];
+function openMissedModal() {
+  _missedCache = getMissedItems(getShift());
+  const body = document.getElementById('missed-modal-list');
+  if (body) body.innerHTML = _missedCache.length
+    ? _missedCache.map(m => `
+        <div class="escalation-item priority-medium">
+          <div class="esc-title">${esc(m.name)}</div>
+          <div class="esc-meta">Scheduled ${esc(m.time)}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Reason: ${esc(m.reason)}</div>
+        </div>`).join('')
+    : '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No missed inspections</div></div>';
+  document.getElementById('missed-modal').classList.remove('hidden');
+}
+function closeMissedModal(event) {
+  if (event && event.target !== document.getElementById('missed-modal')) return;
+  document.getElementById('missed-modal').classList.add('hidden');
 }
 
 function refreshEscalations() {
@@ -2331,31 +2750,59 @@ function addActivity(title, type='patrol') {
 // ═══════════════════════════════════════
 // DAY SHIFT LIST
 // ═══════════════════════════════════════
-function refreshDayShift() {
-  const list = document.getElementById('shift-task-list');
-  if (!list) return;
-  const total = DAY_SHIFT_TASKS.length;
-  const done = STATE.completedTaskIds.length;
-  const pct = Math.round((done/total)*100);
-  const fill = document.getElementById('shift-progress-fill');
-  if (fill) fill.style.width = pct + '%';
-  const sub = document.getElementById('dayshift-sub');
-  if (sub) sub.textContent = `${done} of ${total} tasks complete · ${pct}%`;
+// Is a task complete? (audit-link tasks complete once an inspection of that type is recorded)
+function isTaskDone(task) {
+  if (STATE.completedTaskIds.includes(task.id)) return true;
+  if (task.type === 'audit-link') return STATE.auditRecords.some(r => r.auditTypeId === task.auditTypeId);
+  return false;
+}
 
-  // EOD banner if all done
-  const eod = document.getElementById('eod-section');
-  if (eod) eod.style.display = done >= total ? 'block' : 'none';
+// Partial room progress for in-progress room-based / plant tasks → { done, total } or null
+function getTaskProgress(task) {
+  try {
+    if (task.type === 'flexible' && task.rooms) {
+      const saved = JSON.parse(localStorage.getItem('t_room_results_' + task.id) || 'null');
+      const rooms = saved ? (saved.rooms || saved) : {};
+      return { done: Object.keys(rooms).length, total: task.rooms.length };
+    }
+    if (task.type === 'plant') {
+      const saved = JSON.parse(localStorage.getItem('t_plant_results_' + task.id) || 'null');
+      let done = 0; if (saved) Object.values(saved).forEach(lvl => { done += Object.keys(lvl).length; });
+      let total = 0; PLANT_LEVELS.forEach(l => { total += l.rooms.length; });
+      return { done, total };
+    }
+  } catch (e) {}
+  return null;
+}
+
+function renderShiftTasks(shift) {
+  const list = document.getElementById(shift === 'night' ? 'shift-task-list-night' : 'shift-task-list');
+  if (!list) return;
+  const tasks = getShiftTasks(shift);
+  const total = tasks.length;
+  const done = tasks.filter(isTaskDone).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const fill = document.getElementById(shift === 'night' ? 'shift-progress-fill-night' : 'shift-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  const sub = document.getElementById(shift === 'night' ? 'nightshift-sub' : 'dayshift-sub');
+  if (sub) sub.textContent = `${done} of ${total} tasks complete · ${pct}%`;
+  const eod = document.getElementById(shift === 'night' ? 'eod-section-night' : 'eod-section');
+  if (eod) eod.style.display = (total && done >= total) ? 'block' : 'none';
 
   const lockSvg = `<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
-  list.innerHTML = DAY_SHIFT_TASKS.map((task, idx) => {
-    const isDone = STATE.completedTaskIds.includes(task.id);
+  list.innerHTML = tasks.map((task, idx) => {
+    const isDone = isTaskDone(task);
+    const prog = !isDone ? getTaskProgress(task) : null;
+    const meta = (prog && prog.done > 0)
+      ? `${prog.done}/${prog.total} rooms · ${task.timeHint || task.window || ''}`
+      : (task.timeHint || task.window || '');
     return `<div class="shift-task-card ${isDone ? 'done' : ''}" ${isDone ? 'style="cursor:default"' : `onclick="startRoverTask('${task.id}')"`}>
       <div class="stc-left">
         <div class="stc-num">${String(idx+1).padStart(2,'0')}</div>
         <div class="stc-icon">${task.icon}</div>
         <div class="stc-info">
           <div class="stc-name">${task.label}</div>
-          <div class="stc-meta">${task.timeHint || task.window || ''}</div>
+          <div class="stc-meta">${meta}</div>
         </div>
       </div>
       <div class="stc-right">
@@ -2364,7 +2811,12 @@ function refreshDayShift() {
       </div>
     </div>`;
   }).join('');
-  refreshSidebarShiftList();
+  if (shift === 'day') refreshSidebarShiftList();
+}
+
+function refreshDayShift() {
+  renderShiftTasks('day');
+  renderShiftTasks('night');
 }
 
 function refreshSidebarShiftList() {
@@ -2388,17 +2840,18 @@ function refreshSidebarShiftList() {
 // START ROVER TASK
 // ═══════════════════════════════════════
 function startRoverTask(taskId) {
-  const task = DAY_SHIFT_TASKS.find(t => t.id === taskId);
+  const task = findTaskDef(taskId);
   if (!task) return;
-  if (STATE.completedTaskIds.includes(task.id)) return;
+  if (isTaskDone(task)) return;
 
   if (task.type === 'lobby') { startLobby(task); return; }
   if (task.type === 'plant') { startPlantPatrol(task); return; }
+  if (task.type === 'audit-link') { startAudit(task.auditTypeId); return; }
 
-  // Flexible type
+  // Flexible / room-questions type
   let rooms = task.rooms;
   if (!rooms && task.stepsRef) {
-    const ref = DAY_SHIFT_TASKS.find(t => t.id === task.stepsRef);
+    const ref = findTaskDef(task.stepsRef);
     if (ref) rooms = ref.rooms;
   }
 
@@ -3466,10 +3919,16 @@ async function generateTaskPDF() {
 // ═══════════════════════════════════════
 // END OF DAY PDF
 // ═══════════════════════════════════════
-async function generateEODPDF() { // async needed for escalation photo rendering
-  const officerName = document.getElementById('eod-officer-name').value.trim();
-  if (!officerName) { showToast('Please enter your name'); document.getElementById('eod-officer-name').focus(); return; }
-  showToast('Generating full day report...');
+async function generateEODPDF(shift = 'day') { // async needed for escalation photo rendering
+  const officerFieldId = shift === 'night' ? 'eod-officer-name-night' : 'eod-officer-name';
+  const officerName = document.getElementById(officerFieldId).value.trim();
+  if (!officerName) { showToast('Please enter your name'); document.getElementById(officerFieldId).focus(); return; }
+  showToast(`Generating full ${shift} report...`);
+
+  const shiftTasks = getShiftTasks(shift);
+  const shiftTaskIds = new Set(shiftTasks.map(t => t.id));
+  const shiftRecords = STATE.taskRecords.filter(r => shiftTaskIds.has(r.taskId));
+  const shiftDone = shiftTasks.filter(isTaskDone).length;
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
@@ -3479,7 +3938,7 @@ async function generateEODPDF() { // async needed for escalation photo rendering
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
   doc.text('SECURITY OPERATIONS', M, 17);
   doc.setFontSize(10); doc.setTextColor(150,150,180);
-  doc.text('END OF DAY SHIFT REPORT', M, 26);
+  doc.text(`END OF ${shift.toUpperCase()} SHIFT REPORT`, M, 26);
   doc.setTextColor(124,92,252); doc.setFontSize(9);
   doc.text(SITE.name.toUpperCase(), W-M, 17, {align:'right'});
   doc.setTextColor(150,150,180); doc.setFontSize(8);
@@ -3494,7 +3953,7 @@ async function generateEODPDF() { // async needed for escalation photo rendering
   doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
   doc.text('TASKS COMPLETED', M+80, y+7);
   doc.setTextColor(220,220,240); doc.setFontSize(11); doc.setFont('helvetica','bold');
-  doc.text(`${STATE.completedTaskIds.length} of ${DAY_SHIFT_TASKS.length}`, M+80, y+13.5);
+  doc.text(`${shiftDone} of ${shiftTasks.length}`, M+80, y+13.5);
   doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
   doc.text('ESCALATIONS', M+145, y+7);
   doc.setTextColor(STATE.escalations.length > 0 ? 239 : 27, STATE.escalations.length > 0 ? 68 : 77, STATE.escalations.length > 0 ? 68 : 62);
@@ -3503,7 +3962,7 @@ async function generateEODPDF() { // async needed for escalation photo rendering
   y += 24;
 
   // Each task
-  for (const record of STATE.taskRecords) {
+  for (const record of shiftRecords) {
     if (y > 240) { doc.addPage(); y = 20; }
     doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
     doc.setTextColor(124,92,252); doc.setFontSize(8); doc.setFont('helvetica','bold');
@@ -3558,23 +4017,24 @@ async function generateEODPDF() { // async needed for escalation photo rendering
   }
 
   addFooter(doc, W, M);
-  const eodFilename = `day_shift_report_${dateSlug()}.pdf`;
+  const eodFilename = `${shift}_shift_report_${dateSlug()}.pdf`;
   doc.save(eodFilename);
   try {
     const eodBase64 = doc.output('datauristring');
-    syncPDFToSheets(officerName, 'End of Day Shift Report', eodFilename, eodBase64);
+    syncPDFToSheets(officerName, `End of ${shift} Shift Report`, eodFilename, eodBase64);
   } catch(e) {}
   if (!STATE.reports) STATE.reports = [];
   STATE.reports.unshift({
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
     type: 'daily-summary',
-    typeName: 'Daily Summary',
+    typeName: `${shift.charAt(0).toUpperCase()+shift.slice(1)} Shift Summary`,
     generatedAt: new Date().toISOString(),
-    assetCount: STATE.completedTaskIds.length + STATE.auditRecords.length,
+    assetCount: shiftDone + STATE.auditRecords.length,
     pdfData: null,
   });
   saveState();
-  showToast('Full day report downloaded');
+  refreshReports();
+  showToast(`Full ${shift} report downloaded`);
 }
 
 // ═══════════════════════════════════════
@@ -3855,6 +4315,7 @@ async function generateAuditSessionReport() {
     pdfData: null,
   });
   saveState();
+  refreshReports();
   showToast('Report downloaded');
 }
 
@@ -3890,8 +4351,9 @@ async function generateDailySummaryPDF() {
   doc.setTextColor(100,100,140); doc.setFontSize(8); doc.setFont('helvetica','bold');
   doc.text('TASK COMPLETION LOG', M+4, y+5.5); y += 12;
 
-  for (const task of DAY_SHIFT_TASKS) {
-    if (!STATE.completedTaskIds.includes(task.id)) continue;
+  for (const task of [...DAY_SHIFT_TASKS, ...NIGHT_SHIFT_TASKS]) {
+    if (task.type === 'audit-link') continue; // inspection sessions listed separately below
+    if (!isTaskDone(task)) continue;
     const record = STATE.taskRecords.find(r => r.taskId === task.id);
     if (y > 250) { doc.addPage(); y = 20; }
 
@@ -3928,18 +4390,38 @@ async function generateDailySummaryPDF() {
     }
   }
 
-  // Escalations section
-  if (STATE.escalations.length > 0) {
+  // Inspection sessions section
+  if (STATE.auditRecords.length > 0) {
+    if (y>235){doc.addPage();y=20;}
+    y += 6;
+    doc.setFillColor(30,30,50); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
+    doc.setTextColor(100,100,140); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text(`INSPECTION SESSIONS (${STATE.auditRecords.length})`, M+4, y+5.5); y += 12;
+    for (const r of STATE.auditRecords) {
+      if (y>255){doc.addPage();y=20;}
+      const issues = r.issueCount || 0;
+      doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,10,2,2,'F');
+      doc.setTextColor(59,130,246); doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.text(`${(r.auditTypeName||'').toUpperCase()} — ${r.asset||''}`, M+4, y+6.5);
+      doc.setTextColor(issues>0?239:27, issues>0?68:77, issues>0?68:62); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      doc.text(`${r.completedAt||''} · ${r.passCount||0} pass · ${issues} issue(s)${r.naCount?` · ${r.naCount} N/A`:''}`, W-M-4, y+6.5, {align:'right'});
+      y += 13;
+    }
+  }
+
+  // Open issues section (category · priority · description)
+  const openIssues = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
+  if (openIssues.length > 0) {
     if (y>220){doc.addPage();y=20;}
     y += 6;
     doc.setFillColor(50,20,20); doc.roundedRect(M,y,W-M*2,9,2,2,'F');
     doc.setTextColor(239,68,68); doc.setFontSize(9); doc.setFont('helvetica','bold');
-    doc.text(`ESCALATIONS (${STATE.escalations.length})`, M+4, y+6.5); y += 14;
-    for (const e of STATE.escalations) {
+    doc.text(`OPEN ISSUES (${openIssues.length})`, M+4, y+6.5); y += 14;
+    for (const e of openIssues) {
       if (y>250){doc.addPage();y=20;}
       doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,13,2,2,'F');
       doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-      doc.text(`[${e.priority.toUpperCase()}] ${e.location}`, M+4, y+5.5);
+      doc.text(`[${(e.priority||'').toUpperCase()}] ${e.task || 'General'} · ${e.location}`, M+4, y+5.5);
       doc.setTextColor(200,180,180); doc.setFont('helvetica','normal');
       const descLines = doc.splitTextToSize(e.text, W-M*2-8);
       doc.text(descLines[0], M+4, y+10.5); y += 16;
@@ -3968,6 +4450,7 @@ async function generateDailySummaryPDF() {
     pdfData: null,
   });
   saveState();
+  refreshReports();
   showToast('Daily summary downloaded');
 }
 
