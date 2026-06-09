@@ -1734,7 +1734,7 @@ const DAY_SHIFT_TASKS = [
         { text: 'Are all lift port readers operational?', photoRequired: false, photoOptional: false },
         { text: 'Are all DDA doors functioning correctly?', photoRequired: false, photoOptional: false },
         { text: 'Are all lobby doors secured?', photoRequired: false, photoOptional: false },
-        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: true, photoOptional: false },
+        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: false, photoOptional: true },
         { text: 'Is lighting sufficient throughout?', photoRequired: false, photoOptional: false },
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
         { text: 'Any suspicious items observed in the area?', photoRequired: false, photoOptional: true, negativeQuestion: true },
@@ -1749,26 +1749,22 @@ const DAY_SHIFT_TASKS = [
       { id: 'north', name: 'North Perimeter', questions: [
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
         { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
-        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
-        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+        { text: 'If exclusion zones are present — photograph and confirm they are set up correctly.', photoRequired: false, photoOptional: true },
       ]},
       { id: 'east', name: 'East Perimeter', questions: [
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
         { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
-        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
-        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+        { text: 'If exclusion zones are present — photograph and confirm they are set up correctly.', photoRequired: false, photoOptional: true },
       ]},
       { id: 'south', name: 'South Perimeter', questions: [
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
         { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
-        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
-        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+        { text: 'If exclusion zones are present — photograph and confirm they are set up correctly.', photoRequired: false, photoOptional: true },
       ]},
       { id: 'west', name: 'West Perimeter', questions: [
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
         { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true, negativeQuestion: true },
-        { text: 'Are there any exclusion zones in this area?', photoRequired: false, photoOptional: false, negativeQuestion: true },
-        { text: 'If yes — are the exclusion zones set up correctly?', photoRequired: true, photoOptional: false },
+        { text: 'If exclusion zones are present — photograph and confirm they are set up correctly.', photoRequired: false, photoOptional: true },
       ]},
     ]
   },
@@ -2057,50 +2053,83 @@ function _normalizeNightTask(t) {
   const base = { id: t.id, label: t.name, icon: _NIGHT_ICONS[t.name] || '🌙', timeHint: t.time, window: t.time, tagColor: 'blue' };
   if (t.type === 'static') return { ...base, type: 'lobby', tag: 'STATIC', durationMins: t.duration };
   if (t.type === 'inspection-link') return { ...base, type: 'audit-link', tag: 'INSPECTION', auditTypeId: t.inspectionTypeId };
+  if (t.type === 'floor-rooms') return { ...base, type: 'plant', tag: 'INSPECTION', levels: t.floors };
   return { ...base, type: 'flexible', tag: 'INSPECTION', rooms: _withRoomIds(t.rooms) };
 }
 
-// Full Building Inspection — floor-by-floor. Each floor is a room covering 8 areas in sequence.
-const FBI_FLOORS_NUMS = [3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,24,25,26,28,29,30,31,32,33,34,35,36,37,38];
-function _fbiQuestions() {
-  return [
-    // EAST WIP CUPBOARD
-    { text: 'East WIP Cupboard — Is the hose reel present and accessible?', photoRequired: false, photoOptional: false },
-    { text: 'East WIP Cupboard — Is the fire extinguisher present and accessible?', photoRequired: false, photoOptional: false },
-    { text: 'East WIP Cupboard — Is the WIP (Warden Intercom Point) in place and operational?', photoRequired: false, photoOptional: false },
-    { text: 'East WIP Cupboard — Is all emergency evacuation equipment present and in good condition?', photoRequired: true, photoOptional: false },
-    { text: 'East WIP Cupboard — Is the cupboard door secured?', photoRequired: false, photoOptional: false },
-    // EAST FIRE STAIRS
-    { text: 'East Fire Stairs — Is the fire stair door clear of obstructions?', photoRequired: false, photoOptional: false },
-    { text: 'East Fire Stairs — Is the fire stair door secured?', photoRequired: false, photoOptional: false },
-    { text: 'East Fire Stairs — Anything unusual to report?', photoRequired: true, photoOptional: false },
-    // GOODS LIFT LOBBY
-    { text: 'Goods Lift Lobby — Is the goods lift lobby clear of obstructions?', photoRequired: false, photoOptional: false },
-    { text: 'Goods Lift Lobby — Anything unusual to report?', photoRequired: false, photoOptional: false },
-    // ELECTRICAL RISER
-    { text: 'Electrical Riser — Is the riser door secured?', photoRequired: false, photoOptional: false },
-    { text: 'Electrical Riser — Any unusual smells present?', photoRequired: false, photoOptional: false },
-    { text: 'Electrical Riser — Is the area clean and clear?', photoRequired: true, photoOptional: false },
-    // WEST FIRE STAIRS
-    { text: 'West Fire Stairs — Is the fire stair door clear of obstructions?', photoRequired: false, photoOptional: false },
-    { text: 'West Fire Stairs — Is the fire stair door secured?', photoRequired: false, photoOptional: false },
-    { text: 'West Fire Stairs — Anything unusual to report?', photoRequired: true, photoOptional: false },
-    // WEST WIP CUPBOARD
-    { text: 'West WIP Cupboard — Is the hose reel present and accessible?', photoRequired: false, photoOptional: false },
-    { text: 'West WIP Cupboard — Is the fire extinguisher present and accessible?', photoRequired: false, photoOptional: false },
-    { text: 'West WIP Cupboard — Is the defibrillator present and ready to use?', photoRequired: false, photoOptional: false },
-    { text: 'West WIP Cupboard — Is all emergency evacuation equipment present and in good condition?', photoRequired: true, photoOptional: false },
-    { text: 'West WIP Cupboard — Is the cupboard door secured?', photoRequired: false, photoOptional: false },
-    // TENANCIES
-    { text: 'Tenancies — Are all tenancy doors secured?', photoRequired: false, photoOptional: false },
-    { text: 'Tenancies — Are all common areas clear?', photoRequired: false, photoOptional: false },
-    { text: 'Tenancies — Anything unusual to report?', photoRequired: false, photoOptional: false },
-    // TOILETS
-    { text: 'Toilets — Are the toilets clear of any obstructions?', photoRequired: false, photoOptional: false },
-    { text: 'Toilets — Are the toilets clean and presentable?', photoRequired: false, photoOptional: false },
-  ];
-}
-const FBI_FLOORS = FBI_FLOORS_NUMS.map(n => ({ name: `Level ${n}`, questions: _fbiQuestions() }));
+// Full Building Inspection — floor-by-floor drill-down. Each floor (a "level" in the
+// plant-room engine) contains these 8 rooms; each room is ticked individually and the
+// floor is ticked once all 8 rooms are done.
+const FBI_ROOMS = [
+  {
+    id: 'east-wip-cupboard', name: 'East WIP Cupboard',
+    questions: [
+      { text: 'Is the hose reel present and accessible?', photoRequired: false, photoOptional: false },
+      { text: 'Is the fire extinguisher present and accessible?', photoRequired: false, photoOptional: false },
+      { text: 'Is the WIP (Warden Intercom Point) in place and operational?', photoRequired: false, photoOptional: false },
+      { text: 'Is all emergency evacuation equipment present and in good condition?', photoRequired: true, photoOptional: false },
+      { text: 'Is the cupboard door secured?', photoRequired: false, photoOptional: false }
+    ]
+  },
+  {
+    id: 'east-fire-stairs', name: 'East Fire Stairs',
+    questions: [
+      { text: 'Is the fire stair door clear of obstructions?', photoRequired: false, photoOptional: false },
+      { text: 'Is the fire stair door secured?', photoRequired: false, photoOptional: false },
+      { text: 'Anything unusual to report?', photoRequired: true, photoOptional: false }
+    ]
+  },
+  {
+    id: 'goods-lift-lobby', name: 'Goods Lift Lobby',
+    questions: [
+      { text: 'Is the goods lift lobby clear of obstructions?', photoRequired: false, photoOptional: false },
+      { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false }
+    ]
+  },
+  {
+    id: 'electrical-riser', name: 'Electrical Riser',
+    questions: [
+      { text: 'Is the riser door secured?', photoRequired: false, photoOptional: false },
+      { text: 'Any unusual smells present?', photoRequired: false, photoOptional: false },
+      { text: 'Is the area clean and clear?', photoRequired: true, photoOptional: false }
+    ]
+  },
+  {
+    id: 'west-fire-stairs', name: 'West Fire Stairs',
+    questions: [
+      { text: 'Is the fire stair door clear of obstructions?', photoRequired: false, photoOptional: false },
+      { text: 'Is the fire stair door secured?', photoRequired: false, photoOptional: false },
+      { text: 'Anything unusual to report?', photoRequired: true, photoOptional: false }
+    ]
+  },
+  {
+    id: 'west-wip-cupboard', name: 'West WIP Cupboard',
+    questions: [
+      { text: 'Is the hose reel present and accessible?', photoRequired: false, photoOptional: false },
+      { text: 'Is the fire extinguisher present and accessible?', photoRequired: false, photoOptional: false },
+      { text: 'Is the defibrillator present and ready to use?', photoRequired: false, photoOptional: false },
+      { text: 'Is all emergency evacuation equipment present and in good condition?', photoRequired: true, photoOptional: false },
+      { text: 'Is the cupboard door secured?', photoRequired: false, photoOptional: false }
+    ]
+  },
+  {
+    id: 'tenancies', name: 'Tenancies',
+    questions: [
+      { text: 'Are all tenancy doors secured?', photoRequired: false, photoOptional: false },
+      { text: 'Are all common areas clear?', photoRequired: false, photoOptional: false },
+      { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false }
+    ]
+  },
+  {
+    id: 'toilets', name: 'Toilets',
+    questions: [
+      { text: 'Are the toilets clear of any obstructions?', photoRequired: false, photoOptional: false },
+      { text: 'Are the toilets clean and presentable?', photoRequired: false, photoOptional: false }
+    ]
+  }
+];
+const FBI_FLOOR_NUMS = [3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,24,25,26,28,29,30,31,32,33,34,35,36,37,38];
+const FBI_FLOORS = FBI_FLOOR_NUMS.map(n => ({ id: 'fbi-l' + n, name: 'Level ' + n, isFloor: true, rooms: FBI_ROOMS }));
 
 function buildNightShiftTasks() {
   const dow = new Date().getDay(); // 0 Sun … 6 Sat
@@ -2116,7 +2145,7 @@ function buildNightShiftTasks() {
         { text: 'Are all lift port readers operational?', photoRequired: false, photoOptional: false },
         { text: 'Are all DDA doors functioning correctly?', photoRequired: false, photoOptional: false },
         { text: 'Are all lobby doors secured?', photoRequired: false, photoOptional: false },
-        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: true, photoOptional: false },
+        { text: 'Are all red emergency stop buttons pulled out?', photoRequired: false, photoOptional: true },
         { text: 'Is lighting sufficient throughout?', photoRequired: false, photoOptional: false },
         { text: 'Any damage, hazards, or vandalism observed?', photoRequired: false, photoOptional: true },
         { text: 'Any suspicious items observed in the area?', photoRequired: false, photoOptional: true },
@@ -2136,8 +2165,8 @@ function buildNightShiftTasks() {
         { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
       ]}]
     },
-    { id: 'ns-full-building-inspection', name: 'Full Building Inspection', type: 'room-questions', time: '19:20-20:30',
-      rooms: FBI_FLOORS },
+    { id: 'ns-full-building-inspection', name: 'Full Building Inspection', type: 'floor-rooms', time: '19:20-20:30',
+      floors: FBI_FLOORS },
     { id: 'ns-b1-inspection', name: 'B1 Inspection', type: 'room-questions', time: '20:30-21:00', rooms: B1_ROOMS },
     { id: 'ns-c2-inspection', name: 'C2 Accenture Inspection', type: 'room-questions', time: '21:40-22:00',
       rooms: [
@@ -2856,7 +2885,8 @@ function getTaskProgress(task) {
     if (task.type === 'plant') {
       const saved = JSON.parse(localStorage.getItem('t_plant_results_' + task.id) || 'null');
       let done = 0; if (saved) Object.values(saved).forEach(lvl => { done += Object.keys(lvl).length; });
-      let total = 0; PLANT_LEVELS.forEach(l => { total += l.rooms.length; });
+      const levels = task.levels || PLANT_LEVELS;
+      let total = 0; levels.forEach(l => { total += l.rooms.length; });
       return { done, total };
     }
   } catch (e) {}
@@ -3255,7 +3285,7 @@ function renderPatrolQuestion() {
   const idx = STATE.patrolRoomQuestion;
   const q = room.questions[idx];
   const contextLabel = STATE.patrolRoomContext === 'plant'
-    ? 'PLANT ROOM INSPECTION'
+    ? ((_plantTask() && _plantTask().label) ? _plantTask().label.toUpperCase() : 'PLANT ROOM INSPECTION')
     : (STATE.activeTaskDef ? STATE.activeTaskDef.label.toUpperCase() : 'INSPECTION');
   document.getElementById('patrol-q-title').textContent = room.name;
   document.getElementById('patrol-q-meta').textContent = contextLabel;
@@ -3513,6 +3543,12 @@ function renderTaskSummary(record) {
 // ═══════════════════════════════════════
 // PLANT ROOM PATROL
 // ═══════════════════════════════════════
+// Resolve the active drill-down task and its levels. Day plant tasks fall back to the
+// global PLANT_LEVELS; night "floor" tasks (Full Building Inspection) carry their own
+// `levels` array, so the same engine drives both.
+function _plantTask() { return findTaskDef(STATE.activePlantTaskId); }
+function _plantLevels() { const t = _plantTask(); return (t && t.levels) ? t.levels : PLANT_LEVELS; }
+
 function startPlantPatrol(task) {
   STATE.activePlantTaskId = task.id;
   // Restore any previously saved plant level results
@@ -3532,7 +3568,8 @@ function startPlantPatrol(task) {
 }
 
 function renderPlantLevels() {
-  const task = DAY_SHIFT_TASKS.find(t => t.id === STATE.activePlantTaskId);
+  const task = _plantTask();
+  const levels = _plantLevels();
   const titleEl = document.getElementById('plant-levels-title');
   const metaEl = document.getElementById('plant-levels-meta');
   const listEl = document.getElementById('plant-levels-list');
@@ -3540,11 +3577,11 @@ function renderPlantLevels() {
   if (titleEl) titleEl.textContent = task ? task.label : 'Plant Room Inspection';
   if (metaEl) metaEl.textContent = (task && task.timeHint ? task.timeHint : '') + ' — select a level to begin';
 
-  const allDone = PLANT_LEVELS.every(l => STATE.plantLevelResults[l.id] && Object.keys(STATE.plantLevelResults[l.id]).length === l.rooms.length);
+  const allDone = levels.every(l => STATE.plantLevelResults[l.id] && Object.keys(STATE.plantLevelResults[l.id]).length === l.rooms.length);
   if (completeBtn) completeBtn.classList.toggle('hidden', !allDone);
 
   if (!listEl) return;
-  listEl.innerHTML = PLANT_LEVELS.map(level => {
+  listEl.innerHTML = levels.map(level => {
     const levelResult = STATE.plantLevelResults[level.id] || {};
     const doneCount = Object.keys(levelResult).length;
     const totalCount = level.rooms.length;
@@ -3570,7 +3607,7 @@ function renderPlantLevels() {
 
 function startPlantLevel(levelId) {
   STATE.activePlantLevel = levelId;
-  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  const level = _plantLevels().find(l => l.id === levelId);
   if (!level) return;
   if (!STATE.plantLevelResults[levelId]) STATE.plantLevelResults[levelId] = {};
   renderPlantLevelRooms();
@@ -3579,8 +3616,9 @@ function startPlantLevel(levelId) {
 
 function renderPlantLevelRooms() {
   const levelId = STATE.activePlantLevel;
-  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  const level = _plantLevels().find(l => l.id === levelId);
   if (!level) return;
+  const _t = _plantTask();
 
   const titleEl = document.getElementById('plant-level-rooms-title');
   const metaEl = document.getElementById('plant-level-rooms-meta');
@@ -3588,7 +3626,7 @@ function renderPlantLevelRooms() {
   const completeBtn = document.getElementById('plant-level-complete-btn');
 
   if (titleEl) titleEl.textContent = level.name;
-  if (metaEl) metaEl.textContent = 'PLANT ROOM PATROL — select room to inspect';
+  if (metaEl) metaEl.textContent = (_t ? _t.label.toUpperCase() : 'PLANT ROOM PATROL') + ' — select room to inspect';
 
   const levelResult = STATE.plantLevelResults[levelId] || {};
   const allDone = level.rooms.every(r => levelResult[r.id]);
@@ -3611,7 +3649,7 @@ function renderPlantLevelRooms() {
 
 function startPlantRoom(roomId) {
   const levelId = STATE.activePlantLevel;
-  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  const level = _plantLevels().find(l => l.id === levelId);
   if (!level) return;
   const room = level.rooms.find(r => r.id === roomId);
   if (!room) return;
@@ -3675,7 +3713,7 @@ function setPlantCheck(idx, mode) {
 }
 
 function confirmPlantRoom() {
-  const level = PLANT_LEVELS.find(l => l.id === STATE.activePlantLevel);
+  const level = _plantLevels().find(l => l.id === STATE.activePlantLevel);
   const room = level && level.rooms.find(r => r.id === STATE.activePlantRoomId);
   if (!room) return;
 
@@ -3691,7 +3729,7 @@ function confirmPlantRoom() {
     }
   }
 
-  const task = DAY_SHIFT_TASKS.find(t => t.id === STATE.activePlantTaskId);
+  const task = _plantTask();
   const checks = [];
   let hasReportable = false;
   if (room.checks) {
@@ -3730,18 +3768,18 @@ function confirmPlantRoom() {
 function finishPlantLevel() {
   // Mark level done, go back to levels list
   const levelId = STATE.activePlantLevel;
-  const level = PLANT_LEVELS.find(l => l.id === levelId);
+  const level = _plantLevels().find(l => l.id === levelId);
   if (level) showToast(`${level.name} complete`);
   renderPlantLevels();
   navigateTo('plant-levels');
 }
 
 function completePlantPatrol() {
-  const task = DAY_SHIFT_TASKS.find(t => t.id === STATE.activePlantTaskId);
+  const task = _plantTask();
   const issues = Object.values(STATE.plantLevelResults).reduce((acc, lr) => acc + Object.values(lr).filter(r => r.hasIssue).length, 0);
   const endTime = nowTime();
   const duration = getDuration(STATE.taskStartedAt);
-  const totalRooms = PLANT_LEVELS.reduce((acc, l) => acc + l.rooms.length, 0);
+  const totalRooms = _plantLevels().reduce((acc, l) => acc + l.rooms.length, 0);
 
   const record = {
     taskId: task.id, taskLabel: task.label, timeHint: task.timeHint || '',
