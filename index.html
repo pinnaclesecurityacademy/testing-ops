@@ -796,7 +796,8 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 .na-reason-group { padding: 12px 0 4px; }
 .na-reason-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .na-pill {
-  padding: 8px 14px; border-radius: 20px; border: 1.5px solid #E5E7EB;
+  display: inline-flex; align-items: center;
+  padding: 8px 14px; min-height: 44px; border-radius: 20px; border: 1.5px solid #E5E7EB;
   background: #fff; font-size: 14px; font-weight: 500; color: #6B7280; cursor: pointer;
   transition: all 0.15s; -webkit-tap-highlight-color: transparent;
 }
@@ -1069,6 +1070,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 </style>
 </head>
 <body>
+<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#F59E0B;color:#1a1400;font-size:13px;font-weight:600;text-align:center;padding:8px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.2);">Offline mode — changes will sync when connection returns</div>
 <div id="app">
 
 <!-- MAIN -->
@@ -1514,7 +1516,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         <label class="field-label">OFFICER NAME (FOR REPORT)</label>
         <input type="text" class="field-input" id="audit-report-officer" placeholder="Enter your full name..."/>
       </div>
-      <button class="btn-primary btn-full" style="margin-top:10px" onclick="generateAuditSessionReport()">
+      <button class="btn-primary btn-full" id="audit-report-btn" style="margin-top:10px" onclick="generateAuditSessionReport()">
         <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style="margin-right:6px"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V9l-5-6z" stroke="currentColor" stroke-width="1.5"/><path d="M14 3v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         GENERATE REPORT ›
       </button>
@@ -1799,7 +1801,24 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const SB_TABLE = 'ops_state';
 const SB_SITE_ID = 'tower3-its';
 
+// ── Offline banner ──────────────────────────────────────────────
+// Shown when Supabase requests fail or the device reports offline.
+// Auto-dismissed on a successful sync.
+function showOfflineBanner() {
+  const b = document.getElementById('offline-banner');
+  if (b) b.style.display = '';
+}
+function hideOfflineBanner() {
+  const b = document.getElementById('offline-banner');
+  if (b) b.style.display = 'none';
+}
+// True if we should skip the network entirely (device offline).
+function isOffline() {
+  return (typeof navigator !== 'undefined') && navigator.onLine === false;
+}
+
 async function sbSaveState() {
+  if (isOffline()) { showOfflineBanner(); return; }
   try {
     const { error } = await _sb.from(SB_TABLE).upsert({
       site_id: SB_SITE_ID,
@@ -1812,11 +1831,13 @@ async function sbSaveState() {
       reports: STATE.reports,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'site_id' });
-    if (error) console.warn('Supabase save error:', error.message);
-  } catch(e) { console.warn('Supabase save failed:', e); }
+    if (error) { console.warn('Supabase save error:', error.message); showOfflineBanner(); }
+    else { hideOfflineBanner(); }
+  } catch(e) { console.warn('Supabase save failed:', e); showOfflineBanner(); }
 }
 
 async function sbSaveLobbyState() {
+  if (isOffline()) { showOfflineBanner(); return; }
   try {
     const lobbyData = (STATE.activeLobby && STATE.lobbyStartTime) ? {
       taskId: STATE.activeLobby.id,
@@ -1828,10 +1849,12 @@ async function sbSaveLobbyState() {
       lobby: lobbyData,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'site_id' });
-  } catch(e) { console.warn('Supabase lobby save failed:', e); }
+    hideOfflineBanner();
+  } catch(e) { console.warn('Supabase lobby save failed:', e); showOfflineBanner(); }
 }
 
 async function sbSaveAuditRecord(record) {
+  if (isOffline()) { showOfflineBanner(); return; }
   try {
     const { error } = await _sb.from('audit_history').insert({
       site_id: SB_SITE_ID,
@@ -1842,8 +1865,9 @@ async function sbSaveAuditRecord(record) {
       answers: record.answers,
       record: record,
     });
-    if (error) console.warn('Supabase audit_history save error:', error.message);
-  } catch(e) { console.warn('Supabase audit_history save failed:', e); }
+    if (error) { console.warn('Supabase audit_history save error:', error.message); showOfflineBanner(); }
+    else { hideOfflineBanner(); }
+  } catch(e) { console.warn('Supabase audit_history save failed:', e); showOfflineBanner(); }
 }
 
 // Persist STATE to localStorage only (no Supabase round-trip). Used after a sync merge.
@@ -1879,9 +1903,11 @@ function _mergeByKey(local, remote, keyFn) {
 }
 
 async function sbLoadState() {
+  if (isOffline()) { showOfflineBanner(); return false; }
   try {
     const { data, error } = await _sb.from(SB_TABLE).select('*').eq('site_id', SB_SITE_ID).single();
-    if (error || !data) return false;
+    if (error || !data) { showOfflineBanner(); return false; }
+    hideOfflineBanner();
     const today = new Date().toDateString();
     const localIsToday = localStorage.getItem('t_date') === today;
 
@@ -1932,7 +1958,7 @@ async function sbLoadState() {
     persistLocal();
     sbSaveState();
     return true;
-  } catch(e) { console.warn('Supabase load failed:', e); return false; }
+  } catch(e) { console.warn('Supabase load failed:', e); showOfflineBanner(); return false; }
 }
 
 let _syncInterval = null;
@@ -1954,10 +1980,16 @@ function showSyncStatus(msg, ok = true) {
 }
 
 async function manualSync() {
-  showSyncStatus('SYNCING…');
+  showSyncStatus('Syncing…');
   const ok = await sbLoadState();
-  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('SYNCED ✓', true); }
-  else { showSyncStatus('FAILED ✗', false); }
+  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('Synced ✓', true); }
+  else { showSyncStatus('Offline — saved locally', false); }
+}
+
+// Reflect connectivity changes immediately in the offline banner.
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => { hideOfflineBanner(); manualSync(); });
+  window.addEventListener('offline', () => { showOfflineBanner(); });
 }
 
 // ═══════════════════════════════════════
@@ -3737,7 +3769,25 @@ function completePatrolRoomQuestions() {
   const room = STATE.patrolRoomDef;
   const answers = STATE.patrolRoomAnswers;
   const hasIssue = answers.some(a => a.answer === 'issue');
-  const result = { roomName: room.name, timestamp: nowTime(), answers, hasIssue, photos: answers.flatMap(a => a.photos||[]) };
+  const parentTask = STATE.activeTaskDef || {};
+  const passCount = answers.filter(a => a.answer === 'pass').length;
+  const issueCount = answers.filter(a => a.answer === 'issue').length;
+  const naCount = answers.filter(a => a.answer === 'na').length;
+  const result = {
+    id: genRecordId(),
+    siteId: SB_SITE_ID,
+    taskId: parentTask.id || STATE.activePlantTaskId || '',
+    taskName: parentTask.label || parentTask.name || '',
+    roomName: room.name,
+    timestamp: nowTime(),
+    completedAt: new Date().toISOString(),
+    completedBy: (STATE.officerName || '').trim() || 'Officer',
+    status: 'completed',
+    locked: true,
+    answers, hasIssue,
+    passCount, issueCount, naCount,
+    photos: answers.flatMap(a => a.photos||[])
+  };
 
   if (STATE.patrolRoomContext === 'flexible') {
     const task = STATE.activeTaskDef;
@@ -4563,6 +4613,7 @@ function selectAuditAsset(assetName) {
   STATE.currentQuestion = 0;
   STATE.auditAnswers = [];
   STATE.aqPhotos = [];
+  STATE.auditStartedAt = new Date().toISOString();
   renderAuditQuestion();
   navigateTo('audit-active');
 }
@@ -4652,7 +4703,27 @@ function completeAudit() {
   const naCount = STATE.auditAnswers.filter(a => a.answer === 'na').length;
   const passCount = STATE.auditAnswers.filter(a => a.answer === 'pass').length;
   const endTime = nowTime();
-  const record = { auditTypeId:type.id, auditTypeName:type.name, asset, completedAt:endTime, answers:STATE.auditAnswers, issueCount, naCount, passCount, officer:'' };
+  const officerName = (STATE.officerName || '').trim() || 'Officer';
+  const nowIso = new Date().toISOString();
+  const findings = STATE.auditAnswers
+    .filter(a => a.answer === 'issue')
+    .map(a => ({ question: a.question || a.label || '', detail: a.comments || a.detail || '', photos: a.photos || [] }));
+  const record = {
+    id: genRecordId(),
+    siteId: SB_SITE_ID,
+    auditTypeId: type.id, auditTypeName: type.name,
+    inspectionTypeId: type.id, inspectionTypeName: type.name,
+    asset,
+    createdAt: STATE.auditStartedAt || nowIso,
+    completedAt: endTime,
+    completedAtIso: nowIso,
+    createdBy: officerName, completedBy: officerName, officer: officerName,
+    status: 'completed', locked: true,
+    answers: STATE.auditAnswers,
+    passCount, issueCount, naCount,
+    findings,
+    amendmentHistory: []
+  };
   STATE._completedAuditRecord = record;
   STATE.auditRecords.push(record);
   addActivity(`${type.name} — ${asset} completed`, 'audit');
@@ -4686,6 +4757,7 @@ async function generateAuditSessionReport() {
   const records = STATE.auditRecords.filter(r => r.auditTypeId === type.id);
   if (records.length === 0) { showToast('No completed audits to report'); return; }
   showToast('Generating report...');
+  setBtnLoading('audit-report-btn', true, 'Generating report…');
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
@@ -4790,6 +4862,7 @@ async function generateAuditSessionReport() {
   });
   saveState();
   refreshReports();
+  setBtnLoading('audit-report-btn', false);
   showToast('Report downloaded');
 }
 
@@ -4800,6 +4873,7 @@ async function generateDailySummaryPDF() {
   const officerName = document.getElementById('summary-officer-name').value.trim();
   if (!officerName) { showToast('Please enter your name'); document.getElementById('summary-officer-name').focus(); return; }
   showToast('Generating daily summary...');
+  setBtnLoading('daily-summary-btn', true, 'Generating…');
 
   const shift = getShift();
   const { jsPDF } = window.jspdf;
@@ -4925,6 +4999,7 @@ async function generateDailySummaryPDF() {
   });
   saveState();
   refreshReports();
+  setBtnLoading('daily-summary-btn', false);
   showToast('Daily summary downloaded');
 }
 
@@ -4961,6 +5036,31 @@ function addFooter(doc, W, M) {
 // UTILITIES
 // ═══════════════════════════════════════
 function nowTime(){return new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',hour12:true});}
+function genRecordId(){return Date.now() + '-' + Math.random().toString(36).substr(2,9);}
+// Brief loading placeholder on dashboard stat cards while first remote fetch runs.
+// Only shown when there is no local data yet (avoids flicker on returning sessions).
+function showDashboardLoading(){
+  const hasLocal = (STATE.auditRecords && STATE.auditRecords.length) ||
+                   (STATE.completedTaskIds && STATE.completedTaskIds.length);
+  if (hasLocal) return;
+  ['stat-expected','stat-completed','stat-outstanding','stat-missed'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '…';
+  });
+  const comp = document.getElementById('stat-compliance');
+  if (comp) comp.textContent = '…';
+}
+// Non-blocking button loading state: swaps text while a task runs, restores after.
+function setBtnLoading(id, isLoading, loadingText){
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  if (isLoading) {
+    if (btn.dataset.origHtml === undefined) btn.dataset.origHtml = btn.innerHTML;
+    btn.textContent = loadingText || 'Working…';
+  } else if (btn.dataset.origHtml !== undefined) {
+    btn.innerHTML = btn.dataset.origHtml;
+    delete btn.dataset.origHtml;
+  }
+}
 function getDuration(startDate){if(!startDate)return'—';const ms=new Date()-startDate,mins=Math.floor(ms/60000);if(mins<1)return'< 1 min';if(mins<60)return`${mins} min`;return`${Math.floor(mins/60)}h ${mins%60}m`;}
 function dateSlug(){const d=new Date();return`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;}
 function esc(str){if(!str)return'';return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -5026,9 +5126,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   refreshDashboard();
   refreshDayShift();
   refreshAuditList();
+  showDashboardLoading();
+  showSyncStatus('Loading…');
   const ok = await sbLoadState();
-  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('SYNCED ✓', true); }
-  else { showSyncStatus('OFFLINE', false); }
+  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('Synced ✓', true); }
+  else { refreshDashboard(); showSyncStatus('Offline — saved locally', false); }
   startSyncPolling();
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
