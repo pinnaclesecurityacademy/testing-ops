@@ -844,8 +844,8 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   font-size: 13px; color: var(--text-secondary); letter-spacing: 0.5px; white-space: nowrap;
 }
 
-/* Row 1 — KPI cards */
-.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+/* Row 1 — KPI cards (Site Status card is dominant) */
+.kpi-row { display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr; gap: 12px; }
 .kpi-card {
   background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
   padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); min-width: 0;
@@ -867,15 +867,20 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 .kpi-sub svg { flex-shrink: 0; }
 .kpi-bar { height: 4px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; margin-top: 4px; }
 .kpi-bar-fill { height: 100%; background: var(--accent-green); border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
-.kpi-status { cursor: default; justify-content: center; }
-.kpi-status .kpi-status-label {
-  display: flex; align-items: center; gap: 7px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 17px; font-weight: 700; letter-spacing: 0.5px; color: var(--accent-green);
+.kpi-status {
+  cursor: default; justify-content: center; gap: 10px;
+  background: var(--accent-green); border-color: var(--accent-green);
+  box-shadow: 0 4px 14px rgba(27,77,62,0.28);
 }
+.kpi-status .kpi-status-label {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px; font-weight: 800; letter-spacing: 0.5px; color: #fff;
+}
+.kpi-status .status-dot.green { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.7); }
 .kpi-status .kpi-sub {
   font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted);
+  font-weight: 700; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.85);
 }
 
 /* Two-column panel rows */
@@ -917,14 +922,38 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 .dash-panel .activity-item:last-child { border-bottom: none; }
 .dash-panel .empty-state { padding: 18px 16px; }
 
-/* Widen the command-centre on desktop (overrides the 800px page cap) */
+/* Command-centre fills all space after the sidebar (overrides the 800px page cap) */
 @media (min-width: 900px) {
-  .page-scroll > .dash-cmd { max-width: 1180px; }
+  .page-scroll > .dash-cmd { max-width: none; margin: 0; width: 100%; }
 }
+
+/* Shift Operations panel */
+.shiftops { padding: 12px 16px 8px; display: flex; flex-direction: column; gap: 14px; }
+.shiftops-progress-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.shiftops-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted);
+}
+.shiftops-progress-val { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent-green); }
+.shiftops-bar { height: 8px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; }
+.shiftops-bar-fill { height: 100%; background: var(--accent-green); border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.shiftops-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border-light); }
+.shiftops-item-icon {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
+}
+.shiftops-item-icon.next { background: var(--accent-green-light); color: var(--accent-green); }
+.shiftops-item-icon.done { background: #D1FAE5; color: #065F46; }
+.shiftops-item-body { min-width: 0; flex: 1; }
+.shiftops-item-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted); }
+.shiftops-item-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+.shiftops-item-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
 /* Mobile — stack panels, 2-up KPI grid */
 @media (max-width: 899px) {
   .kpi-row { grid-template-columns: 1fr 1fr; }
+  .kpi-status { grid-column: 1 / -1; }
   .dash-grid-2 { grid-template-columns: 1fr; }
   .dash-topbar-site { font-size: 16px; }
   .dash-topbar-datetime { font-size: 12px; }
@@ -1044,7 +1073,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         <div class="dash-panel">
           <div class="panel-header"><span>⚠ Priority Attention</span><span class="panel-link" onclick="navigateTo('issues')">View all</span></div>
           <div id="missed-section" style="display:none">
-            <div class="panel-subhead">MISSED INSPECTIONS <span class="section-badge" id="missed-count">0</span></div>
+            <div class="panel-subhead">REQUIRES ACTION <span class="section-badge" id="missed-count">0</span></div>
             <div id="missed-list" class="escalation-list"></div>
           </div>
           <div class="panel-subhead">OPEN ISSUES</div>
@@ -1052,18 +1081,31 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         </div>
 
         <div class="dash-panel">
-          <div class="panel-header"><span>Shift Overview</span></div>
-          <div class="shift-next-card" onclick="navigateTo('dayshift')">
-            <div class="shift-next-label">TODAY'S RUN SHEET</div>
-            <div class="shift-next-name">Continue scheduled inspections</div>
-            <div class="shift-next-cta">Open Tasks →</div>
-          </div>
-          <div class="panel-subhead">QUICK ACTIONS</div>
-          <div class="quick-start-grid">
-            <button class="qs-btn patrol" onclick="startQuickPatrol('White Level Inspection')"><div class="qs-icon">⬜</div><div class="qs-label">White Level</div></button>
-            <button class="qs-btn patrol" onclick="startQuickPatrol('External Inspection')"><div class="qs-icon">🔦</div><div class="qs-label">External Inspection</div></button>
-            <button class="qs-btn patrol" onclick="startRoverTask('plant-room-morning')"><div class="qs-icon">⚙️</div><div class="qs-label">Plant Room</div></button>
-            <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')"><div class="qs-icon">🛗</div><div class="qs-label">Lift Inspection</div></button>
+          <div class="panel-header"><span>Shift Operations</span></div>
+          <div class="shiftops">
+            <div class="shiftops-progress">
+              <div class="shiftops-progress-top">
+                <span class="shiftops-label">SHIFT PROGRESS</span>
+                <span class="shiftops-progress-val" id="shiftops-progress-val">0 / 0</span>
+              </div>
+              <div class="shiftops-bar"><div class="shiftops-bar-fill" id="shiftops-progress-fill" style="width:0%"></div></div>
+            </div>
+            <div class="shiftops-item">
+              <div class="shiftops-item-icon next">→</div>
+              <div class="shiftops-item-body">
+                <div class="shiftops-item-label">NEXT SCHEDULED</div>
+                <div class="shiftops-item-name" id="shiftops-next-name">—</div>
+                <div class="shiftops-item-time" id="shiftops-next-time"></div>
+              </div>
+            </div>
+            <div class="shiftops-item">
+              <div class="shiftops-item-icon done">✓</div>
+              <div class="shiftops-item-body">
+                <div class="shiftops-item-label">LAST COMPLETED</div>
+                <div class="shiftops-item-name" id="shiftops-last-name">—</div>
+                <div class="shiftops-item-time" id="shiftops-last-time"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2897,6 +2939,33 @@ function refreshDashboard() {
 
   refreshEscalations();
   refreshActivity();
+  renderShiftOps(shift);
+}
+
+// Shift Operations panel — read-only view built from existing task data.
+function renderShiftOps(shift) {
+  const tasks = getShiftTasks(shift);
+  const total = tasks.length;
+  const done = tasks.filter(isTaskDone).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('shiftops-progress-val', `${done} / ${total}`);
+  const fill = document.getElementById('shiftops-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+
+  // Next scheduled = first task not yet done, in run-sheet order
+  const next = tasks.find(t => !isTaskDone(t));
+  setTxt('shiftops-next-name', next ? next.label : 'All inspections complete');
+  setTxt('shiftops-next-time', next ? (next.timeHint || next.window || '') : '');
+
+  // Last completed = most recent task record belonging to this shift
+  const ids = new Set(tasks.map(t => t.id));
+  let last = null;
+  for (let i = STATE.taskRecords.length - 1; i >= 0; i--) {
+    if (ids.has(STATE.taskRecords[i].taskId)) { last = STATE.taskRecords[i]; break; }
+  }
+  setTxt('shiftops-last-name', last ? last.taskLabel : 'None yet');
+  setTxt('shiftops-last-time', last ? (last.completedAt || '') : '');
 }
 
 let _missedCache = [];
