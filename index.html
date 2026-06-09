@@ -1607,12 +1607,53 @@ async function sbSaveAuditRecord(record) {
   } catch(e) { console.warn('Supabase audit_history save failed:', e); }
 }
 
+// Persist STATE to localStorage only (no Supabase round-trip). Used after a sync merge.
+function persistLocal() {
+  try {
+    localStorage.setItem('t_completed', JSON.stringify(STATE.completedTaskIds));
+    localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
+    localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
+    localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
+    localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
+    localStorage.setItem('t_reports', JSON.stringify(STATE.reports));
+    localStorage.setItem('t_date', new Date().toDateString());
+  } catch(e) {}
+}
+
+// Union of two arrays of scalars (preserves order: local first, then new server-only items).
+function _unionScalar(local, remote) {
+  const out = [...(local || [])];
+  const seen = new Set(out);
+  for (const v of (remote || [])) { if (!seen.has(v)) { out.push(v); seen.add(v); } }
+  return out;
+}
+
+// Merge two arrays of objects by a key function. Local wins on conflict; server-only items appended.
+function _mergeByKey(local, remote, keyFn) {
+  const out = [...(local || [])];
+  const seen = new Set(out.map(keyFn));
+  for (const item of (remote || [])) {
+    const k = keyFn(item);
+    if (!seen.has(k)) { out.push(item); seen.add(k); }
+  }
+  return out;
+}
+
 async function sbLoadState() {
   try {
     const { data, error } = await _sb.from(SB_TABLE).select('*').eq('site_id', SB_SITE_ID).single();
     if (error || !data) return false;
     const today = new Date().toDateString();
+    const localIsToday = localStorage.getItem('t_date') === today;
+
     if (data.state_date !== today) {
+      // Server snapshot belongs to a previous day.
+      if (localIsToday) {
+        // Local state is current — do NOT wipe it. Push local up so the server catches up.
+        sbSaveState();
+        return true;
+      }
+      // Neither local nor server is current → reset server for the new day.
       await _sb.from(SB_TABLE).upsert({
         site_id: SB_SITE_ID,
         state_date: today,
@@ -1626,17 +1667,31 @@ async function sbLoadState() {
       }, { onConflict: 'site_id' });
       return true;
     }
-    STATE.completedTaskIds = data.completed_task_ids || [];
-    STATE.taskRecords = data.task_records || [];
-    STATE.auditRecords = data.audit_records || [];
-    STATE.escalations = (data.escalations || []).map(e => ({ status: 'open', ...e }));
-    STATE.activity = data.activity || [];
-    STATE.reports = data.reports || [];
-    if (data.lobby && data.lobby.taskId) {
+
+    // Server snapshot is for today → MERGE with local. Local completions always survive;
+    // server-only completions (from other devices) are added. Completions are monotonic
+    // within a day, so a union never loses a tick.
+    STATE.completedTaskIds = _unionScalar(STATE.completedTaskIds, data.completed_task_ids);
+    STATE.taskRecords = _mergeByKey(STATE.taskRecords, data.task_records, r => r.taskId);
+    STATE.auditRecords = _mergeByKey(STATE.auditRecords, data.auditRecords || data.audit_records,
+      r => (r.auditTypeId || '') + '|' + (r.asset || '') + '|' + (r.completedAt || ''));
+    STATE.escalations = _mergeByKey(
+      (STATE.escalations || []),
+      (data.escalations || []).map(e => ({ status: 'open', ...e })),
+      e => (e.text || '') + '|' + (e.time || '') + '|' + (e.location || '')
+    );
+    STATE.activity = _mergeByKey(STATE.activity, data.activity, a => (a.title || '') + '|' + (a.time || ''));
+    STATE.reports = _mergeByKey(STATE.reports, data.reports, r => r.id);
+
+    if (data.lobby && data.lobby.taskId && !STATE.activeLobby) {
       STATE.activeLobby = DAY_SHIFT_TASKS.find(t => t.id === data.lobby.taskId);
       STATE.lobbyStartTime = data.lobby.startTime;
       STATE.lobbyStartedAt = data.lobby.startedAt ? new Date(data.lobby.startedAt) : null;
     }
+
+    // Save the merged result locally, then push the superset up so all devices converge.
+    persistLocal();
+    sbSaveState();
     return true;
   } catch(e) { console.warn('Supabase load failed:', e); return false; }
 }
@@ -2005,6 +2060,48 @@ function _normalizeNightTask(t) {
   return { ...base, type: 'flexible', tag: 'INSPECTION', rooms: _withRoomIds(t.rooms) };
 }
 
+// Full Building Inspection — floor-by-floor. Each floor is a room covering 8 areas in sequence.
+const FBI_FLOORS_NUMS = [3,4,5,6,7,8,9,10,11,12,13,14,16,17,18,19,20,21,22,23,24,25,26,28,29,30,31,32,33,34,35,36,37,38];
+function _fbiQuestions() {
+  return [
+    // EAST WIP CUPBOARD
+    { text: 'East WIP Cupboard — Is the hose reel present and accessible?', photoRequired: false, photoOptional: false },
+    { text: 'East WIP Cupboard — Is the fire extinguisher present and accessible?', photoRequired: false, photoOptional: false },
+    { text: 'East WIP Cupboard — Is the WIP (Warden Intercom Point) in place and operational?', photoRequired: false, photoOptional: false },
+    { text: 'East WIP Cupboard — Is all emergency evacuation equipment present and in good condition?', photoRequired: true, photoOptional: false },
+    { text: 'East WIP Cupboard — Is the cupboard door secured?', photoRequired: false, photoOptional: false },
+    // EAST FIRE STAIRS
+    { text: 'East Fire Stairs — Is the fire stair door clear of obstructions?', photoRequired: false, photoOptional: false },
+    { text: 'East Fire Stairs — Is the fire stair door secured?', photoRequired: false, photoOptional: false },
+    { text: 'East Fire Stairs — Anything unusual to report?', photoRequired: true, photoOptional: false },
+    // GOODS LIFT LOBBY
+    { text: 'Goods Lift Lobby — Is the goods lift lobby clear of obstructions?', photoRequired: false, photoOptional: false },
+    { text: 'Goods Lift Lobby — Anything unusual to report?', photoRequired: false, photoOptional: false },
+    // ELECTRICAL RISER
+    { text: 'Electrical Riser — Is the riser door secured?', photoRequired: false, photoOptional: false },
+    { text: 'Electrical Riser — Any unusual smells present?', photoRequired: false, photoOptional: false },
+    { text: 'Electrical Riser — Is the area clean and clear?', photoRequired: true, photoOptional: false },
+    // WEST FIRE STAIRS
+    { text: 'West Fire Stairs — Is the fire stair door clear of obstructions?', photoRequired: false, photoOptional: false },
+    { text: 'West Fire Stairs — Is the fire stair door secured?', photoRequired: false, photoOptional: false },
+    { text: 'West Fire Stairs — Anything unusual to report?', photoRequired: true, photoOptional: false },
+    // WEST WIP CUPBOARD
+    { text: 'West WIP Cupboard — Is the hose reel present and accessible?', photoRequired: false, photoOptional: false },
+    { text: 'West WIP Cupboard — Is the fire extinguisher present and accessible?', photoRequired: false, photoOptional: false },
+    { text: 'West WIP Cupboard — Is the defibrillator present and ready to use?', photoRequired: false, photoOptional: false },
+    { text: 'West WIP Cupboard — Is all emergency evacuation equipment present and in good condition?', photoRequired: true, photoOptional: false },
+    { text: 'West WIP Cupboard — Is the cupboard door secured?', photoRequired: false, photoOptional: false },
+    // TENANCIES
+    { text: 'Tenancies — Are all tenancy doors secured?', photoRequired: false, photoOptional: false },
+    { text: 'Tenancies — Are all common areas clear?', photoRequired: false, photoOptional: false },
+    { text: 'Tenancies — Anything unusual to report?', photoRequired: false, photoOptional: false },
+    // TOILETS
+    { text: 'Toilets — Are the toilets clear of any obstructions?', photoRequired: false, photoOptional: false },
+    { text: 'Toilets — Are the toilets clean and presentable?', photoRequired: false, photoOptional: false },
+  ];
+}
+const FBI_FLOORS = FBI_FLOORS_NUMS.map(n => ({ name: `Level ${n}`, questions: _fbiQuestions() }));
+
 function buildNightShiftTasks() {
   const dow = new Date().getDay(); // 0 Sun … 6 Sat
   const isWeekend = dow === 0 || dow === 6;
@@ -2039,37 +2136,8 @@ function buildNightShiftTasks() {
         { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
       ]}]
     },
-    { id: 'ns-full-inspection', name: 'Full Building Inspection', type: 'room-questions', time: '19:20-20:30',
-      rooms: [
-        { name: 'Plant Rooms', questions: [
-          { text: 'All plant rooms inspected and secured?', photoRequired: false, photoOptional: false },
-          { text: 'Any faults, alarms, or hazards present?', photoRequired: false, photoOptional: true },
-        ]},
-        { name: 'External Balconies', questions: [
-          { text: 'All balcony access doors secured?', photoRequired: false, photoOptional: false },
-          { text: 'Any damage or hazards present?', photoRequired: false, photoOptional: true },
-        ]},
-        { name: 'Rooftop', questions: [
-          { text: 'Rooftop clear of unauthorised persons?', photoRequired: false, photoOptional: false },
-          { text: 'Any damage, hazards, or loose items present?', photoRequired: false, photoOptional: true },
-        ]},
-        { name: 'Tenancies', questions: [
-          { text: 'All tenancy doors secured?', photoRequired: false, photoOptional: false },
-          { text: 'Any suspicious persons or items observed?', photoRequired: false, photoOptional: true },
-          { text: 'Anything unusual to report?', photoRequired: false, photoOptional: false },
-        ]},
-        { name: 'Generator Rooms', questions: [
-          { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
-          { text: 'Is the generator showing any faults or alarms?', photoRequired: false, photoOptional: true },
-          { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false },
-        ]},
-        { name: 'Lift Motor Rooms', questions: [
-          { text: 'Is the room secured?', photoRequired: false, photoOptional: false },
-          { text: 'Any audible alarms present?', photoRequired: false, photoOptional: false },
-          { text: 'Any unusual sounds, smells, or hazards?', photoRequired: false, photoOptional: false },
-        ]},
-      ]
-    },
+    { id: 'ns-full-building-inspection', name: 'Full Building Inspection', type: 'room-questions', time: '19:20-20:30',
+      rooms: FBI_FLOORS },
     { id: 'ns-b1-inspection', name: 'B1 Inspection', type: 'room-questions', time: '20:30-21:00', rooms: B1_ROOMS },
     { id: 'ns-c2-inspection', name: 'C2 Accenture Inspection', type: 'room-questions', time: '21:40-22:00',
       rooms: [
@@ -2165,9 +2233,12 @@ const AUDIT_TYPES = [
   {
     id: 'goods-lift-lobby', name: 'Goods Lift Lobby Audit', icon: '🛗', available: true,
     assetGroups: [
-      { group: 'Lower Floors', assets: ['Floors 3-10'] },
-      { group: 'Mid Floors', assets: ['Floors 11-22'] },
-      { group: 'Upper Floors', assets: ['Floors 23-38'] },
+      { group: 'Basement', assets: ['B2', 'B1'] },
+      { group: 'Ground & Lower', assets: ['Ground Floor', 'Level 1', 'Level 2'] },
+      { group: 'Levels 3–10', assets: ['Level 3', 'Level 4', 'Level 5', 'Level 6', 'Level 7', 'Level 8', 'Level 9', 'Level 10'] },
+      { group: 'Levels 11–20', assets: ['Level 11', 'Level 12', 'Level 13', 'Level 14', 'Level 15', 'Level 16', 'Level 17', 'Level 18', 'Level 19', 'Level 20'] },
+      { group: 'Levels 21–30', assets: ['Level 21', 'Level 22', 'Level 23', 'Level 24', 'Level 25', 'Level 26', 'Level 27', 'Level 28', 'Level 29', 'Level 30'] },
+      { group: 'Levels 31–39', assets: ['Level 31', 'Level 32', 'Level 33', 'Level 34', 'Level 35', 'Level 36', 'Level 37', 'Level 38', 'Level 39'] },
     ],
     questions: [
       { text: 'Is the goods lift lobby clear of obstructions?', photoRequired: false, photoOptional: false },
