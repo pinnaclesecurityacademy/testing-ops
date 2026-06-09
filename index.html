@@ -811,10 +811,124 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 /* Dashboard 5-card grid */
 .dash-stats-5 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px 0; }
 .dash-stats-5 .stat-card-wide { grid-column: 1 / -1; }
-/* Dashboard greeting */
+/* Dashboard greeting (legacy — retained for safety) */
 .dash-greeting { padding: 20px 16px 8px; }
 .dash-greeting-text { font-size: 28px; font-weight: 700; color: var(--text-primary); }
 .dash-greeting-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ═══════════ COMMAND-CENTRE DASHBOARD ═══════════ */
+.dash-cmd {
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 16px;
+  background: var(--bg-secondary);
+  min-height: 100%;
+}
+
+/* Command header bar */
+.dash-topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+  padding: 12px 18px; box-shadow: var(--shadow-sm); min-height: 56px;
+}
+.dash-topbar-site {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 600; letter-spacing: 1px; color: var(--text-primary);
+}
+.dash-topbar-status {
+  display: flex; align-items: center; gap: 6px; margin-top: 3px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent-green);
+}
+.dash-topbar-datetime {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--text-secondary); letter-spacing: 0.5px; white-space: nowrap;
+}
+
+/* Row 1 — KPI cards */
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.kpi-card {
+  background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+  padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); min-width: 0;
+  display: flex; flex-direction: column; gap: 6px; cursor: pointer;
+  transition: box-shadow var(--transition), transform var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.kpi-card:active { box-shadow: var(--shadow-md); transform: scale(0.99); }
+.kpi-value {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px; font-weight: 700; line-height: 1; color: var(--text-primary);
+}
+.kpi-value-of { color: var(--text-muted); }
+.kpi-value-sep { color: var(--text-muted); font-weight: 500; }
+.kpi-sub {
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  display: flex; align-items: center; gap: 6px;
+}
+.kpi-sub svg { flex-shrink: 0; }
+.kpi-bar { height: 4px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+.kpi-bar-fill { height: 100%; background: var(--accent-green); border-radius: 99px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.kpi-status { cursor: default; justify-content: center; }
+.kpi-status .kpi-status-label {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 17px; font-weight: 700; letter-spacing: 0.5px; color: var(--accent-green);
+}
+.kpi-status .kpi-sub {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted);
+}
+
+/* Two-column panel rows */
+.dash-grid-2 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; align-items: start; }
+.dash-panel {
+  background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+  box-shadow: var(--shadow-sm); padding: 14px 0 8px; overflow: hidden;
+}
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px 12px; border-bottom: 1px solid var(--border-light);
+  font-size: 14px; font-weight: 600; color: var(--text-primary);
+}
+.panel-link { font-size: 12px; font-weight: 600; color: var(--accent-green); cursor: pointer; }
+.panel-subhead {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-muted);
+  padding: 12px 16px 6px;
+}
+.panel-subhead .section-badge { padding: 1px 7px; }
+
+/* Shift overview next-step card */
+.shift-next-card {
+  margin: 6px 16px 0; padding: 14px; border-radius: 8px; cursor: pointer;
+  background: var(--accent-green-light); border: 1px solid var(--border-accent);
+  transition: transform var(--transition); -webkit-tap-highlight-color: transparent;
+}
+.shift-next-card:active { transform: scale(0.99); }
+.shift-next-label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--accent-green); }
+.shift-next-name { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-top: 4px; }
+.shift-next-cta { font-size: 12px; font-weight: 600; color: var(--accent-green); margin-top: 8px; }
+
+/* Panel-scoped overrides for reused components */
+.dash-panel .quick-start-grid { grid-template-columns: 1fr 1fr; padding: 0 16px 6px; }
+.dash-panel .escalation-list { padding: 0 16px; }
+.dash-panel .activity-feed { padding: 4px 16px 0; gap: 0; }
+.dash-panel .activity-item { border: none; border-bottom: 1px solid var(--border-light); border-radius: 0; box-shadow: none; padding: 11px 4px; }
+.dash-panel .activity-item:last-child { border-bottom: none; }
+.dash-panel .empty-state { padding: 18px 16px; }
+
+/* Widen the command-centre on desktop (overrides the 800px page cap) */
+@media (min-width: 900px) {
+  .page-scroll > .dash-cmd { max-width: 1180px; }
+}
+
+/* Mobile — stack panels, 2-up KPI grid */
+@media (max-width: 899px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .dash-grid-2 { grid-template-columns: 1fr; }
+  .dash-topbar-site { font-size: 16px; }
+  .dash-topbar-datetime { font-size: 12px; }
+}
 
 /* ── SHIFT TABS ──────────────────────────── */
 .shift-tabs { display: flex; border-bottom: 2px solid var(--border-color); padding: 0 16px; background: #fff; flex-shrink: 0; }
@@ -889,54 +1003,79 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 <!-- ═══════ DASHBOARD ═══════ -->
 <div id="page-dashboard" class="page active">
   <div class="page-scroll">
-    <div class="dash-greeting">
-      <div class="dash-greeting-text" id="dash-greeting">Good morning</div>
-      <div class="dash-greeting-sub"><span id="dash-site">Tower 3 ITS</span> · <span id="dash-date"></span></div>
+    <div class="dash-cmd">
+
+      <!-- Command header -->
+      <div class="dash-topbar">
+        <div>
+          <div class="dash-topbar-site">TOWER 3 ITS</div>
+          <div class="dash-topbar-status"><span class="status-dot green"></span> SITE ACTIVE</div>
+        </div>
+        <div class="dash-topbar-datetime"><span id="dash-date"></span> · <span id="nav-time">--:--</span></div>
+      </div>
+
+      <!-- ROW 1 — KPI cards -->
+      <div class="kpi-row">
+        <div class="kpi-card kpi-status">
+          <div class="kpi-status-label"><span class="status-dot green"></span> SITE ACTIVE</div>
+          <div class="kpi-sub" id="shift-indicator">DAY SHIFT</div>
+        </div>
+        <div class="kpi-card" onclick="navigateTo('dayshift')">
+          <div class="kpi-value" id="stat-compliance" style="color:#1B4D3E">—</div>
+          <div class="kpi-sub">Compliance Score</div>
+          <div class="kpi-bar"><div class="kpi-bar-fill" id="compliance-progress" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card" onclick="navigateTo('dayshift')">
+          <div class="kpi-value"><span id="stat-completed">0</span><span class="kpi-value-sep"> / </span><span id="stat-expected" class="kpi-value-of">0</span></div>
+          <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M5 13l4 4L19 7" stroke="#1B4D3E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> Completed Today</div>
+        </div>
+        <div class="kpi-card" onclick="navigateTo('dayshift')">
+          <div class="kpi-value" id="stat-outstanding" style="color:#F59E0B">0</div>
+          <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="9" stroke="#F59E0B" stroke-width="1.6"/><path d="M12 7v5l3 3" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/></svg> Outstanding</div>
+        </div>
+        <div class="kpi-card" onclick="navigateTo('issues')">
+          <div class="kpi-value" id="esc-count" style="color:#EF4444">0</div>
+          <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#EF4444" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Active Issues</div>
+        </div>
+      </div>
+
+      <!-- ROW 2 — Priority Attention + Shift Overview -->
+      <div class="dash-grid-2">
+        <div class="dash-panel">
+          <div class="panel-header"><span>⚠ Priority Attention</span><span class="panel-link" onclick="navigateTo('issues')">View all</span></div>
+          <div id="missed-section" style="display:none">
+            <div class="panel-subhead">MISSED INSPECTIONS <span class="section-badge" id="missed-count">0</span></div>
+            <div id="missed-list" class="escalation-list"></div>
+          </div>
+          <div class="panel-subhead">OPEN ISSUES</div>
+          <div id="escalations-list" class="escalation-list"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">All inspections on track</div></div></div>
+        </div>
+
+        <div class="dash-panel">
+          <div class="panel-header"><span>Shift Overview</span></div>
+          <div class="shift-next-card" onclick="navigateTo('dayshift')">
+            <div class="shift-next-label">TODAY'S RUN SHEET</div>
+            <div class="shift-next-name">Continue scheduled inspections</div>
+            <div class="shift-next-cta">Open Tasks →</div>
+          </div>
+          <div class="panel-subhead">QUICK ACTIONS</div>
+          <div class="quick-start-grid">
+            <button class="qs-btn patrol" onclick="startQuickPatrol('White Level Inspection')"><div class="qs-icon">⬜</div><div class="qs-label">White Level</div></button>
+            <button class="qs-btn patrol" onclick="startQuickPatrol('External Inspection')"><div class="qs-icon">🔦</div><div class="qs-label">External Inspection</div></button>
+            <button class="qs-btn patrol" onclick="startRoverTask('plant-room-morning')"><div class="qs-icon">⚙️</div><div class="qs-label">Plant Room</div></button>
+            <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')"><div class="qs-icon">🛗</div><div class="qs-label">Lift Inspection</div></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3 — Recent Activity -->
+      <div class="dash-panel">
+        <div class="panel-header"><span>Recent Activity</span></div>
+        <div id="activity-feed" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div></div>
+      </div>
+
+      <div class="bottom-spacer"></div>
     </div>
-    <div class="dash-stats-5">
-      <div class="stat-card" onclick="navigateTo('dayshift')">
-        <div class="stat-label">Expected Today</div>
-        <div class="stat-value" id="stat-expected" style="font-size:36px;font-weight:700;color:var(--text-primary)">0</div>
-        <div class="stat-icon" style="color:#6B7280"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      </div>
-      <div class="stat-card" onclick="navigateTo('dayshift')">
-        <div class="stat-label">Completed</div>
-        <div class="stat-value" id="stat-completed" style="font-size:36px;font-weight:700;color:#1B4D3E">0</div>
-        <div class="stat-icon" style="color:#1B4D3E"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </div>
-      <div class="stat-card" onclick="navigateTo('dayshift')">
-        <div class="stat-label">Outstanding</div>
-        <div class="stat-value" id="stat-outstanding" style="font-size:36px;font-weight:700;color:#F59E0B">0</div>
-        <div class="stat-icon" style="color:#F59E0B"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      </div>
-      <div class="stat-card" onclick="openMissedModal()">
-        <div class="stat-label">Missed</div>
-        <div class="stat-value" id="stat-missed" style="font-size:36px;font-weight:700;color:#EF4444">0</div>
-        <div class="stat-icon" style="color:#EF4444"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
-      </div>
-      <div class="stat-card stat-card-wide">
-        <div class="stat-label">Compliance Score</div>
-        <div class="stat-value" id="stat-compliance" style="font-size:36px;font-weight:700;color:#1B4D3E">—</div>
-        <div class="stat-progress" style="margin-top:8px"><div class="stat-progress-fill" id="compliance-progress" style="width:0%"></div></div>
-        <div class="stat-icon" style="color:#1B4D3E"><svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      </div>
-    </div>
-    <div id="missed-section" style="display:none">
-      <div class="section-header"><span class="section-title">⚠ Missed Inspections</span><span class="section-badge" id="missed-count">0</span></div>
-      <div id="missed-list" class="escalation-list"></div>
-    </div>
-    <div class="section-header"><span class="section-title">Open Issues</span><span class="section-badge" id="esc-count">0</span></div>
-    <div id="escalations-list" class="escalation-list"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div></div>
-    <div class="section-header"><span class="section-title">Recent Activity</span></div>
-    <div id="activity-feed" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div></div>
-    <div class="section-header"><span class="section-title">Quick Start</span></div>
-    <div class="quick-start-grid">
-      <button class="qs-btn patrol" onclick="startQuickPatrol('White Level Inspection')"><div class="qs-icon">⬜</div><div class="qs-label">White Level</div></button>
-      <button class="qs-btn patrol" onclick="startQuickPatrol('External Inspection')"><div class="qs-icon">🔦</div><div class="qs-label">External Inspection</div></button>
-      <button class="qs-btn patrol" onclick="startRoverTask('plant-room-morning')"><div class="qs-icon">⚙️</div><div class="qs-label">Plant Room</div></button>
-      <button class="qs-btn audit" onclick="startQuickAudit('Lift Audit')"><div class="qs-icon">🛗</div><div class="qs-label">Lift Inspection</div></button>
-    </div>
-    <div class="bottom-spacer"></div>
   </div>
 </div>
 
