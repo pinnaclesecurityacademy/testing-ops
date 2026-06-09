@@ -650,6 +650,16 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 }
 .sidebar-task-item.done .sidebar-task-name { color: var(--text-muted); }
 .sidebar-task-check { font-size: 11px; color: #1B4D3E; flex-shrink: 0; }
+.sidebar-task-status {
+  width: 16px; height: 16px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-size: 10px; font-weight: 800; line-height: 1;
+}
+.sidebar-task-item.st-completed .sidebar-task-status { background: #D1FAE5; color: #065F46; }
+.sidebar-task-item.st-missed .sidebar-task-status { background: #FEE2E2; color: #991B1B; }
+.sidebar-task-item.st-current .sidebar-task-status { background: #FEF3C7; color: #92400E; animation: pulse 2s infinite; }
+.sidebar-task-item.st-upcoming .sidebar-task-status { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border-color); }
+.sidebar-task-item.st-missed .sidebar-task-name { color: #991B1B; }
 .sidebar-status {
   padding: 8px 20px 16px; font-family: 'Barlow Condensed', sans-serif;
   font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text-muted);
@@ -884,7 +894,8 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 }
 
 /* Two-column panel rows */
-.dash-grid-2 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; align-items: start; }
+.dash-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.dash-grid-tl { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; }
 .dash-panel {
   background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
   box-shadow: var(--shadow-sm); padding: 14px 0 8px; overflow: hidden;
@@ -950,13 +961,57 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 .shiftops-item-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
 .shiftops-item-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
 
+/* Today's Inspection Timeline */
+.timeline { padding: 6px 16px 8px; display: flex; flex-direction: column; }
+.tl-item {
+  display: flex; align-items: center; gap: 12px; padding: 11px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.tl-item:last-child { border-bottom: none; }
+.tl-marker {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; line-height: 1;
+}
+.tl-completed .tl-marker { background: #D1FAE5; color: #065F46; }
+.tl-missed .tl-marker { background: #FEE2E2; color: #991B1B; }
+.tl-current .tl-marker { background: #FEF3C7; color: #92400E; box-shadow: 0 0 0 4px rgba(245,158,11,0.18); animation: pulse 2s infinite; }
+.tl-upcoming .tl-marker { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border-color); }
+.tl-body { flex: 1; min-width: 0; }
+.tl-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-current .tl-name { color: #92400E; }
+.tl-missed .tl-name { color: #991B1B; }
+.tl-upcoming .tl-name { color: var(--text-secondary); font-weight: 500; }
+.tl-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.tl-status {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  padding: 2px 8px; border-radius: 99px; flex-shrink: 0;
+}
+.tl-completed .tl-status { background: #D1FAE5; color: #065F46; }
+.tl-missed .tl-status { background: #FEE2E2; color: #991B1B; }
+.tl-current .tl-status { background: #FEF3C7; color: #92400E; }
+.tl-upcoming .tl-status { background: var(--bg-elevated); color: var(--text-muted); }
+
+/* Top header — merged site/status/shift/time */
+.nav-divider { width: 1px; height: 16px; background: var(--border-color); display: inline-block; }
+.topnav-left { display: flex; align-items: center; gap: 10px; }
+.nav-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent-green);
+}
+.nav-shift-pill {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  background: var(--accent-green-light); color: var(--accent-green);
+  border: 1px solid var(--border-accent); border-radius: 99px; padding: 3px 10px;
+}
+
 /* Mobile — stack panels, 2-up KPI grid */
 @media (max-width: 899px) {
   .kpi-row { grid-template-columns: 1fr 1fr; }
   .kpi-status { grid-column: 1 / -1; }
   .dash-grid-2 { grid-template-columns: 1fr; }
-  .dash-topbar-site { font-size: 16px; }
-  .dash-topbar-datetime { font-size: 12px; }
+  .dash-grid-tl { grid-template-columns: 1fr; }
+  .nav-status, .nav-time { display: none; }
 }
 
 /* ── SHIFT TABS ──────────────────────────── */
@@ -1020,9 +1075,15 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 <div id="main" class="main hidden">
 
 <nav class="topnav">
-  <div class="topnav-left"><span class="nav-wordmark">Pinnacle Inspect</span></div>
-  <div class="topnav-center"><span id="nav-site-name">Tower 3 ITS</span></div>
+  <div class="topnav-left">
+    <span class="nav-wordmark">Pinnacle Inspect</span>
+    <span class="nav-divider"></span>
+    <span id="nav-site-name">Tower 3 ITS</span>
+  </div>
   <div class="topnav-right">
+    <span class="nav-status"><span class="status-dot green"></span> SITE ACTIVE</span>
+    <span class="nav-shift-pill" id="shift-indicator">DAY SHIFT</span>
+    <span class="nav-time"><span id="dash-date"></span> · <span id="nav-time">--:--</span></span>
     <button id="sync-btn" onclick="manualSync()" style="background:var(--accent-green);border:none;border-radius:99px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;padding:5px 12px;">↑ SYNC</button>
   </div>
 </nav>
@@ -1034,20 +1095,11 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   <div class="page-scroll">
     <div class="dash-cmd">
 
-      <!-- Command header -->
-      <div class="dash-topbar">
-        <div>
-          <div class="dash-topbar-site">TOWER 3 ITS</div>
-          <div class="dash-topbar-status"><span class="status-dot green"></span> SITE ACTIVE</div>
-        </div>
-        <div class="dash-topbar-datetime"><span id="dash-date"></span> · <span id="nav-time">--:--</span></div>
-      </div>
-
       <!-- ROW 1 — KPI cards -->
       <div class="kpi-row">
         <div class="kpi-card kpi-status">
           <div class="kpi-status-label"><span class="status-dot green"></span> SITE ACTIVE</div>
-          <div class="kpi-sub" id="shift-indicator">DAY SHIFT</div>
+          <div class="kpi-sub">All systems operational</div>
         </div>
         <div class="kpi-card" onclick="navigateTo('dayshift')">
           <div class="kpi-value" id="stat-compliance" style="color:#1B4D3E">—</div>
@@ -1110,10 +1162,16 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         </div>
       </div>
 
-      <!-- ROW 3 — Recent Activity -->
-      <div class="dash-panel">
-        <div class="panel-header"><span>Recent Activity</span></div>
-        <div id="activity-feed" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div></div>
+      <!-- ROW 3 — Inspection Timeline + Recent Activity -->
+      <div class="dash-grid-tl">
+        <div class="dash-panel">
+          <div class="panel-header"><span>Today's Inspection Timeline</span></div>
+          <div id="timeline-list" class="timeline"></div>
+        </div>
+        <div class="dash-panel">
+          <div class="panel-header"><span>Recent Activity</span></div>
+          <div id="activity-feed" class="activity-feed"><div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No activity yet today</div></div></div>
+        </div>
       </div>
 
       <div class="bottom-spacer"></div>
@@ -2874,6 +2932,27 @@ function _parseEndMinutes(str) {
   return h * 60 + m;
 }
 
+// Parse the leading HH:MM out of a schedule string (window start)
+function _parseStartMinutes(str) {
+  if (!str) return null;
+  const matches = String(str).match(/(\d{1,2}):(\d{2})/g);
+  if (!matches || !matches.length) return null;
+  const [h, m] = matches[0].split(':').map(Number);
+  return h * 60 + m;
+}
+
+// Timeline status for a scheduled task: completed | missed | current | upcoming
+function getTaskTimelineStatus(task) {
+  if (isTaskDone(task)) return 'completed';
+  const time = task.timeHint || task.window || '';
+  const s = _parseStartMinutes(time), e = _parseEndMinutes(time);
+  const now = new Date();
+  const n = now.getHours() * 60 + now.getMinutes();
+  if (e !== null && n > e) return 'missed';
+  if (s !== null && e !== null && n >= s && n <= e) return 'current';
+  return 'upcoming';
+}
+
 // Tasks whose scheduled window has passed and which were not completed (incl. captured N/A reasons)
 function getMissedItems(shift) {
   const tasks = getShiftTasks(shift);
@@ -2940,6 +3019,29 @@ function refreshDashboard() {
   refreshEscalations();
   refreshActivity();
   renderShiftOps(shift);
+  renderTimeline(shift);
+}
+
+// Today's Inspection Timeline — built from existing scheduled task data.
+function renderTimeline(shift) {
+  const el = document.getElementById('timeline-list');
+  if (!el) return;
+  const tasks = getShiftTasks(shift);
+  const marker = { completed: '✓', missed: '!', current: '●', upcoming: '○' };
+  const label = { completed: 'DONE', missed: 'MISSED', current: 'NOW', upcoming: 'UPCOMING' };
+  if (!tasks.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No inspections scheduled</div></div>'; return; }
+  el.innerHTML = tasks.map(t => {
+    const time = t.timeHint || t.window || '';
+    const st = getTaskTimelineStatus(t);
+    return `<div class="tl-item tl-${st}">
+      <div class="tl-marker">${marker[st]}</div>
+      <div class="tl-body">
+        <div class="tl-name">${esc(t.label)}</div>
+        <div class="tl-time">${esc(time || 'Unscheduled')}</div>
+      </div>
+      <span class="tl-status">${label[st]}</span>
+    </div>`;
+  }).join('');
 }
 
 // Shift Operations panel — read-only view built from existing task data.
@@ -3148,12 +3250,14 @@ function refreshSidebarShiftList() {
   if (!el) return;
   const done = STATE.completedTaskIds.length;
   const total = DAY_SHIFT_TASKS.length;
+  const stMarker = { completed: '✓', missed: '!', current: '●', upcoming: '○' };
   el.innerHTML = DAY_SHIFT_TASKS.map(task => {
     const isDone = STATE.completedTaskIds.includes(task.id);
-    return `<div class="sidebar-task-item ${isDone ? 'done locked' : ''}" ${isDone ? '' : `onclick="startRoverTask('${task.id}')"`}>
+    const st = getTaskTimelineStatus(task);
+    return `<div class="sidebar-task-item st-${st} ${isDone ? 'done locked' : ''}" ${isDone ? '' : `onclick="startRoverTask('${task.id}')"`}>
+      <span class="sidebar-task-status">${stMarker[st]}</span>
       <span class="sidebar-task-icon">${task.icon}</span>
       <span class="sidebar-task-name">${task.label}</span>
-      ${isDone ? '<span class="sidebar-task-check">✓</span>' : ''}
     </div>`;
   }).join('');
   const status = document.getElementById('sidebar-site-status');
