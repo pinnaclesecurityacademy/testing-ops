@@ -2023,7 +2023,9 @@ async function sbSaveState() {
       audit_records,
       escalations,
       activity: STATE.activity,
-      reports: STATE.reports,
+      // Strip the heavy base64 PDF blob from saved report records before sync —
+      // it is kept locally for direct download but must not bloat the upsert.
+      reports: STATE.reports.map(r => r.pdfData ? { ...r, pdfData: null } : r),
       updated_at: new Date().toISOString(),
     }, { onConflict: 'site_id' });
     if (error) { console.warn('Supabase save error:', error.message); markOffline(); return; }
@@ -2853,15 +2855,27 @@ function loadState() {
 function saveState() {
   sbSaveState();
   try {
+    // Write t_date first so a later quota failure can never cause a false
+    // daily-reset (which would wipe state) on the next load.
+    localStorage.setItem('t_date', new Date().toDateString());
     localStorage.setItem('t_completed', JSON.stringify(STATE.completedTaskIds));
     localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
     localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
     localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
     localStorage.setItem('t_unable', JSON.stringify(STATE.unableTasks));
     localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
-    localStorage.setItem('t_reports', JSON.stringify(STATE.reports));
-    localStorage.setItem('t_date', new Date().toDateString());
   } catch(e) {}
+  // Saved-report PDFs are large; persist them separately so a storage-quota
+  // failure here cannot abort the core-state writes above.
+  try {
+    localStorage.setItem('t_reports', JSON.stringify(STATE.reports));
+  } catch(e) {
+    // Out of quota — drop the heaviest blobs (PDF data) and retry metadata-only.
+    try {
+      const lite = (STATE.reports||[]).map(r => r.pdfData ? { ...r, pdfData: null } : r);
+      localStorage.setItem('t_reports', JSON.stringify(lite));
+    } catch(e2) {}
+  }
 }
 
 function saveLobbyState() {
@@ -2980,6 +2994,24 @@ function refreshReports() {
       <div class="report-date-header">${date}<span>${rpts.length} report${rpts.length!==1?'s':''}</span></div>
       ${rpts.map(r => {
         const timeStr = new Date(r.generatedAt||r.completedAt).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+        const dlSvg = `<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        // Saved EOD / daily shift reports — direct download from the stored PDF (no name re-entry).
+        if (r.type === 'eod-shift' || r.summary) {
+          const dStr = new Date(r.generatedAt).toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+          const s = r.summary || {};
+          const summaryLine = `Completed ${s.completed??'—'}/${s.total??'—'} · Issues: ${s.issues??0}`;
+          const dlBtn = r.pdfData
+            ? `<button class="report-dl-btn" onclick="downloadSavedReport('${r.reportId||r.id}')">${dlSvg}Download Report</button>`
+            : `<button class="report-dl-btn" onclick="showToast('PDF not stored locally — regenerate to download')">${dlSvg}Download Report</button>`;
+          return `<div class="report-card">
+            <div class="report-card-icon">🛡️</div>
+            <div class="report-card-info">
+              <div class="report-card-title">${esc(r.shift||'Shift Report')} — ${dStr}</div>
+              <div class="report-card-meta">Officer: ${esc(r.officer||'—')} · ${summaryLine}</div>
+            </div>
+            ${dlBtn}
+          </div>`;
+        }
         const assetInfo = r.assetCount ? `${r.assetCount} asset${r.assetCount!==1?'s':''}` : (r.asset||'');
         return `<div class="report-card">
           <div class="report-card-icon">${typeIcons[r.type]||'📋'}</div>
@@ -2988,7 +3020,7 @@ function refreshReports() {
             <div class="report-card-meta">${assetInfo} · ${timeStr}</div>
           </div>
           <button class="report-dl-btn" onclick="regenerateReport('${r.id}')">
-            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 3v13M7 11l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>PDF
+            ${dlSvg}PDF
           </button>
         </div>`;
       }).join('')}
@@ -4844,265 +4876,357 @@ async function generateTaskPDF() {
 // ═══════════════════════════════════════
 // END OF DAY PDF
 // ═══════════════════════════════════════
-async function generateEODPDF(shift = 'day') { // async needed for escalation photo rendering
-  const officerFieldId = shift === 'night' ? 'eod-officer-name-night' : 'eod-officer-name';
-  const officerName = document.getElementById(officerFieldId).value.trim();
-  if (!officerName) { showToast('Please enter your name'); document.getElementById(officerFieldId).focus(); return; }
-  showToast(`Generating full ${shift} report...`);
+// ── Professional report palette (light theme) ──────────────────
+const RPT_C = {
+  navy:[26,26,46], grey:[107,114,128], green:[27,77,62], border:[229,231,235],
+  amberBg:[254,243,199], amberTx:[146,64,14], critBg:[254,226,226], critTx:[153,27,27],
+  alt:[249,250,251], card:[243,244,246], pillGreenBg:[209,237,221],
+};
 
-  const shiftTasks = getShiftTasks(shift);
-  const shiftTaskIds = new Set(shiftTasks.map(t => t.id));
-  const shiftRecords = STATE.taskRecords.filter(r => shiftTaskIds.has(r.taskId));
-  const shiftDone = shiftTasks.filter(isTaskDone).length;
+function shiftDisplayName(shift) {
+  const dow = new Date().getDay();
+  if (dow === 0 || dow === 6) return 'Weekend Shift';
+  return shift === 'night' ? 'Night Shift' : 'Day Shift';
+}
 
+// Shared professional PDF builder for both EOD and daily summary reports.
+// opts: { officer, shiftName, scheduledTasks, records, audits, openIssues }
+// Returns { doc, metrics }.
+async function buildShiftReportDoc(opts) {
+  const { officer, shiftName, scheduledTasks, records, audits, openIssues } = opts;
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const W = 210, M = 16;
-
-  doc.setFillColor(15,15,25); doc.rect(0,0,W,40,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
-  doc.text('SECURITY OPERATIONS', M, 17);
-  doc.setFontSize(10); doc.setTextColor(150,150,180);
-  doc.text(`END OF ${shift.toUpperCase()} SHIFT REPORT`, M, 26);
-  doc.setTextColor(124,92,252); doc.setFontSize(9);
-  doc.text(SITE.name.toUpperCase(), W-M, 17, {align:'right'});
-  doc.setTextColor(150,150,180); doc.setFontSize(8);
-  doc.text(new Date().toLocaleDateString('en-AU',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}), W-M, 26, {align:'right'});
-
-  let y = 48;
-  doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,18,3,3,'F');
-  doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
-  doc.text('OFFICER', M+6, y+7);
-  doc.setTextColor(220,220,240); doc.setFontSize(11); doc.setFont('helvetica','bold');
-  doc.text(officerName, M+6, y+13.5);
-  doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
-  doc.text('TASKS COMPLETED', M+80, y+7);
-  doc.setTextColor(220,220,240); doc.setFontSize(11); doc.setFont('helvetica','bold');
-  doc.text(`${shiftDone} of ${shiftTasks.length}`, M+80, y+13.5);
-  doc.setTextColor(100,100,130); doc.setFontSize(7); doc.setFont('helvetica','normal');
-  doc.text('ESCALATIONS', M+145, y+7);
-  doc.setTextColor(STATE.escalations.length > 0 ? 239 : 27, STATE.escalations.length > 0 ? 68 : 77, STATE.escalations.length > 0 ? 68 : 62);
-  doc.setFontSize(11); doc.setFont('helvetica','bold');
-  doc.text(String(STATE.escalations.length), M+145, y+13.5);
-  y += 24;
-
-  // ── Helpers for the operational report layout ──────────────────
-  const pageBreak = (limit) => { if (y > (limit || 262)) { doc.addPage(); y = 20; } };
-  const sectionHeader = (title, rgb) => {
-    pageBreak(255); y += 4;
-    doc.setTextColor(rgb[0], rgb[1], rgb[2]); doc.setFontSize(9.5); doc.setFont('helvetica','bold');
-    doc.text(title, M, y); y += 2;
-    doc.setDrawColor(rgb[0], rgb[1], rgb[2]); doc.setLineWidth(0.4); doc.line(M, y, W-M, y);
-    y += 6;
+  const W = 210, M = 16, CW = W - M*2;
+  const C = RPT_C;
+  let y = 0;
+  const setText = c => doc.setTextColor(c[0],c[1],c[2]);
+  const setFill = c => doc.setFillColor(c[0],c[1],c[2]);
+  const setDraw = c => doc.setDrawColor(c[0],c[1],c[2]);
+  const ensure = need => { if (y + need > 274) { doc.addPage(); y = 18; } };
+  const sectionHeader = title => {
+    ensure(16); y += 4;
+    setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(13);
+    doc.text(title, M, y);
+    setDraw(C.green); doc.setLineWidth(0.5); doc.line(M, y+2, M+CW, y+2);
+    y += 9;
+  };
+  const pill = (text, x, yy, bg, tx) => {
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    const w = doc.getTextWidth(text) + 6;
+    setFill(bg); doc.roundedRect(x, yy-3.6, w, 5.2, 2.6, 2.6, 'F');
+    setText(tx); doc.text(text, x+3, yy);
+    return w;
   };
 
-  // ── Classify every scheduled task: completed / unable / missed ──
-  const recByTask = {}; shiftRecords.forEach(r => { recByTask[r.taskId] = r; });
-  // Forward-compatible exception map (keyed by task id). No capture UI exists
-  // yet, so this is normally empty — a justified incomplete is rendered
-  // distinctly from a silent miss when the data is present.
+  // ── Classify scheduled tasks ──
+  const recByTask = {}; (records||[]).forEach(r => { recByTask[r.taskId] = r; });
   const unableMap = (STATE.unableTasks && typeof STATE.unableTasks === 'object') ? STATE.unableTasks : {};
-  const completedTasks = [], unableTasks = [], missedTasks = [];
-  for (const t of shiftTasks) {
-    if (unableMap[t.id]) unableTasks.push({ task: t, info: unableMap[t.id] });
-    else if (isTaskDone(t)) completedTasks.push({ task: t, record: recByTask[t.id] || null });
-    else missedTasks.push(t);
+  const completed = [], unable = [], missed = [];
+  for (const t of scheduledTasks) {
+    if (unableMap[t.id]) unable.push({ task:t, info:unableMap[t.id] });
+    else if (isTaskDone(t)) completed.push({ task:t, record: recByTask[t.id] || null });
+    else missed.push(t);
   }
+  const total = scheduledTasks.length;
+  const issuesCount = (openIssues||[]).length;
+  const compliance = total ? Math.round(((completed.length + unable.length) / total) * 100) : 100;
+  const compColor = compliance >= 90 ? C.green : (compliance >= 70 ? C.amberTx : C.critTx);
 
-  // ── 1. SHIFT REQUIREMENTS — status of every scheduled task ──────
-  sectionHeader('SHIFT REQUIREMENTS', [124,92,252]);
-  const reqLine = (a, b) => {
-    doc.setTextColor(150,150,170); doc.setFontSize(7); doc.setFont('helvetica','normal');
-    doc.text(a, M+6, y);
-    if (b) { doc.setTextColor(210,210,230); doc.text(b, M+44, y); }
-    y += 4.2;
+  // ── PAGE 1 — COVER / SUMMARY ──
+  setFill(C.green); doc.rect(0,0,W,3,'F');
+  y = 20;
+  setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(20);
+  doc.text('Security Operations Report', M, y); y += 8;
+  setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(12);
+  doc.text(SITE.name, M, y); y += 5;
+  setDraw(C.border); doc.setLineWidth(0.4); doc.line(M, y, M+CW, y); y += 9;
+
+  const dt = new Date();
+  const dateStr = dt.toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  const genStr = dt.toLocaleString('en-AU',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const shiftStatus = missed.length === 0 ? 'Completed' : 'In Progress';
+  const colY = y;
+  const drawKV = (rows, x) => {
+    let ry = colY;
+    for (const [k,v] of rows) {
+      setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text(k.toUpperCase(), x, ry);
+      setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.text(String(v), x, ry+4.5);
+      ry += 10;
+    }
+    return ry;
   };
-  for (const { task, record } of completedTasks) {
-    pageBreak(250);
-    doc.setFillColor(20,30,22); doc.roundedRect(M,y,W-M*2,7,1.5,1.5,'F');
-    doc.setTextColor(46,204,113); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text(`✓ COMPLETED   ${task.label.toUpperCase()}`, M+4, y+5); y += 10;
-    if (task.type === 'lobby') {
-      reqLine('Required:', task.window || task.timeHint || '—');
-      reqLine('Completed:', (record && (record.endTime || record.completedAt)) || '—');
-    } else {
-      if (task.timeHint) reqLine('Scheduled:', task.timeHint);
-      reqLine('Started:', (record && record.startTime) || '—');
-      reqLine('Completed:', (record && record.completedAt) || '—');
-      if (record && record.duration) reqLine('Duration:', record.duration);
+  const lend = drawKV([['Date',dateStr],['Shift',shiftName],['Officer',officer],['Generated',genStr]], M);
+  const rend = drawKV([['Site',SITE.name],['Shift Status',shiftStatus],['Sync Status','Synced']], M + CW/2);
+  y = Math.max(lend, rend) + 4;
+
+  const cards = [
+    ['COMPLETED', `${completed.length}/${total}`, C.green],
+    ['OUTSTANDING', String(missed.length), missed.length ? C.amberTx : C.green],
+    ['ISSUES', String(issuesCount), issuesCount ? C.amberTx : C.green],
+    ['COMPLIANCE', `${compliance}%`, compColor],
+  ];
+  const gap = 4, bw = (CW - gap*3)/4, bh = 22;
+  cards.forEach((c, i) => {
+    const x = M + i*(bw+gap);
+    setFill(C.card); doc.roundedRect(x, y, bw, bh, 2, 2, 'F');
+    setText(c[2]); doc.setFont('helvetica','bold'); doc.setFontSize(18);
+    doc.text(c[1], x+bw/2, y+11, {align:'center'});
+    setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+    doc.text(c[0], x+bw/2, y+17.5, {align:'center'});
+  });
+  y += bh + 6;
+
+  // ── SHIFT REQUIREMENTS (grouped by type) ──
+  sectionHeader('Shift Requirements');
+  const renderTaskRow = (entry, kind) => {
+    const task = entry.task, record = entry.record;
+    ensure(11);
+    setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(task.label + (task.timeHint ? ` — ${task.timeHint}` : ''), M, y);
+    let pillText, bg, tx;
+    if (kind === 'completed') { pillText='COMPLETED'; bg=C.pillGreenBg; tx=C.green; }
+    else if (kind === 'unable') { pillText='UNABLE'; bg=C.amberBg; tx=C.amberTx; }
+    else { pillText='MISSED'; bg=C.amberBg; tx=C.amberTx; }
+    const pw = doc.getTextWidth(pillText) + 6;
+    pill(pillText, M+CW-pw, y, bg, tx);
+    y += 4.8;
+    const metas = [];
+    if (record) {
+      let roomsDone = null;
+      if (record.roomResults) roomsDone = Object.keys(record.roomResults).length;
+      else if (record.levelResults) roomsDone = Object.values(record.levelResults).reduce((a,l)=>a+Object.keys(l).length,0);
+      if (roomsDone != null && record.roomCount) metas.push(`${roomsDone}/${record.roomCount} areas completed`);
+      if (record.issues) metas.push(`⚠ ${record.issues} issue${record.issues>1?'s':''}`);
     }
-    y += 2;
-  }
-  for (const { task, info } of unableTasks) {
-    pageBreak(248);
-    doc.setFillColor(38,30,12); doc.roundedRect(M,y,W-M*2,7,1.5,1.5,'F');
-    doc.setTextColor(245,166,35); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text(`⚠ UNABLE TO COMPLETE   ${task.label.toUpperCase()}`, M+4, y+5); y += 10;
-    if (task.timeHint || task.window) reqLine('Required:', task.timeHint || task.window);
-    reqLine('Reason:', info.reason || 'Operational');
-    if (info.recordedAt) reqLine('Recorded:', info.recordedAt);
-    if (info.note) {
-      doc.setTextColor(150,150,170); doc.setFontSize(7); doc.text('Officer note:', M+6, y);
-      doc.setTextColor(210,210,230);
-      const noteLines = doc.splitTextToSize(info.note, W-M*2-50);
-      doc.text(noteLines, M+44, y); y += Math.max(4.2, noteLines.length*4);
-    }
-    y += 2;
-  }
-  for (const task of missedTasks) {
-    pageBreak(250);
-    doc.setFillColor(40,18,18); doc.roundedRect(M,y,W-M*2,7,1.5,1.5,'F');
-    doc.setTextColor(239,68,68); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text(`✕ MISSED   ${task.label.toUpperCase()}`, M+4, y+5); y += 10;
-    if (task.timeHint || task.window) reqLine('Required:', task.timeHint || task.window);
-    reqLine('Reason:', 'No reason entered');
+    if (kind === 'unable' && entry.info) metas.push(entry.info.reason);
+    if (metas.length) {
+      setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+      doc.text(metas.join('    ·    '), M, y); y += 4.5;
+    } else { y += 1; }
+    y += 1.5;
+  };
+  const groups = [
+    ['Inspections', t => t.type !== 'lobby' && t.type !== 'audit-link'],
+    ['Static Posts', t => t.type === 'lobby'],
+    ['Audits', t => t.type === 'audit-link'],
+  ];
+  for (const [gname, gf] of groups) {
+    const gc = completed.filter(e => gf(e.task));
+    const gu = unable.filter(e => gf(e.task));
+    const gm = missed.filter(t => gf(t));
+    if (!gc.length && !gu.length && !gm.length) continue;
+    ensure(8);
+    setText(C.grey); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text(gname.toUpperCase(), M, y); y += 5;
+    gc.forEach(e => renderTaskRow(e, 'completed'));
+    gu.forEach(e => renderTaskRow(e, 'unable'));
+    gm.forEach(t => renderTaskRow({ task:t }, 'missed'));
     y += 2;
   }
 
-  // ── 4. INSPECTION DETAIL — times + rooms checked (PASS summarised) ─
-  const detailTasks = completedTasks.filter(c => c.record && (c.record.roomResults || c.record.levelResults));
+  // ── INSPECTION DETAIL (tables) ──
+  const detailTasks = completed.filter(c => c.record && (c.record.roomResults || c.record.levelResults));
   if (detailTasks.length) {
-    sectionHeader('INSPECTION DETAIL', [124,92,252]);
-    for (const { task, record } of detailTasks) {
-      pageBreak(248);
-      // Flatten rooms (flexible roomResults or plant levelResults)
-      const roomEntries = record.roomResults
-        ? Object.values(record.roomResults).map(rd => ({ rd, level: '' }))
-        : Object.entries(record.levelResults).flatMap(([lid, rooms]) => {
-            const lvl = (PLANT_LEVELS.find(l => l.id === lid) || {}).name || lid;
-            return Object.values(rooms).map(rd => ({ rd, level: lvl }));
-          });
-      const checked = roomEntries.length;
-      doc.setTextColor(200,200,225); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
-      doc.text(task.label + (task.timeHint ? ` — ${task.timeHint}` : ''), M, y); y += 5;
-      doc.setTextColor(140,140,165); doc.setFontSize(7); doc.setFont('helvetica','normal');
-      doc.text(`Started ${record.startTime||'—'}  ·  Completed ${record.completedAt||'—'}  ·  ${record.duration||'—'}  ·  ${checked}/${record.roomCount||checked} rooms checked`, M, y);
-      y += 5.5;
-      // PASS rooms summarised to one line each; issue rooms flagged.
-      for (const { rd, level } of roomEntries) {
-        pageBreak(265);
-        const name = (level ? level + ' ' : '') + (rd.roomName || 'Room');
-        const hasPhoto = (rd.photos && rd.photos.length) || (rd.photos2 && rd.photos2.length);
+    sectionHeader('Inspection Detail');
+    const cols = [M+1, M+92, M+120, M+150];
+    const renderRoomTable = (title, roomEntries) => {
+      ensure(20);
+      setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+      doc.text(title, M, y); y += 4;
+      setDraw(C.border); doc.setLineWidth(0.3); doc.line(M, y, M+CW, y); y += 4;
+      setText(C.grey); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      doc.text('Room / Area', cols[0], y); doc.text('Status', cols[1], y); doc.text('Checks', cols[2], y); doc.text('Evidence', cols[3], y);
+      y += 3; setDraw(C.border); doc.line(M, y, M+CW, y); y += 4.5;
+      let alt = false;
+      for (const { rd } of roomEntries) {
+        ensure(8);
+        const tot = (rd.answers && rd.answers.length) ? rd.answers.length : ((rd.checks?.length||0) + (rd.obsChecks?.length||0));
+        const issueN = rd.answers ? rd.answers.filter(a=>a.answer==='issue').length
+          : [...(rd.checks||[]),...(rd.obsChecks||[])].filter(c=>c.status==='reportable').length;
+        const passed = Math.max(0, tot - issueN);
+        const evid = ((rd.photos&&rd.photos.length)||(rd.photos2&&rd.photos2.length)) ? '✓ Captured' : '—';
+        if (alt) { setFill(C.alt); doc.rect(M, y-3.6, CW, 6, 'F'); }
+        alt = !alt;
+        setText(C.navy); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+        doc.text(String(rd.roomName||'Room').slice(0,44), cols[0], y);
+        if (rd.hasIssue) { setText(C.amberTx); doc.setFont('helvetica','bold'); doc.text('Issue', cols[1], y); }
+        else { setText(C.green); doc.text('Passed', cols[1], y); }
+        setText(C.navy); doc.setFont('helvetica','normal');
+        doc.text(tot ? `${passed}/${tot}` : '—', cols[2], y);
+        doc.text(evid, cols[3], y);
+        y += 6;
         if (rd.hasIssue) {
-          doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-          doc.text(`⚠ ${name} — issue logged (see Issues Raised)`, M+4, y);
-        } else {
-          doc.setTextColor(46,204,113); doc.setFontSize(7); doc.setFont('helvetica','normal');
-          doc.text(`✓ ${name} — all checks passed${hasPhoto ? ' · evidence captured' : ''}`, M+4, y);
+          const issues = rd.answers
+            ? rd.answers.filter(a=>a.answer==='issue').map(a=>({ d:a.finding||a.question, p:a.priority, c:a.category }))
+            : [...(rd.checks||[]),...(rd.obsChecks||[])].filter(c=>c.status==='reportable'&&c.reportText).map(c=>({ d:c.reportText, p:c.priority, c:c.label }));
+          for (const is of issues) {
+            ensure(7);
+            setFill(C.amberBg); doc.roundedRect(M+3, y-3.6, CW-6, 6, 1, 1, 'F');
+            setText(C.amberTx); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+            const line = `⚠ Issue: ${is.d}${is.p?` — Priority: ${String(is.p).toUpperCase()}`:''}${is.c?` — ${is.c}`:''}`;
+            doc.text(doc.splitTextToSize(line, CW-14)[0], M+6, y); y += 7;
+          }
         }
-        y += 4.2;
       }
-      y += 3;
-    }
-  }
-
-  // ── 6 (issues) ISSUES RAISED — full escalation detail with photos ─
-  if (STATE.escalations.length > 0) {
-    sectionHeader('ISSUES RAISED', [239,68,68]);
-    for (const e of STATE.escalations) {
-      pageBreak(250);
-      doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,13,2,2,'F');
-      doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-      doc.text(`[${(e.priority||'').toUpperCase()}] ${e.location||''}`, M+4, y+5.5);
-      doc.setTextColor(200,180,180); doc.setFont('helvetica','normal');
-      doc.text((e.text||'').slice(0,90), M+4, y+10.5);
-      y += 16;
-      if (e.photo) {
-        pageBreak(232);
-        const added = await addEscalationPhotoToPDF(doc, e.photo, M, W, y);
-        if (added) y += added+4;
+      y += 4;
+    };
+    for (const { task, record } of detailTasks) {
+      if (record.levelResults) {
+        for (const [lid, rooms] of Object.entries(record.levelResults)) {
+          const lvl = (PLANT_LEVELS.find(l=>l.id===lid)||{}).name || lid;
+          renderRoomTable(`${task.label} — ${lvl}`, Object.values(rooms).map(rd=>({ rd })));
+        }
+      } else {
+        renderRoomTable(task.label, Object.values(record.roomResults).map(rd=>({ rd })));
       }
     }
   }
 
-  // ── 5. EVIDENCE REGISTER — mandatory + issue photos as thumbnails ─
-  const evidence = [];
-  for (const ar of STATE.auditRecords) {
-    (ar.answers || []).forEach(a => (a.photos || []).forEach(p => evidence.push({
-      photo: p, location: ar.asset || ar.auditTypeName || 'Inspection',
-      question: a.question || 'Inspection evidence',
-      captured: a.timestamp || ar.completedAt || '', issue: a.answer === 'issue',
+  // ── INSPECTION SESSIONS (audits) ──
+  if (audits && audits.length) {
+    sectionHeader('Inspection Sessions');
+    for (const r of audits) {
+      ensure(8);
+      const iss = r.issueCount || 0;
+      setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      doc.text(`${r.auditTypeName||'Inspection'} — ${r.asset||''}`, M, y);
+      setText(iss ? C.amberTx : C.green); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      doc.text(`${r.completedAt||''}  ·  ${r.passCount||0} pass  ·  ${iss} issue${iss!==1?'s':''}${r.naCount?`  ·  ${r.naCount} N/A`:''}`, M+CW, y, {align:'right'});
+      y += 5.5;
+    }
+    y += 2;
+  }
+
+  // ── EVIDENCE REGISTER ──
+  const evidence = [], criticals = [];
+  const isCrit = p => ['high','urgent'].includes(String(p||'').toLowerCase());
+  (audits||[]).forEach(ar => (ar.answers||[]).forEach(a => (a.photos||[]).forEach(p => {
+    const it = { photo:p, location: ar.asset||ar.auditTypeName||'Inspection', label:a.question||'Inspection evidence', captured:a.timestamp||ar.completedAt||'', issue:a.answer==='issue', priority:a.priority };
+    (it.issue && isCrit(a.priority) ? criticals : evidence).push(it);
+  })));
+  (records||[]).forEach(r => {
+    const rooms = r.roomResults ? Object.values(r.roomResults) : (r.levelResults ? Object.values(r.levelResults).flatMap(l=>Object.values(l)) : []);
+    rooms.forEach(rd => [...(rd.photos||[]),...(rd.photos2||[])].forEach(p => evidence.push({
+      photo:p, location:`${r.taskLabel}${rd.roomName?' — '+rd.roomName:''}`, label:'Inspection evidence', captured:rd.timestamp||r.completedAt||'', issue:!!rd.hasIssue,
     })));
-  }
-  for (const r of shiftRecords) {
-    const rooms = r.roomResults
-      ? Object.values(r.roomResults)
-      : (r.levelResults ? Object.values(r.levelResults).flatMap(l => Object.values(l)) : []);
-    rooms.forEach(rd => {
-      [...(rd.photos || []), ...(rd.photos2 || [])].forEach(p => evidence.push({
-        photo: p, location: `${r.taskLabel}${rd.roomName ? ' — ' + rd.roomName : ''}`,
-        question: 'Inspection evidence', captured: rd.timestamp || r.completedAt || '',
-        issue: !!rd.hasIssue,
-      }));
-    });
-  }
-  // Issue evidence first (highlighted), then mandatory inspection evidence.
-  evidence.sort((a, b) => (b.issue ? 1 : 0) - (a.issue ? 1 : 0));
-  if (evidence.length) {
-    sectionHeader('EVIDENCE REGISTER', [124,92,252]);
-    const CAP = 10;
-    for (const ev of evidence.slice(0, CAP)) {
-      pageBreak(232);
-      const boxH = 20;
-      if (ev.issue) { doc.setDrawColor(239,68,68); doc.setLineWidth(0.5); doc.roundedRect(M, y, W-M*2, boxH+2, 1.5, 1.5, 'S'); }
-      const drew = await addPhotoToPDF(doc, ev.photo, M+2, y+1, 26, boxH);
-      const tx = M+32;
-      doc.setFontSize(6.8); doc.setFont('helvetica','normal');
-      doc.setTextColor(150,150,170); doc.text('Location:', tx, y+4);
-      doc.setTextColor(215,215,235); doc.text(String(ev.location).slice(0,70), tx+16, y+4);
-      doc.setTextColor(150,150,170); doc.text('Question:', tx, y+9);
-      doc.setTextColor(215,215,235); doc.text(String(ev.question).slice(0,70), tx+16, y+9);
-      doc.setTextColor(150,150,170); doc.text('Captured:', tx, y+14);
-      doc.setTextColor(215,215,235); doc.text(String(ev.captured||'—'), tx+16, y+14);
-      doc.setTextColor(150,150,170); doc.text('Status:', tx, y+19);
-      if (ev.issue) { doc.setTextColor(239,68,68); doc.setFont('helvetica','bold'); doc.text('ISSUE EVIDENCE', tx+16, y+19); }
-      else { doc.setTextColor(46,204,113); doc.text('Inspection evidence', tx+16, y+19); }
-      y += boxH + 6;
+  });
+  (openIssues||[]).forEach(e => { if (e.photo) {
+    const it = { photo:e.photo, location:e.location||e.task||'Issue', label:e.text||'Issue', captured:e.time||'', issue:true, priority:e.priority };
+    (isCrit(e.priority) ? criticals : evidence).push(it);
+  }});
+  if (evidence.length || criticals.length) {
+    sectionHeader('Evidence Register');
+    // Critical/High issue photos — full width.
+    for (const ev of criticals.slice(0,4)) {
+      ensure(70);
+      const h = await addPhotoToPDF(doc, ev.photo, M, y, 120, 78);
+      setText(C.critTx); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+      doc.text(String(ev.location).slice(0,60), M+124, y+6);
+      setText(C.grey); doc.setFont('helvetica','normal');
+      doc.text(doc.splitTextToSize(String(ev.label), 56)[0], M+124, y+11);
+      doc.setFontSize(7); doc.text(String(ev.captured||''), M+124, y+16);
+      setText(C.critTx); doc.setFont('helvetica','bold'); doc.text('CRITICAL EVIDENCE', M+124, y+22);
+      y += Math.max(h || 40, 26) + 6;
     }
-    if (evidence.length > CAP) {
-      doc.setTextColor(140,140,165); doc.setFontSize(7); doc.setFont('helvetica','italic');
-      doc.text(`+ ${evidence.length - CAP} further photo(s) — view in app`, M, y); y += 6;
+    // Remaining evidence — 3-up thumbnail grid.
+    const cellW = (CW - 8)/3;
+    let col = 0, rowTopY = y;
+    for (const ev of evidence.slice(0, 9)) {
+      if (col === 0) { ensure(56); rowTopY = y; }
+      const x = M + col*(cellW+4);
+      await addPhotoToPDF(doc, ev.photo, x, rowTopY, cellW, 40);
+      let cy = rowTopY + 42;
+      setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.text(String(ev.location).slice(0,32), x, cy);
+      setText(C.grey); doc.setFont('helvetica','normal'); doc.text(String(ev.label).slice(0,36), x, cy+4);
+      doc.setFontSize(7); doc.text(String(ev.captured||''), x, cy+8);
+      col++; if (col === 3) { col = 0; y = rowTopY + 54; }
+    }
+    if (col !== 0) y = rowTopY + 54;
+    const more = (evidence.length - 9);
+    if (more > 0) {
+      setText(C.grey); doc.setFont('helvetica','italic'); doc.setFontSize(7);
+      doc.text(`+ ${more} further photo(s) — view in app`, M, y); y += 6;
       doc.setFont('helvetica','normal');
     }
   }
 
-  // ── 6. SHIFT OUTCOME — manager summary ─────────────────────────
-  sectionHeader('SHIFT OUTCOME', [124,92,252]);
-  pageBreak(245);
-  const outcome = [
-    ['Completed', String(completedTasks.length), [46,204,113]],
-    ['Unable to Complete', String(unableTasks.length), [245,166,35]],
-    ['Missed without reason', String(missedTasks.length), [239,68,68]],
-    ['Issues Raised', String(STATE.escalations.length), STATE.escalations.length ? [239,68,68] : [46,204,113]],
-  ];
-  for (const [label, val, rgb] of outcome) {
-    doc.setFillColor(22,22,32); doc.roundedRect(M, y, W-M*2, 9, 2, 2, 'F');
-    doc.setTextColor(170,170,190); doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text(label, M+5, y+6);
-    doc.setTextColor(rgb[0], rgb[1], rgb[2]); doc.setFontSize(11); doc.setFont('helvetica','bold');
-    doc.text(val, W-M-6, y+6.5, { align: 'right' });
-    y += 12;
+  // ── ISSUES & FINDINGS (grouped by priority) ──
+  if (openIssues && openIssues.length) {
+    sectionHeader('Issues & Findings');
+    const order = ['urgent','high','medium','low'];
+    const pri2 = { urgent:[C.critBg,C.critTx], high:[C.critBg,C.critTx], medium:[C.amberBg,C.amberTx], low:[C.card,C.grey] };
+    for (const p of order) {
+      const list = openIssues.filter(e => String(e.priority||'low').toLowerCase() === p);
+      for (const e of list) {
+        ensure(18);
+        const [bg, tx] = pri2[p];
+        pill(p.toUpperCase(), M, y+1, bg, tx);
+        setText(C.navy); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+        doc.text(doc.splitTextToSize(e.text||'', CW-32)[0], M+30, y+1); y += 6;
+        const src = `${e.task?e.task+' · ':''}${e.location||''}`.trim();
+        setText(C.grey); doc.setFontSize(9);
+        if (src) { doc.text(src, M+30, y); y += 4.5; }
+        doc.text(`Reported ${e.time||'—'} · Status: ${e.status||'open'}`, M+30, y); y += 4.5;
+        if (e.action) { doc.setFont('helvetica','italic'); doc.text(`Action: ${e.action}`, M+30, y); doc.setFont('helvetica','normal'); y += 4.5; }
+        y += 2; setDraw(C.border); doc.line(M, y, M+CW, y); y += 3.5;
+      }
+    }
   }
 
   addFooter(doc, W, M);
-  const eodFilename = `${shift}_shift_report_${dateSlug()}.pdf`;
-  doc.save(eodFilename);
-  try {
-    const eodBase64 = doc.output('datauristring');
-    syncPDFToSheets(officerName, `End of ${shift} Shift Report`, eodFilename, eodBase64);
-  } catch(e) {}
+  return { doc, metrics: { completed: completed.length, total, issues: issuesCount, missed: missed.length, unable: unable.length, compliance } };
+}
+
+// Persist a generated report (with its PDF blob) to the report archive.
+function saveReportRecord({ shift, officer, doc, metrics }) {
+  let pdfData = null;
+  try { pdfData = doc.output('datauristring'); } catch(e) {}
+  const reportId = Date.now() + '-' + Math.random().toString(36).substr(2,9);
+  const rec = {
+    reportId, id: reportId, siteId: SB_SITE_ID, date: new Date().toDateString(),
+    shift, officer, generatedAt: new Date().toISOString(),
+    type: 'eod-shift', typeName: `${shift} — Operations Report`,
+    pdfData,
+    summary: { completed: metrics.completed, total: metrics.total, issues: metrics.issues, missed: metrics.missed },
+  };
   if (!STATE.reports) STATE.reports = [];
-  STATE.reports.unshift({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-    type: 'daily-summary',
-    typeName: `${shift.charAt(0).toUpperCase()+shift.slice(1)} Shift Summary`,
-    generatedAt: new Date().toISOString(),
-    assetCount: shiftDone + STATE.auditRecords.length,
-    pdfData: null,
-  });
+  STATE.reports.unshift(rec);
+  // Bound local storage: keep the PDF blob only on the newest 6 saved reports.
+  let kept = 0;
+  STATE.reports.forEach(r => { if (r.pdfData) { kept++; if (kept > 6) r.pdfData = null; } });
   saveState();
   refreshReports();
-  showToast(`Full ${shift} report downloaded`);
+  return rec;
+}
+
+// Download a previously saved report's PDF directly — no officer name needed.
+function downloadSavedReport(reportId) {
+  const r = (STATE.reports||[]).find(x => x.reportId === reportId || x.id === reportId);
+  if (!r || !r.pdfData) { showToast('Report PDF not stored locally — regenerate to download'); return; }
+  const link = document.createElement('a');
+  link.href = r.pdfData;
+  link.download = `${String(r.shift||'shift').replace(/\s+/g,'_').toLowerCase()}_report_${String(r.date||'').replace(/[\s,]+/g,'_')}.pdf`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+async function generateEODPDF(shift = 'day') {
+  const officerFieldId = shift === 'night' ? 'eod-officer-name-night' : 'eod-officer-name';
+  const officerName = document.getElementById(officerFieldId).value.trim();
+  if (!officerName) { showToast('Please enter your name'); document.getElementById(officerFieldId).focus(); return; }
+  showToast(`Generating ${shift} report...`);
+
+  const shiftTasks = getShiftTasks(shift);
+  const ids = new Set(shiftTasks.map(t => t.id));
+  const records = STATE.taskRecords.filter(r => ids.has(r.taskId));
+  const openIssues = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
+  const shiftName = shiftDisplayName(shift);
+
+  const { doc, metrics } = await buildShiftReportDoc({ officer: officerName, shiftName, scheduledTasks: shiftTasks, records, audits: STATE.auditRecords, openIssues });
+  const filename = `${shift}_shift_report_${dateSlug()}.pdf`;
+  doc.save(filename);
+  try { syncPDFToSheets(officerName, `End of ${shift} Shift Report`, filename, doc.output('datauristring')); } catch(e) {}
+  saveReportRecord({ shift: shiftName, officer: officerName, doc, metrics });
+  showToast(`${shiftName} report saved`);
 }
 
 // ═══════════════════════════════════════
@@ -5437,131 +5561,19 @@ async function generateDailySummaryPDF() {
   setBtnLoading('daily-summary-btn', true, 'Generating…');
 
   const shift = getShift();
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const W = 210, M = 16;
-
-  // Header
-  doc.setFillColor(15,15,25); doc.rect(0,0,W,46,'F');
-  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(20);
-  doc.text('DAILY INSPECTION REPORT', M, 16);
-  doc.setFontSize(9); doc.setTextColor(150,150,180); doc.setFont('helvetica','normal');
-  doc.text(SITE.name.toUpperCase(), M, 25);
-  doc.text(`Officer: ${officerName}`, M, 33);
-  doc.setTextColor(124,92,252); doc.setFontSize(9); doc.setFont('helvetica','bold');
-  doc.text(shift.toUpperCase() + ' SHIFT', W-M, 16, {align:'right'});
-  doc.setTextColor(150,150,180); doc.setFontSize(8); doc.setFont('helvetica','normal');
-  doc.text(new Date().toLocaleDateString('en-AU',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}), W-M, 25, {align:'right'});
-
-  let y = 54;
-
-  // Task summary label
-  doc.setFillColor(30,30,50); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
-  doc.setTextColor(100,100,140); doc.setFontSize(8); doc.setFont('helvetica','bold');
-  doc.text('TASK COMPLETION LOG', M+4, y+5.5); y += 12;
-
-  for (const task of [...DAY_SHIFT_TASKS, ...NIGHT_SHIFT_TASKS]) {
-    if (task.type === 'audit-link') continue; // inspection sessions listed separately below
-    if (!isTaskDone(task)) continue;
-    const record = STATE.taskRecords.find(r => r.taskId === task.id);
-    if (y > 250) { doc.addPage(); y = 20; }
-
-    // Task header row
-    doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,10,2,2,'F');
-    doc.setTextColor(124,92,252); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    const taskLabel = task.label + (task.timeHint ? ' — ' + task.timeHint : '');
-    doc.text(taskLabel.toUpperCase(), M+4, y+7);
-    if (record && record.startTime && record.completedAt) {
-      doc.setTextColor(27,77,62); doc.setFontSize(8); doc.setFont('helvetica','normal');
-      doc.text(`${record.startTime} → ${record.completedAt}  ✓`, W-M-4, y+7, {align:'right'});
-    } else {
-      doc.setTextColor(27,77,62); doc.setFontSize(8); doc.setFont('helvetica','normal');
-      doc.text('✓ COMPLETE', W-M-4, y+7, {align:'right'});
-    }
-    y += 13;
-
-    // Show issues for flexible tasks (roomResults)
-    if (record && record.roomResults) {
-      for (const [, rd] of Object.entries(record.roomResults)) {
-        if (!rd.hasIssue) continue;
-        y = await renderSummaryRoomIssues(doc, rd, M, W, y);
-      }
-    }
-
-    // Show issues for plant tasks (levelResults)
-    if (record && record.levelResults) {
-      for (const [, lr] of Object.entries(record.levelResults)) {
-        for (const [, rd] of Object.entries(lr)) {
-          if (!rd.hasIssue) continue;
-          y = await renderSummaryRoomIssues(doc, rd, M, W, y);
-        }
-      }
-    }
-  }
-
-  // Inspection sessions section
-  if (STATE.auditRecords.length > 0) {
-    if (y>235){doc.addPage();y=20;}
-    y += 6;
-    doc.setFillColor(30,30,50); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
-    doc.setTextColor(100,100,140); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text(`INSPECTION SESSIONS (${STATE.auditRecords.length})`, M+4, y+5.5); y += 12;
-    for (const r of STATE.auditRecords) {
-      if (y>255){doc.addPage();y=20;}
-      const issues = r.issueCount || 0;
-      doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,10,2,2,'F');
-      doc.setTextColor(59,130,246); doc.setFontSize(8); doc.setFont('helvetica','bold');
-      doc.text(`${(r.auditTypeName||'').toUpperCase()} — ${r.asset||''}`, M+4, y+6.5);
-      doc.setTextColor(issues>0?239:27, issues>0?68:77, issues>0?68:62); doc.setFontSize(8); doc.setFont('helvetica','normal');
-      doc.text(`${r.completedAt||''} · ${r.passCount||0} pass · ${issues} issue(s)${r.naCount?` · ${r.naCount} N/A`:''}`, W-M-4, y+6.5, {align:'right'});
-      y += 13;
-    }
-  }
-
-  // Open issues section (category · priority · description)
+  const shiftTasks = getShiftTasks(shift);
+  const ids = new Set(shiftTasks.map(t => t.id));
+  const records = STATE.taskRecords.filter(r => ids.has(r.taskId));
   const openIssues = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
-  if (openIssues.length > 0) {
-    if (y>220){doc.addPage();y=20;}
-    y += 6;
-    doc.setFillColor(50,20,20); doc.roundedRect(M,y,W-M*2,9,2,2,'F');
-    doc.setTextColor(239,68,68); doc.setFontSize(9); doc.setFont('helvetica','bold');
-    doc.text(`OPEN ISSUES (${openIssues.length})`, M+4, y+6.5); y += 14;
-    for (const e of openIssues) {
-      if (y>250){doc.addPage();y=20;}
-      doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,13,2,2,'F');
-      doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-      doc.text(`[${(e.priority||'').toUpperCase()}] ${e.task || 'General'} · ${e.location}`, M+4, y+5.5);
-      doc.setTextColor(200,180,180); doc.setFont('helvetica','normal');
-      const descLines = doc.splitTextToSize(e.text, W-M*2-8);
-      doc.text(descLines[0], M+4, y+10.5); y += 16;
-      if (e.photo) {
-        if (y>230){doc.addPage();y=20;}
-        const added = await addEscalationPhotoToPDF(doc, e.photo, M, W, y);
-        if (added) y += added+4;
-      }
-    }
-  }
+  const shiftName = shiftDisplayName(shift);
 
-  addFooter(doc, W, M);
-  const summaryFilename = `daily_summary_${shift}_${dateSlug()}.pdf`;
-  doc.save(summaryFilename);
-  try {
-    const pdfBase64 = doc.output('datauristring');
-    syncPDFToSheets(officerName, 'Daily Inspection Report', summaryFilename, pdfBase64);
-  } catch(e) {}
-  if (!STATE.reports) STATE.reports = [];
-  STATE.reports.unshift({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-    type: 'daily-summary',
-    typeName: 'Daily Summary',
-    generatedAt: new Date().toISOString(),
-    assetCount: STATE.completedTaskIds.length + STATE.auditRecords.length,
-    pdfData: null,
-  });
-  saveState();
-  refreshReports();
+  const { doc, metrics } = await buildShiftReportDoc({ officer: officerName, shiftName, scheduledTasks: shiftTasks, records, audits: STATE.auditRecords, openIssues });
+  const filename = `daily_summary_${shift}_${dateSlug()}.pdf`;
+  doc.save(filename);
+  try { syncPDFToSheets(officerName, 'Daily Inspection Report', filename, doc.output('datauristring')); } catch(e) {}
+  saveReportRecord({ shift: shiftName, officer: officerName, doc, metrics });
   setBtnLoading('daily-summary-btn', false);
-  showToast('Daily summary downloaded');
+  showToast('Daily summary saved');
 }
 
 // Render a room's flagged issues into a summary/daily PDF; returns updated y.
@@ -5585,11 +5597,15 @@ async function renderSummaryRoomIssues(doc, rd, M, W, y) {
 }
 
 function addFooter(doc, W, M) {
-  const n=doc.internal.getNumberOfPages();
-  for(let i=1;i<=n;i++){
-    doc.setPage(i);doc.setFillColor(15,15,25);doc.rect(0,285,W,12,'F');
-    doc.setTextColor(80,80,100);doc.setFontSize(7);doc.setFont('helvetica','normal');
-    doc.text(`TESTING SECURITY PLATFORM · ${SITE.name} · Generated ${new Date().toLocaleString('en-AU')} · Page ${i} of ${n}`,W/2,292,{align:'center'});
+  const n = doc.internal.getNumberOfPages();
+  const dateStr = new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+  for (let i=1; i<=n; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(229,231,235); doc.setLineWidth(0.3); doc.line(M, 287, W-M, 287);
+    doc.setTextColor(107,114,128); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.text(`Pinnacle Inspect — ${SITE.name}`, M, 292);
+    doc.text(`Page ${i} of ${n}`, W/2, 292, {align:'center'});
+    doc.text(dateStr, W-M, 292, {align:'right'});
   }
 }
 
