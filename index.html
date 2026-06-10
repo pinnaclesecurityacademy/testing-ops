@@ -1830,8 +1830,9 @@ const SB_TABLE = 'ops_state';
 const SB_SITE_ID = 'tower3-its';
 
 // ── Offline banner ──────────────────────────────────────────────
-// Shown when Supabase requests fail or the device reports offline.
-// Auto-dismissed on a successful sync.
+// Shown only after an actual failed Supabase request; dismissed on a
+// successful one. navigator.onLine is used as a hint to trigger retries,
+// never to block network calls.
 function showOfflineBanner() {
   const b = document.getElementById('offline-banner');
   if (b) b.style.display = '';
@@ -1840,13 +1841,46 @@ function hideOfflineBanner() {
   const b = document.getElementById('offline-banner');
   if (b) b.style.display = 'none';
 }
-// True if we should skip the network entirely (device offline).
-function isOffline() {
-  return (typeof navigator !== 'undefined') && navigator.onLine === false;
+
+// ── Result-based connectivity tracking ──────────────────────────
+// Online/offline state is determined by the actual outcome of Supabase
+// requests, not by navigator.onLine (which is unreliable when switching
+// between WiFi and mobile data, and on some Android browsers).
+let _appOnline = true;
+let _offlineRetryTimer = null;
+
+function markOnline() {
+  if (!_appOnline) {
+    _appOnline = true;
+    hideOfflineBanner();
+    console.log('Pinnacle: connection restored');
+  }
+}
+
+function markOffline() {
+  if (_appOnline) {
+    _appOnline = false;
+    showOfflineBanner();
+    console.log('Pinnacle: working offline');
+  }
+  scheduleOfflineRetry();
+}
+
+function scheduleOfflineRetry() {
+  if (_offlineRetryTimer) return;
+  _offlineRetryTimer = setTimeout(async () => {
+    _offlineRetryTimer = null;
+    try {
+      const { error } = await _sb.from(SB_TABLE).select('site_id').eq('site_id', SB_SITE_ID).single();
+      if (!error) markOnline();
+      else scheduleOfflineRetry();
+    } catch(e) {
+      scheduleOfflineRetry();
+    }
+  }, 30000);
 }
 
 async function sbSaveState() {
-  if (isOffline()) { showOfflineBanner(); return; }
   try {
     const { error } = await _sb.from(SB_TABLE).upsert({
       site_id: SB_SITE_ID,
@@ -1859,30 +1893,29 @@ async function sbSaveState() {
       reports: STATE.reports,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'site_id' });
-    if (error) { console.warn('Supabase save error:', error.message); showOfflineBanner(); }
-    else { hideOfflineBanner(); }
-  } catch(e) { console.warn('Supabase save failed:', e); showOfflineBanner(); }
+    if (error) { console.warn('Supabase save error:', error.message); markOffline(); return; }
+    markOnline();
+  } catch(e) { console.warn('Supabase save failed:', e); markOffline(); }
 }
 
 async function sbSaveLobbyState() {
-  if (isOffline()) { showOfflineBanner(); return; }
   try {
     const lobbyData = (STATE.activeLobby && STATE.lobbyStartTime) ? {
       taskId: STATE.activeLobby.id,
       startTime: STATE.lobbyStartTime,
       startedAt: STATE.lobbyStartedAt ? STATE.lobbyStartedAt.toISOString() : null,
     } : null;
-    await _sb.from(SB_TABLE).upsert({
+    const { error } = await _sb.from(SB_TABLE).upsert({
       site_id: SB_SITE_ID,
       lobby: lobbyData,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'site_id' });
-    hideOfflineBanner();
-  } catch(e) { console.warn('Supabase lobby save failed:', e); showOfflineBanner(); }
+    if (error) { console.warn('Supabase lobby save error:', error.message); markOffline(); return; }
+    markOnline();
+  } catch(e) { console.warn('Supabase lobby save failed:', e); markOffline(); }
 }
 
 async function sbSaveAuditRecord(record) {
-  if (isOffline()) { showOfflineBanner(); return; }
   try {
     const { error } = await _sb.from('audit_history').insert({
       site_id: SB_SITE_ID,
@@ -1893,9 +1926,9 @@ async function sbSaveAuditRecord(record) {
       answers: record.answers,
       record: record,
     });
-    if (error) { console.warn('Supabase audit_history save error:', error.message); showOfflineBanner(); }
-    else { hideOfflineBanner(); }
-  } catch(e) { console.warn('Supabase audit_history save failed:', e); showOfflineBanner(); }
+    if (error) { console.warn('Supabase audit_history save error:', error.message); markOffline(); return; }
+    markOnline();
+  } catch(e) { console.warn('Supabase audit_history save failed:', e); markOffline(); }
 }
 
 // Persist STATE to localStorage only (no Supabase round-trip). Used after a sync merge.
@@ -1931,11 +1964,10 @@ function _mergeByKey(local, remote, keyFn) {
 }
 
 async function sbLoadState() {
-  if (isOffline()) { showOfflineBanner(); return false; }
   try {
     const { data, error } = await _sb.from(SB_TABLE).select('*').eq('site_id', SB_SITE_ID).single();
-    if (error || !data) { showOfflineBanner(); return false; }
-    hideOfflineBanner();
+    if (error || !data) { markOffline(); return false; }
+    markOnline();
     const today = new Date().toDateString();
     const localIsToday = localStorage.getItem('t_date') === today;
 
@@ -1986,7 +2018,7 @@ async function sbLoadState() {
     persistLocal();
     sbSaveState();
     return true;
-  } catch(e) { console.warn('Supabase load failed:', e); showOfflineBanner(); return false; }
+  } catch(e) { console.warn('Supabase load failed:', e); markOffline(); return false; }
 }
 
 let _syncInterval = null;
@@ -2009,15 +2041,24 @@ function showSyncStatus(msg, ok = true) {
 
 async function manualSync() {
   showSyncStatus('Syncing…');
+  // Always attempt the sync — never skip based on navigator.onLine.
   const ok = await sbLoadState();
-  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('Synced ✓', true); }
-  else { showSyncStatus('Offline — saved locally', false); }
+  if (ok) { refreshDashboard(); refreshDayShift(); refreshAuditList(); showSyncStatus('Synced ✓', true); markOnline(); }
+  else { showSyncStatus('Offline — saved locally', false); markOffline(); }
 }
 
-// Reflect connectivity changes immediately in the offline banner.
+// navigator.onLine / online-offline events are hints to trigger a retry,
+// never a reason to block network calls or flash the banner. The banner is
+// driven solely by confirmed request outcomes (markOnline / markOffline).
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => { hideOfflineBanner(); manualSync(); });
-  window.addEventListener('offline', () => { showOfflineBanner(); });
+  window.addEventListener('online', () => {
+    console.log('Pinnacle: browser reports online — attempting sync');
+    manualSync();
+  });
+  window.addEventListener('offline', () => {
+    console.log('Pinnacle: browser reports offline');
+    // Do not show the offline banner here — wait for an actual failed request.
+  });
 }
 
 // ═══════════════════════════════════════
