@@ -1640,6 +1640,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         GENERATE DAILY SUMMARY
       </button>
     </div>
+    <div id="shift-reports-panel" style="padding:4px 16px 0"></div>
     <div id="reports-list" style="padding-top:8px">
       <div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">No reports found</div></div>
     </div>
@@ -1798,14 +1799,18 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <div id="modal-issue-detail" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px"></div>
     <div class="field-group" style="margin-bottom:12px">
       <label class="field-label">STATUS</label>
-      <select class="field-select" id="modal-issue-status">
+      <select class="field-select" id="modal-issue-status" onchange="toggleResolutionFields()">
         <option value="open">Open</option>
         <option value="being-rectified">Being Rectified</option>
-        <option value="closed">Closed</option>
+        <option value="resolved">Resolved / Closed</option>
       </select>
     </div>
+    <div class="field-group" id="modal-resolved-by-group" style="margin-bottom:12px;display:none">
+      <label class="field-label">RESOLVED BY — MANDATORY</label>
+      <input type="text" class="field-input" id="modal-issue-resolved-by" placeholder="Full name of person resolving..."/>
+    </div>
     <div class="field-group" style="margin-bottom:16px">
-      <label class="field-label">NOTE (OPTIONAL)</label>
+      <label class="field-label" id="modal-issue-note-label">NOTE (OPTIONAL)</label>
       <textarea class="field-textarea" id="modal-issue-note" placeholder="Add a note..." style="min-height:60px"></textarea>
     </div>
     <button class="btn-primary btn-full" onclick="saveIssueStatus()">SAVE STATUS ›</button>
@@ -2958,6 +2963,7 @@ function refreshReports() {
   const summaryBtn = document.getElementById('daily-summary-btn');
   const hasCompleted = STATE.completedTaskIds.length > 0;
   if (summaryBtn) summaryBtn.classList.toggle('hidden', !hasCompleted);
+  renderShiftReportsPanel();
   if (!list) return;
 
   const searchVal = (document.getElementById('reports-search')?.value || '').toLowerCase().trim();
@@ -3347,7 +3353,7 @@ function refreshDashboard() {
   if (compBar) { compBar.style.width = compliance + '%'; compBar.style.background = compColor; }
 
   // Operational Quality — qualitative indicator from open issues + missed tasks
-  const openIssueCount = STATE.escalations.filter(e => (e.status||'open') !== 'closed').length;
+  const openIssueCount = STATE.escalations.filter(e => !issueResolved(e)).length;
   const qDot = document.getElementById('op-quality-dot');
   const qText = document.getElementById('op-quality-text');
   let qColor = '#22C55E', qLabel = 'Good standing';
@@ -3445,7 +3451,7 @@ function refreshEscalations() {
   const list = document.getElementById('escalations-list');
   const badge = document.getElementById('esc-count');
   if (!list) return;
-  const open = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
+  const open = STATE.escalations.filter(e => !issueResolved(e));
   if (badge) badge.textContent = open.length;
   if (!STATE.escalations.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div>'; return; }
   list.innerHTML = open.slice(0,5).map(e => {
@@ -3460,13 +3466,13 @@ function refreshIssues() {
   if (!list) return;
   const sub = document.getElementById('issues-sub');
   const escs = STATE.escalations;
-  const openCount = escs.filter(e => (e.status||'open') !== 'closed').length;
+  const openCount = escs.filter(e => !issueResolved(e)).length;
   if (sub) sub.textContent = `${openCount} open issue${openCount!==1?'s':''} · ${escs.length} total`;
   if (!escs.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No issues logged</div></div>'; return; }
   list.innerHTML = escs.map((e, i) => {
     const status = e.status || 'open';
     const pc = e.priority === 'medium' ? ' priority-medium' : e.priority === 'low' ? ' priority-low' : '';
-    const statusLabel = status === 'open' ? 'Open' : status === 'being-rectified' ? 'Being Rectified' : 'Closed';
+    const statusLabel = status === 'open' ? 'Open' : status === 'being-rectified' ? 'Being Rectified' : 'Resolved';
     let thumb = '';
     if (e.photo) {
       const pid = registerPhotoThumb(e.photo, [
@@ -3493,9 +3499,24 @@ function refreshIssues() {
         </div>
         ${thumb}
       </div>
-      ${e.statusNote ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;padding-top:6px;border-top:1px solid var(--border-color)">📝 ${esc(e.statusNote)}</div>` : ''}
+      ${status === 'resolved' && e.resolvedBy ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;padding-top:6px;border-top:1px solid var(--border-color)">✓ Resolved by ${esc(e.resolvedBy)} · ${e.resolvedAt ? new Date(e.resolvedAt).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : ''}${e.resolutionNote ? `<br>📝 ${esc(e.resolutionNote)}` : ''}</div>` : (e.statusNote ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;padding-top:6px;border-top:1px solid var(--border-color)">📝 ${esc(e.statusNote)}</div>` : '')}
     </div>`;
   }).join('');
+}
+
+// An issue is no longer outstanding once it is resolved (accountable close)
+// or legacy-closed. Centralised so all filters stay consistent.
+function issueResolved(e) {
+  const s = (e && e.status) || 'open';
+  return s === 'resolved' || s === 'closed';
+}
+
+// Show the mandatory Resolved-by field only when the chosen status is Resolved.
+function toggleResolutionFields() {
+  const status = document.getElementById('modal-issue-status').value;
+  const resolving = status === 'resolved';
+  document.getElementById('modal-resolved-by-group').style.display = resolving ? '' : 'none';
+  document.getElementById('modal-issue-note-label').textContent = resolving ? 'RESOLUTION NOTE — MANDATORY' : 'NOTE (OPTIONAL)';
 }
 
 let _modalIssueIdx = -1;
@@ -3505,8 +3526,12 @@ function showIssueStatusModal(idx) {
   if (!e) return;
   document.getElementById('modal-issue-title').textContent = e.text.length > 60 ? e.text.slice(0,60)+'…' : e.text;
   document.getElementById('modal-issue-detail').textContent = `${e.location} · ${(e.priority||'').toUpperCase()} priority · Raised ${e.time}`;
-  document.getElementById('modal-issue-status').value = e.status || 'open';
+  document.getElementById('modal-issue-status').value = e.status === 'closed' ? 'resolved' : (e.status || 'open');
   document.getElementById('modal-issue-note').value = '';
+  // Future compatibility: when user accounts exist, prefill from the signed-in
+  // officer so resolvedBy can be populated automatically.
+  document.getElementById('modal-issue-resolved-by').value = e.resolvedBy || (STATE.officerName || '');
+  toggleResolutionFields();
   document.getElementById('issue-modal').classList.remove('hidden');
 }
 
@@ -3520,14 +3545,26 @@ function saveIssueStatus() {
   if (_modalIssueIdx < 0) return;
   const status = document.getElementById('modal-issue-status').value;
   const note = document.getElementById('modal-issue-note').value.trim();
-  STATE.escalations[_modalIssueIdx].status = status;
-  if (note) STATE.escalations[_modalIssueIdx].statusNote = note;
+  const e = STATE.escalations[_modalIssueIdx];
+  if (status === 'resolved') {
+    const resolvedBy = document.getElementById('modal-issue-resolved-by').value.trim();
+    if (!resolvedBy) { showToast('Resolved by name is required'); return; }
+    if (!note) { showToast('Resolution note is required'); return; }
+    e.status = 'resolved';
+    e.resolvedBy = resolvedBy;
+    e.resolvedAt = new Date().toISOString();
+    e.resolutionNote = note;
+    addActivity(`Issue resolved by ${resolvedBy}: ${(e.text||'').slice(0,40)}`, 'escalation');
+  } else {
+    e.status = status;
+    if (note) e.statusNote = note;
+  }
   document.getElementById('issue-modal').classList.add('hidden');
   _modalIssueIdx = -1;
   saveState();
   refreshIssues();
   refreshEscalations();
-  showToast('Issue status updated');
+  showToast(status === 'resolved' ? 'Issue resolved' : 'Issue status updated');
 }
 
 function refreshActivity() {
@@ -4890,10 +4927,13 @@ function shiftDisplayName(shift) {
 }
 
 // Shared professional PDF builder for both EOD and daily summary reports.
-// opts: { officer, shiftName, scheduledTasks, records, audits, openIssues }
+// opts: { officer, shiftName, scheduledTasks, records, audits, issues }
+//   issues = ALL escalations (open + resolved); open count is derived for metrics.
 // Returns { doc, metrics }.
 async function buildShiftReportDoc(opts) {
-  const { officer, shiftName, scheduledTasks, records, audits, openIssues } = opts;
+  const { officer, shiftName, scheduledTasks, records, audits } = opts;
+  const issues = opts.issues || [];
+  const openIssues = issues.filter(e => !issueResolved(e));
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
   const W = 210, M = 16, CW = W - M*2;
@@ -5110,7 +5150,7 @@ async function buildShiftReportDoc(opts) {
       photo:p, location:`${r.taskLabel}${rd.roomName?' — '+rd.roomName:''}`, label:'Inspection evidence', captured:rd.timestamp||r.completedAt||'', issue:!!rd.hasIssue,
     })));
   });
-  (openIssues||[]).forEach(e => { if (e.photo) {
+  issues.forEach(e => { if (e.photo) {
     const it = { photo:e.photo, location:e.location||e.task||'Issue', label:e.text||'Issue', captured:e.time||'', issue:true, priority:e.priority };
     (isCrit(e.priority) ? criticals : evidence).push(it);
   }});
@@ -5150,24 +5190,29 @@ async function buildShiftReportDoc(opts) {
     }
   }
 
-  // ── ISSUES & FINDINGS (grouped by priority) ──
-  if (openIssues && openIssues.length) {
+  // ── ISSUES & FINDINGS (grouped by priority; resolved issues retained) ──
+  if (issues && issues.length) {
     sectionHeader('Issues & Findings');
     const order = ['urgent','high','medium','low'];
     const pri2 = { urgent:[C.critBg,C.critTx], high:[C.critBg,C.critTx], medium:[C.amberBg,C.amberTx], low:[C.card,C.grey] };
+    const fmtTs = ts => { try { return new Date(ts).toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); } catch(e) { return ts||''; } };
     for (const p of order) {
-      const list = openIssues.filter(e => String(e.priority||'low').toLowerCase() === p);
+      const list = issues.filter(e => String(e.priority||'low').toLowerCase() === p);
       for (const e of list) {
-        ensure(18);
+        ensure(20);
         const [bg, tx] = pri2[p];
-        pill(p.toUpperCase(), M, y+1, bg, tx);
+        const resolved = issueResolved(e);
+        pill(resolved ? p.toUpperCase()+' · RESOLVED' : p.toUpperCase(), M, y+1, resolved ? C.pillGreenBg : bg, resolved ? C.green : tx);
         setText(C.navy); doc.setFont('helvetica','normal'); doc.setFontSize(10);
-        doc.text(doc.splitTextToSize(e.text||'', CW-32)[0], M+30, y+1); y += 6;
+        doc.text(doc.splitTextToSize(e.text||'', CW-44)[0], M+44, y+1); y += 6;
         const src = `${e.task?e.task+' · ':''}${e.location||''}`.trim();
         setText(C.grey); doc.setFontSize(9);
-        if (src) { doc.text(src, M+30, y); y += 4.5; }
-        doc.text(`Reported ${e.time||'—'} · Status: ${e.status||'open'}`, M+30, y); y += 4.5;
-        if (e.action) { doc.setFont('helvetica','italic'); doc.text(`Action: ${e.action}`, M+30, y); doc.setFont('helvetica','normal'); y += 4.5; }
+        if (src) { doc.text(src, M+44, y); y += 4.5; }
+        doc.text(`Raised ${e.time||'—'} · Status: ${resolved ? 'Resolved' : (e.status||'open')}`, M+44, y); y += 4.5;
+        if (resolved && e.resolvedBy) {
+          setText(C.green); doc.text(`Resolved by ${e.resolvedBy}${e.resolvedAt?` · ${fmtTs(e.resolvedAt)}`:''}`, M+44, y); y += 4.5;
+          if (e.resolutionNote) { setText(C.grey); doc.setFont('helvetica','italic'); doc.text(doc.splitTextToSize(`Resolution: ${e.resolutionNote}`, CW-46)[0], M+44, y); doc.setFont('helvetica','normal'); y += 4.5; }
+        }
         y += 2; setDraw(C.border); doc.line(M, y, M+CW, y); y += 3.5;
       }
     }
@@ -5178,14 +5223,17 @@ async function buildShiftReportDoc(opts) {
 }
 
 // Persist a generated report (with its PDF blob) to the report archive.
-function saveReportRecord({ shift, officer, doc, metrics }) {
+// shiftKey ('day' | 'night' | 'daily') lets the Reports tab reliably match a
+// report to its shift regardless of the display name (e.g. 'Weekend Shift').
+function saveReportRecord({ shift, shiftKey, officer, doc, metrics }) {
   let pdfData = null;
   try { pdfData = doc.output('datauristring'); } catch(e) {}
   const reportId = Date.now() + '-' + Math.random().toString(36).substr(2,9);
   const rec = {
     reportId, id: reportId, siteId: SB_SITE_ID, date: new Date().toDateString(),
-    shift, officer, generatedAt: new Date().toISOString(),
-    type: 'eod-shift', typeName: `${shift} — Operations Report`,
+    shift, shiftKey: shiftKey || 'day', officer, generatedAt: new Date().toISOString(),
+    type: shiftKey === 'daily' ? 'daily-summary' : 'eod-shift',
+    typeName: shiftKey === 'daily' ? 'Daily Operations Summary' : `${shift} — Operations Report`,
     pdfData,
     summary: { completed: metrics.completed, total: metrics.total, issues: metrics.issues, missed: metrics.missed },
   };
@@ -5209,23 +5257,75 @@ function downloadSavedReport(reportId) {
   document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
-async function generateEODPDF(shift = 'day') {
-  const officerFieldId = shift === 'night' ? 'eod-officer-name-night' : 'eod-officer-name';
-  const officerName = document.getElementById(officerFieldId).value.trim();
-  if (!officerName) { showToast('Please enter your name'); document.getElementById(officerFieldId).focus(); return; }
+// Reports tab: per-shift status + generate/download for TODAY, so a forgotten
+// Day Shift report can still be produced after the app has rolled to Night.
+function renderShiftReportsPanel() {
+  const panel = document.getElementById('shift-reports-panel');
+  if (!panel) return;
+  const today = new Date().toDateString();
+  const todayStr = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
+  const currentShift = getShift();
+  const findReport = key => (STATE.reports||[]).find(r => r.shiftKey === key && r.date === today);
+  const row = (key, label) => {
+    const rep = findReport(key);
+    let statusText, btn;
+    if (rep) {
+      statusText = 'Generated';
+      btn = rep.pdfData
+        ? `<button class="report-dl-btn" onclick="downloadSavedReport('${rep.reportId}')">Download Report</button>`
+        : `<button class="report-dl-btn" onclick="generateShiftReport('${key}')">Regenerate</button>`;
+    } else {
+      statusText = currentShift === key ? 'In Progress' : 'Not Generated';
+      btn = `<button class="report-dl-btn" onclick="generateShiftReport('${key}')">Generate Report</button>`;
+    }
+    return `<div class="report-card">
+      <div class="report-card-info">
+        <div class="report-card-title">${label}</div>
+        <div class="report-card-meta">Status: ${statusText}</div>
+      </div>
+      ${btn}
+    </div>`;
+  };
+  panel.innerHTML = `<div class="report-date-group">
+    <div class="report-date-header">${todayStr}<span>Shift reports</span></div>
+    ${row('day','Day Shift')}
+    ${row('night','Night Shift')}
+  </div>`;
+}
+
+// Generate a specific shift's report from the Reports tab (uses the daily-summary
+// officer name field; never depends on the current shift).
+function generateShiftReport(shift) {
+  const field = document.getElementById('summary-officer-name');
+  const name = field ? field.value.trim() : '';
+  if (!name) { showToast('Enter officer name above to generate'); if (field) field.focus(); return; }
+  generateEODPDF(shift, name);
+}
+
+// shift: 'day' | 'night' — generates that shift's report from its OWN stored
+// data, independent of the current time/shift (allows previous-shift recovery).
+// officerOverride lets the Reports tab supply the name without the dashboard field.
+async function generateEODPDF(shift = 'day', officerOverride) {
+  let officerName = officerOverride && officerOverride.trim();
+  if (!officerName) {
+    const officerFieldId = shift === 'night' ? 'eod-officer-name-night' : 'eod-officer-name';
+    const field = document.getElementById(officerFieldId);
+    officerName = field ? field.value.trim() : '';
+    if (!officerName) { showToast('Please enter your name'); if (field) field.focus(); return; }
+  }
   showToast(`Generating ${shift} report...`);
 
+  // Shift-specific data only — never mix Day and Night.
   const shiftTasks = getShiftTasks(shift);
   const ids = new Set(shiftTasks.map(t => t.id));
   const records = STATE.taskRecords.filter(r => ids.has(r.taskId));
-  const openIssues = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
   const shiftName = shiftDisplayName(shift);
 
-  const { doc, metrics } = await buildShiftReportDoc({ officer: officerName, shiftName, scheduledTasks: shiftTasks, records, audits: STATE.auditRecords, openIssues });
+  const { doc, metrics } = await buildShiftReportDoc({ officer: officerName, shiftName, scheduledTasks: shiftTasks, records, audits: STATE.auditRecords, issues: STATE.escalations });
   const filename = `${shift}_shift_report_${dateSlug()}.pdf`;
   doc.save(filename);
   try { syncPDFToSheets(officerName, `End of ${shift} Shift Report`, filename, doc.output('datauristring')); } catch(e) {}
-  saveReportRecord({ shift: shiftName, officer: officerName, doc, metrics });
+  saveReportRecord({ shift: shiftName, shiftKey: shift, officer: officerName, doc, metrics });
   showToast(`${shiftName} report saved`);
 }
 
@@ -5567,11 +5667,11 @@ async function generateDailySummaryPDF() {
   const openIssues = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
   const shiftName = shiftDisplayName(shift);
 
-  const { doc, metrics } = await buildShiftReportDoc({ officer: officerName, shiftName, scheduledTasks: shiftTasks, records, audits: STATE.auditRecords, openIssues });
+  const { doc, metrics } = await buildShiftReportDoc({ officer: officerName, shiftName, scheduledTasks: shiftTasks, records, audits: STATE.auditRecords, issues: STATE.escalations });
   const filename = `daily_summary_${shift}_${dateSlug()}.pdf`;
   doc.save(filename);
   try { syncPDFToSheets(officerName, 'Daily Inspection Report', filename, doc.output('datauristring')); } catch(e) {}
-  saveReportRecord({ shift: shiftName, officer: officerName, doc, metrics });
+  saveReportRecord({ shift: shiftName, shiftKey: 'daily', officer: officerName, doc, metrics });
   setBtnLoading('daily-summary-btn', false);
   showToast('Daily summary saved');
 }
