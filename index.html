@@ -1812,6 +1812,34 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   </div>
 </div>
 
+<!-- Unable to Complete Modal -->
+<div id="unable-modal" class="modal-overlay hidden" onclick="closeUnableModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">⚠ Unable to Complete</div>
+      <button class="modal-close" onclick="closeUnableModal()">✕</button>
+    </div>
+    <div id="unable-context" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px"></div>
+    <div class="field-group" style="margin-bottom:12px">
+      <label class="field-label">REASON</label>
+      <select class="field-select" id="unable-reason">
+        <option value="Weather / unsafe conditions">Weather / unsafe conditions</option>
+        <option value="Area inaccessible">Area inaccessible</option>
+        <option value="Emergency response">Emergency response</option>
+        <option value="Client request">Client request</option>
+        <option value="Higher priority task">Higher priority task</option>
+        <option value="Equipment issue">Equipment issue</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field-group" style="margin-bottom:16px">
+      <label class="field-label">OFFICER NOTE — MANDATORY</label>
+      <textarea class="field-textarea" id="unable-note" placeholder="Explain why this task could not be completed..." style="min-height:60px"></textarea>
+    </div>
+    <button class="btn-primary btn-full" onclick="submitUnable()">RECORD EXCEPTION ›</button>
+  </div>
+</div>
+
 </div><!-- /main -->
 </div><!-- /app -->
 
@@ -2046,6 +2074,7 @@ function persistLocal() {
     localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
     localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
     localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
+    localStorage.setItem('t_unable', JSON.stringify(STATE.unableTasks));
     localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
     localStorage.setItem('t_reports', JSON.stringify(STATE.reports));
     localStorage.setItem('t_date', new Date().toDateString());
@@ -2783,6 +2812,7 @@ const STATE = {
   taskRecords: [],
   auditRecords: [],
   escalations: [],
+  unableTasks: {}, // { taskId: { taskId, taskName, reason, note, recordedAt, recordedBy } } — justified incompletes
   activity: [],
   _completedTaskRecord: null,
   _completedLobbyRecord: null,
@@ -2808,6 +2838,7 @@ function loadState() {
     STATE.taskRecords = load('t_tasks', []);
     STATE.auditRecords = load('t_audits', []);
     STATE.escalations = load('t_escs', []);
+    STATE.unableTasks = load('t_unable', {});
     STATE.activity = load('t_activity', []);
     STATE.reports = load('t_reports', []);
     const lobby = load('t_lobby', null);
@@ -2826,6 +2857,7 @@ function saveState() {
     localStorage.setItem('t_tasks', JSON.stringify(STATE.taskRecords));
     localStorage.setItem('t_audits', JSON.stringify(STATE.auditRecords));
     localStorage.setItem('t_escs', JSON.stringify(STATE.escalations));
+    localStorage.setItem('t_unable', JSON.stringify(STATE.unableTasks));
     localStorage.setItem('t_activity', JSON.stringify(STATE.activity));
     localStorage.setItem('t_reports', JSON.stringify(STATE.reports));
     localStorage.setItem('t_date', new Date().toDateString());
@@ -3514,17 +3546,38 @@ function renderShiftTasks(shift) {
   const tasks = getShiftTasks(shift);
   const total = tasks.length;
   const done = tasks.filter(isTaskDone).length;
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  const unableCount = tasks.filter(t => STATE.unableTasks[t.id]).length;
+  const resolved = tasks.filter(t => isTaskDone(t) || STATE.unableTasks[t.id]).length;
+  const pct = total ? Math.round((resolved / total) * 100) : 0;
   const fill = document.getElementById(shift === 'night' ? 'shift-progress-fill-night' : 'shift-progress-fill');
   if (fill) fill.style.width = pct + '%';
   const sub = document.getElementById(shift === 'night' ? 'nightshift-sub' : 'dayshift-sub');
-  if (sub) sub.textContent = `${done} of ${total} tasks complete · ${pct}%`;
+  if (sub) sub.textContent = `${done} of ${total} tasks complete${unableCount ? ` · ${unableCount} unable` : ''} · ${pct}%`;
+  // Shift can be closed once every task is resolved (completed OR a justified exception).
   const eod = document.getElementById(shift === 'night' ? 'eod-section-night' : 'eod-section');
-  if (eod) eod.style.display = (total && done >= total) ? 'block' : 'none';
+  if (eod) eod.style.display = (total && resolved >= total) ? 'block' : 'none';
 
   const lockSvg = `<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V7a4 4 0 018 0v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
   list.innerHTML = tasks.map((task, idx) => {
     const isDone = isTaskDone(task);
+    const unable = STATE.unableTasks[task.id];
+    // Justified exception — operational, not a missed/forgotten task.
+    if (unable && !isDone) {
+      return `<div class="shift-task-card" style="cursor:default;border-left:3px solid #F5A623">
+        <div class="stc-left">
+          <div class="stc-num">${String(idx+1).padStart(2,'0')}</div>
+          <div class="stc-icon">${task.icon}</div>
+          <div class="stc-info">
+            <div class="stc-name">${task.label}</div>
+            <div class="stc-meta" style="color:#F5A623">Unable to complete — ${esc(unable.reason)}</div>
+          </div>
+        </div>
+        <div class="stc-right">
+          <span class="stc-tag" style="background:rgba(245,166,35,0.15);color:#F5A623">EXCEPTION</span>
+          <button onclick="event.stopPropagation();clearUnable('${task.id}')" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;text-decoration:underline">Undo</button>
+        </div>
+      </div>`;
+    }
     const prog = !isDone ? getTaskProgress(task) : null;
     const meta = (prog && prog.done > 0) ? `${prog.done}/${prog.total} rooms` : '';
     return `<div class="shift-task-card ${isDone ? 'done' : ''}" ${isDone ? 'style="cursor:default"' : `onclick="startRoverTask('${task.id}')"`}>
@@ -3538,11 +3591,57 @@ function renderShiftTasks(shift) {
       </div>
       <div class="stc-right">
         <span class="stc-tag tag-${task.tagColor || 'blue'}">${task.tag}</span>
-        ${isDone ? `<div class="stc-done-check">✓</div><div class="stc-arrow" style="color:var(--text-muted);opacity:0.5">${lockSvg}</div>` : '<div class="stc-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>'}
+        ${isDone
+          ? `<div class="stc-done-check">✓</div><div class="stc-arrow" style="color:var(--text-muted);opacity:0.5">${lockSvg}</div>`
+          : `<button onclick="event.stopPropagation();openUnableModal('${task.id}')" style="background:none;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;text-decoration:underline">Unable?</button><div class="stc-arrow"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>`}
       </div>
     </div>`;
   }).join('');
   if (shift === 'day') refreshSidebarShiftList();
+}
+
+// ── Unable to Complete capture ──────────────────────────────────
+let _unableTaskId = null;
+function openUnableModal(taskId) {
+  const task = findTaskDef(taskId);
+  if (!task) return;
+  _unableTaskId = taskId;
+  document.getElementById('unable-context').textContent =
+    `${task.label}${task.timeHint ? ' — ' + task.timeHint : (task.window ? ' — ' + task.window : '')}`;
+  document.getElementById('unable-reason').value = 'Weather / unsafe conditions';
+  document.getElementById('unable-note').value = '';
+  document.getElementById('unable-modal').classList.remove('hidden');
+}
+function closeUnableModal(e) {
+  if (e && e.target !== e.currentTarget) return; // ignore clicks inside the sheet
+  document.getElementById('unable-modal').classList.add('hidden');
+  _unableTaskId = null;
+}
+function submitUnable() {
+  const task = findTaskDef(_unableTaskId);
+  if (!task) { closeUnableModal(); return; }
+  const reason = document.getElementById('unable-reason').value;
+  const note = document.getElementById('unable-note').value.trim();
+  if (!note) { showToast('Officer note is required'); return; }
+  STATE.unableTasks[task.id] = {
+    taskId: task.id, taskName: task.label, reason, note,
+    recordedAt: nowTime(), recordedBy: (STATE.officerName || '').trim() || 'Officer',
+  };
+  addActivity(`Unable to complete: ${task.label} — ${reason}`, 'escalation');
+  saveState();
+  document.getElementById('unable-modal').classList.add('hidden');
+  _unableTaskId = null;
+  showToast('Exception recorded');
+  refreshDayShift();
+  refreshDashboard();
+}
+function clearUnable(taskId) {
+  if (!STATE.unableTasks[taskId]) return;
+  delete STATE.unableTasks[taskId];
+  saveState();
+  refreshDayShift();
+  refreshDashboard();
+  showToast('Exception cleared');
 }
 
 function refreshDayShift() {
