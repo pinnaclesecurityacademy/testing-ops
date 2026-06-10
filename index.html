@@ -945,6 +945,67 @@ body.day-mode, body.night-mode { /* theme is always light */ }
   .page-scroll > .dash-cmd { max-width: none; margin: 0; width: 100%; }
 }
 
+/* ── Enterprise desktop layout for the secondary operational pages ──
+   Applies the Home dashboard's full-width, white-card visual language to
+   Tasks / Issues / Inspections / Reports. CSS-only: no markup, IDs, handlers
+   or logic are touched, and the dashboard + workflow screens are untouched.
+   Everything below is gated on desktop width so phone layout is unaffected. */
+@media (min-width: 900px) {
+  /* Fill the space beside the sidebar — override the 800px centred page cap */
+  #page-dayshift .page-scroll > *,
+  #page-issues   .page-scroll > *,
+  #page-audits   .page-scroll > *,
+  #page-reports  .page-scroll > * { max-width: none; margin-left: 0; margin-right: 0; }
+
+  /* 24px operational padding */
+  #page-dayshift .page-scroll,
+  #page-issues   .page-scroll,
+  #page-audits   .page-scroll,
+  #page-reports  .page-scroll { padding: 24px 24px 32px; }
+
+  /* Clean operational headers, consistent with the dashboard */
+  #page-dayshift .page-header,
+  #page-issues   .page-header,
+  #page-audits   .page-header,
+  #page-reports  .page-header { padding: 0 0 16px; margin-bottom: 8px; }
+
+  /* TASKS — Shift Operations board: wider, two-column, status-focused */
+  #page-dayshift .shift-tabs { padding: 0; margin-bottom: 16px; }
+  #page-dayshift .shift-progress-bar { height: 6px; border-radius: 99px; margin-bottom: 8px; }
+  #page-dayshift #dayshift-sub,
+  #page-dayshift #nightshift-sub { padding: 0 0 14px !important; font-size: 14px; }
+  #page-dayshift .shift-task-list { padding: 0; display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; align-items: start; }
+  #page-dayshift .shift-task-card { margin: 0; padding: 16px 18px; }
+  #page-dayshift .eod-banner { margin-top: 20px; }
+
+  /* ISSUES — Risk Register: responsive issue-card board */
+  #page-issues #issues-list { padding: 0 !important; display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; align-items: start; }
+  #page-issues .escalation-item { margin: 0; }
+
+  /* INSPECTIONS — Inspection Library: catalogue grid + framed log panel */
+  #page-audits .audit-type-grid { padding: 0;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  #page-audits .audit-type-card { padding: 20px 16px; }
+  #page-audits .section-header { margin-top: 28px !important; padding-left: 0; padding-right: 0; }
+  #page-audits #audit-history { background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 4px 16px; }
+
+  /* REPORTS — Client Report Centre: archive grid */
+  #page-reports .reports-filter-bar { padding: 0 0 16px; border: none;
+    flex-direction: row; align-items: center; flex-wrap: wrap; }
+  #page-reports #reports-search { flex: 2 1 240px; }
+  #page-reports .reports-filter-row { flex: 3 1 320px; }
+  #page-reports #shift-reports-panel { padding: 0 !important; }
+  #page-reports .report-date-group { padding: 0; margin-bottom: 18px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  #page-reports .report-date-header { grid-column: 1 / -1; }
+  #page-reports .report-card { margin: 0; }
+  #page-reports #past-reports-list { display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+}
+
 /* Shift Operations panel */
 .shiftops { padding: 12px 16px 8px; display: flex; flex-direction: column; gap: 14px; }
 .shiftops-progress-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
