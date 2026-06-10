@@ -1829,6 +1829,104 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const SB_TABLE = 'ops_state';
 const SB_SITE_ID = 'tower3-its';
 
+// ── Photo evidence → Supabase Storage ───────────────────────────
+// Photos are captured as base64 (unchanged) and kept in STATE for local
+// PDF generation and the lightbox. Before a record is synced, each base64
+// image is uploaded to the 'inspection-evidence' bucket and the heavy
+// base64 string is replaced with a lightweight signed URL in the synced
+// payload — this avoids multi-megabyte upserts that time out.
+const EVIDENCE_BUCKET = 'inspection-evidence';
+
+async function uploadEvidence(base64DataUrl, metadata = {}) {
+  try {
+    // Convert base64 to blob
+    const response = await fetch(base64DataUrl);
+    const blob = await response.blob();
+
+    // Generate unique path
+    const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+    const path = `${SB_SITE_ID}/${metadata.inspectionId || 'general'}/${Date.now()}-${Math.random().toString(36).substr(2,9)}.${ext}`;
+
+    // Upload to Supabase Storage
+    const { error } = await _sb.storage
+      .from(EVIDENCE_BUCKET)
+      .upload(path, blob, { contentType: blob.type, upsert: false });
+
+    if (error) throw error;
+
+    // Get signed URL (valid 7 days — enough for reports)
+    const { data: urlData } = await _sb.storage
+      .from(EVIDENCE_BUCKET)
+      .createSignedUrl(path, 604800);
+
+    // Save metadata to evidence table
+    await _sb.from('evidence').insert({
+      site_id: SB_SITE_ID,
+      inspection_id: metadata.inspectionId || null,
+      task_id: metadata.taskId || null,
+      issue_id: metadata.issueId || null,
+      question_text: metadata.questionText || null,
+      captured_at: new Date().toISOString(),
+      captured_by: metadata.capturedBy || 'Officer',
+      storage_path: path,
+      photo_url: urlData?.signedUrl || null,
+      metadata: metadata,
+    });
+
+    return { evidenceId: path, photoUrl: urlData?.signedUrl || null, storagePath: path };
+  } catch(e) {
+    console.warn('Evidence upload failed:', e && e.message ? e.message : e);
+    return null;
+  }
+}
+
+// Cache uploads so the same base64 photo is not re-uploaded on every sync
+// poll. Keyed by the base64 string → signed URL.
+const _evidenceCache = new Map();
+async function _uploadEvidenceCached(base64, meta) {
+  if (_evidenceCache.has(base64)) return _evidenceCache.get(base64);
+  const res = await uploadEvidence(base64, meta);
+  const url = res && res.photoUrl ? res.photoUrl : null;
+  if (url) _evidenceCache.set(base64, url);
+  return url;
+}
+
+// Returns true for an inline base64 image (the heavy payload we must replace).
+function _isBase64Image(v) {
+  return typeof v === 'string' && v.startsWith('data:image');
+}
+
+// Deep-clone `node`, uploading any base64 image found and replacing it with
+// its signed URL. STATE itself is never mutated — only the returned copy is
+// safe to send to Supabase. On upload failure the image is dropped (null) so
+// the payload stays small; the base64 survives in STATE and is retried on the
+// next successful sync.
+async function _sanitizeEvidence(node, meta) {
+  if (Array.isArray(node)) {
+    const out = [];
+    for (const v of node) out.push(await _sanitizeEvidence(v, meta));
+    return out;
+  }
+  if (node && typeof node === 'object') {
+    const out = {};
+    for (const k in node) out[k] = await _sanitizeEvidence(node[k], meta);
+    return out;
+  }
+  if (_isBase64Image(node)) {
+    return await _uploadEvidenceCached(node, meta);
+  }
+  return node;
+}
+
+// Sanitize an array of records, deriving per-record evidence metadata.
+async function _sanitizeRecords(records, metaFn) {
+  const out = [];
+  for (const rec of (records || [])) {
+    out.push(await _sanitizeEvidence(rec, metaFn ? metaFn(rec) : {}));
+  }
+  return out;
+}
+
 // ── Offline banner ──────────────────────────────────────────────
 // Shown only after an actual failed Supabase request; dismissed on a
 // successful one. navigator.onLine is used as a hint to trigger retries,
@@ -1882,13 +1980,20 @@ function scheduleOfflineRetry() {
 
 async function sbSaveState() {
   try {
+    // Upload photos to Storage and replace base64 with signed URLs so the
+    // upsert payload stays small (base64 remains in STATE for local use).
+    const [task_records, audit_records, escalations] = await Promise.all([
+      _sanitizeRecords(STATE.taskRecords, r => ({ inspectionId: r.taskId, taskId: r.taskId, capturedBy: r.officer || 'Officer' })),
+      _sanitizeRecords(STATE.auditRecords, r => ({ inspectionId: r.id, capturedBy: r.officer || r.completedBy || 'Officer' })),
+      _sanitizeRecords(STATE.escalations, e => ({ inspectionId: 'escalation', questionText: e.text || null, capturedBy: e.officer || 'Officer' })),
+    ]);
     const { error } = await _sb.from(SB_TABLE).upsert({
       site_id: SB_SITE_ID,
       state_date: new Date().toDateString(),
       completed_task_ids: STATE.completedTaskIds,
-      task_records: STATE.taskRecords,
-      audit_records: STATE.auditRecords,
-      escalations: STATE.escalations,
+      task_records,
+      audit_records,
+      escalations,
       activity: STATE.activity,
       reports: STATE.reports,
       updated_at: new Date().toISOString(),
@@ -1917,14 +2022,17 @@ async function sbSaveLobbyState() {
 
 async function sbSaveAuditRecord(record) {
   try {
+    // Strip base64 → Storage URLs before insert (keeps STATE base64 intact).
+    const meta = { inspectionId: record.id, capturedBy: record.officer || record.completedBy || 'Officer' };
+    const safeRecord = await _sanitizeEvidence(record, meta);
     const { error } = await _sb.from('audit_history').insert({
       site_id: SB_SITE_ID,
       audit_type: record.auditTypeName,
       asset: record.asset,
       completed_at: new Date().toISOString(),
       completed_by: record.officer || '',
-      answers: record.answers,
-      record: record,
+      answers: safeRecord.answers,
+      record: safeRecord,
     });
     if (error) { console.warn('Supabase audit_history save error:', error.message); markOffline(); return; }
     markOnline();
