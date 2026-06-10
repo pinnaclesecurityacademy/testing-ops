@@ -1120,7 +1120,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         </div>
         <div class="kpi-card" onclick="navigateTo('dayshift')">
           <div class="kpi-value" id="stat-outstanding" style="color:#F59E0B">0</div>
-          <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="9" stroke="#F59E0B" stroke-width="1.6"/><path d="M12 7v5l3 3" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/></svg> <span id="stat-outstanding-label">Outstanding</span></div>
+          <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="9" stroke="#F59E0B" stroke-width="1.6"/><path d="M12 7v5l3 3" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/></svg> <span id="stat-outstanding-label">Remaining</span></div>
           <div class="kpi-sub" id="stat-outstanding-sub" style="font-size:10px;margin-top:2px"></div>
         </div>
         <div class="kpi-card" onclick="navigateTo('issues')">
@@ -1161,7 +1161,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
             <div class="shiftops-item">
               <div class="shiftops-item-icon next">→</div>
               <div class="shiftops-item-body">
-                <div class="shiftops-item-label">NEXT SCHEDULED</div>
+                <div class="shiftops-item-label">UP NEXT</div>
                 <div class="shiftops-item-name" id="shiftops-next-name">—</div>
                 <div class="shiftops-item-time" id="shiftops-next-time"></div>
               </div>
@@ -3263,42 +3263,21 @@ function _parseStartMinutes(str) {
   return h * 60 + m;
 }
 
-// Timeline status for a scheduled task: completed | missed | current | upcoming
+// Operational status for a task (activity-based, never clock-based):
+// completed | unable | current (in progress) | upcoming (pending).
 function getTaskTimelineStatus(task) {
   if (isTaskDone(task)) return 'completed';
-  const time = task.timeHint || task.window || '';
-  const s = _parseStartMinutes(time), e = _parseEndMinutes(time);
-  const now = new Date();
-  const n = now.getHours() * 60 + now.getMinutes();
-  if (e !== null && n > e) return 'missed';
-  if (s !== null && e !== null && n >= s && n <= e) return 'current';
-  return 'upcoming';
+  if (STATE.unableTasks && STATE.unableTasks[task.id]) return 'unable';
+  const prog = getTaskProgress(task);
+  if (prog && prog.done > 0) return 'current'; // officer has started
+  return 'upcoming'; // pending — belongs to shift, not yet started
 }
 
-// Tasks whose scheduled window has passed and which were not completed (incl. captured N/A reasons)
+// Operational priorities change through a shift, so tasks are NOT marked
+// missed on clock time. "Missed" is only a reporting outcome decided at end of
+// shift. During the active shift this returns nothing (no clock lateness).
 function getMissedItems(shift) {
-  const tasks = getShiftTasks(shift);
-  const now = new Date();
-  const nowMins = now.getHours() * 60 + now.getMinutes();
-  const items = [];
-  for (const task of tasks) {
-    if (isTaskDone(task)) continue;
-    const endMins = _parseEndMinutes(task.timeHint || task.window);
-    if (endMins === null || nowMins < endMins) continue; // not yet due — that's "outstanding"
-    // Pull any captured N/A reasons from saved partial progress
-    let reason = 'No reason recorded';
-    try {
-      const saved = JSON.parse(localStorage.getItem('t_room_results_' + task.id) || 'null');
-      const rooms = saved ? (saved.rooms || saved) : {};
-      const naReasons = [];
-      Object.values(rooms).forEach(rd => (rd.answers || []).forEach(a => { if (a.answer === 'na' && a.reason) naReasons.push(a.reason); }));
-      if (naReasons.length) reason = [...new Set(naReasons)].join(', ');
-      else if (Object.keys(rooms).length) reason = 'Not completed — partially inspected';
-      else reason = 'Not completed — scheduled window passed';
-    } catch (e) {}
-    items.push({ name: task.label, time: task.timeHint || task.window || '', reason });
-  }
-  return items;
+  return [];
 }
 
 function refreshDashboard() {
@@ -3312,38 +3291,26 @@ function refreshDashboard() {
   const completed = taskDone + sessionCompleted;
   const missed = getMissedItems(shift);
 
-  // Classify not-yet-completed tasks by their scheduled-time status.
-  const now = new Date();
-  const nowMins = now.getHours() * 60 + now.getMinutes();
-  let upcoming = 0, outstanding = 0;
-  for (const task of tasks) {
-    if (isTaskDone(task)) continue;
-    const endMins = _parseEndMinutes(task.timeHint || task.window);
-    if (endMins === null) { outstanding++; continue; }   // no scheduled time — outstanding
-    if (nowMins > endMins) continue;                      // window passed — counted as overdue (missed)
-    upcoming++;                                           // scheduled in the future — upcoming
-  }
-  const overdue = missed.length;
+  // Remaining work = tasks belonging to this shift that are neither completed
+  // nor recorded as unable-to-complete. No clock-based lateness is applied.
+  const unableCount = tasks.filter(t => STATE.unableTasks && STATE.unableTasks[t.id]).length;
+  const remaining = tasks.filter(t => !isTaskDone(t) && !(STATE.unableTasks && STATE.unableTasks[t.id])).length;
+  const overdue = 0; // operational model — never auto-overdue during the shift
   // Shift Progress — completed tasks / total scheduled tasks for today's shift
   const compliance = expected ? Math.round((completed / expected) * 100) : 0;
 
   const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   setVal('stat-expected', expected);
   setVal('stat-completed', completed);
-  setVal('stat-missed', overdue);
+  setVal('stat-missed', 0);
 
-  // Outstanding card — show Overdue (red) when time-based tasks are overdue, else Outstanding
+  // Remaining card — pending operational work (amber, never "Overdue").
   const outEl = document.getElementById('stat-outstanding');
   const outLabel = document.getElementById('stat-outstanding-label');
   const outSub = document.getElementById('stat-outstanding-sub');
-  if (overdue > 0) {
-    if (outEl) { outEl.textContent = overdue; outEl.style.color = '#EF4444'; }
-    if (outLabel) outLabel.textContent = 'Overdue';
-  } else {
-    if (outEl) { outEl.textContent = outstanding; outEl.style.color = '#F59E0B'; }
-    if (outLabel) outLabel.textContent = 'Outstanding';
-  }
-  if (outSub) outSub.textContent = `${overdue} overdue · ${upcoming} upcoming`;
+  if (outEl) { outEl.textContent = remaining; outEl.style.color = '#F59E0B'; }
+  if (outLabel) outLabel.textContent = 'Remaining';
+  if (outSub) outSub.textContent = unableCount ? `${unableCount} unable to complete` : '';
 
   // Shift Progress KPI — ≥80% green, 50-79% amber, <50% red
   const compEl = document.getElementById('stat-compliance');
@@ -3385,17 +3352,18 @@ function renderTimeline(shift) {
   const el = document.getElementById('timeline-list');
   if (!el) return;
   const tasks = getShiftTasks(shift);
-  const marker = { completed: '✓', missed: '!', current: '●', upcoming: '○' };
-  const label = { completed: 'DONE', missed: 'MISSED', current: 'NOW', upcoming: 'UPCOMING' };
-  if (!tasks.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No inspections scheduled</div></div>'; return; }
+  const marker = { completed: '✓', unable: '⚠', current: '●', upcoming: '○' };
+  const label = { completed: 'DONE', unable: 'UNABLE', current: 'IN PROGRESS', upcoming: 'PENDING' };
+  if (!tasks.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">○</div><div class="empty-text">No workflow items</div></div>'; return; }
   el.innerHTML = tasks.map(t => {
-    const time = t.timeHint || t.window || '';
     const st = getTaskTimelineStatus(t);
+    const rec = STATE.taskRecords.find(r => r.taskId === t.id);
+    const sub = st === 'completed' && rec && rec.completedAt ? `Completed ${rec.completedAt}` : (label[st] || '');
     return `<div class="tl-item tl-${st}">
       <div class="tl-marker">${marker[st]}</div>
       <div class="tl-body">
         <div class="tl-name">${esc(t.label)}</div>
-        <div class="tl-time">${esc(time || 'Unscheduled')}</div>
+        <div class="tl-time">${esc(sub)}</div>
       </div>
       <span class="tl-status">${label[st]}</span>
     </div>`;
@@ -3413,10 +3381,10 @@ function renderShiftOps(shift) {
   const fill = document.getElementById('shiftops-progress-fill');
   if (fill) fill.style.width = pct + '%';
 
-  // Next scheduled = first task not yet done, in run-sheet order
-  const next = tasks.find(t => !isTaskDone(t));
+  // Up next = first task not yet completed, in run-sheet order (no clock time)
+  const next = tasks.find(t => !isTaskDone(t) && !(STATE.unableTasks && STATE.unableTasks[t.id]));
   setTxt('shiftops-next-name', next ? next.label : 'All inspections complete');
-  setTxt('shiftops-next-time', next ? (next.timeHint || next.window || '') : '');
+  setTxt('shiftops-next-time', '');
 
   // Last completed = most recent task record belonging to this shift
   const ids = new Set(tasks.map(t => t.id));
@@ -3436,7 +3404,7 @@ function openMissedModal() {
     ? _missedCache.map(m => `
         <div class="escalation-item priority-medium">
           <div class="esc-title">${esc(m.name)}</div>
-          <div class="esc-meta">Scheduled ${esc(m.time)}</div>
+          <div class="esc-meta">${esc(m.time)}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Reason: ${esc(m.reason)}</div>
         </div>`).join('')
     : '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No missed inspections</div></div>';
@@ -3723,7 +3691,7 @@ function refreshSidebarShiftList() {
   if (!el) return;
   const done = STATE.completedTaskIds.length;
   const total = DAY_SHIFT_TASKS.length;
-  const stMarker = { completed: '✓', missed: '!', current: '●', upcoming: '○' };
+  const stMarker = { completed: '✓', unable: '⚠', current: '●', upcoming: '○' };
   el.innerHTML = DAY_SHIFT_TASKS.map(task => {
     const isDone = STATE.completedTaskIds.includes(task.id);
     const st = getTaskTimelineStatus(task);
@@ -4926,6 +4894,28 @@ function shiftDisplayName(shift) {
   return shift === 'night' ? 'Night Shift' : 'Day Shift';
 }
 
+// Operational task label — keep descriptive run-sheet hints ("Morning",
+// "Run 1 of 2") but never clock-time windows ("19:20-20:30"), which would
+// imply a fixed schedule the operational model does not enforce.
+function _opLabel(task) {
+  const hint = task.timeHint || '';
+  const isClock = /\d{1,2}\s*:\s*\d{2}/.test(hint);
+  return task.label + (hint && !isClock ? ` — ${hint}` : '');
+}
+
+// Parse an activity time string ("2:05 pm", "14:05", ISO) to minutes-of-day
+// for chronological sorting of the activity timeline.
+function _clockToMins(str) {
+  if (!str) return -1;
+  if (/\d{4}-\d{2}-\d{2}T/.test(str)) { const d = new Date(str); return d.getHours()*60 + d.getMinutes(); }
+  const m = String(str).match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
+  if (!m) return -1;
+  let h = +m[1]; const min = +m[2], ap = (m[3]||'').toLowerCase();
+  if (ap === 'pm' && h < 12) h += 12;
+  if (ap === 'am' && h === 12) h = 0;
+  return h*60 + min;
+}
+
 // Shared professional PDF builder for both EOD and daily summary reports.
 // opts: { officer, shiftName, scheduledTasks, records, audits, issues }
 //   issues = ALL escalations (open + resolved); open count is derived for metrics.
@@ -5001,7 +4991,7 @@ async function buildShiftReportDoc(opts) {
 
   const cards = [
     ['COMPLETED', `${completed.length}/${total}`, C.green],
-    ['OUTSTANDING', String(missed.length), missed.length ? C.amberTx : C.green],
+    ['REMAINING', String(missed.length), missed.length ? C.amberTx : C.green],
     ['ISSUES', String(issuesCount), issuesCount ? C.amberTx : C.green],
     ['COMPLIANCE', `${compliance}%`, compColor],
   ];
@@ -5018,31 +5008,41 @@ async function buildShiftReportDoc(opts) {
 
   // ── SHIFT REQUIREMENTS (grouped by type) ──
   sectionHeader('Shift Requirements');
+  const detailLine = (txt) => { setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.text(txt, M+4, y); y += 4.2; };
   const renderTaskRow = (entry, kind) => {
     const task = entry.task, record = entry.record;
-    ensure(11);
+    ensure(14);
     setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(10);
-    doc.text(task.label + (task.timeHint ? ` — ${task.timeHint}` : ''), M, y);
-    let pillText, bg, tx;
-    if (kind === 'completed') { pillText='COMPLETED'; bg=C.pillGreenBg; tx=C.green; }
-    else if (kind === 'unable') { pillText='UNABLE'; bg=C.amberBg; tx=C.amberTx; }
-    else { pillText='MISSED'; bg=C.amberBg; tx=C.amberTx; }
+    doc.text(_opLabel(task), M, y);
+    let pillText, bg, tx, outcome;
+    if (kind === 'completed') { pillText='COMPLETED'; bg=C.pillGreenBg; tx=C.green; outcome='Completed'; }
+    else if (kind === 'unable') { pillText='UNABLE'; bg=C.amberBg; tx=C.amberTx; outcome='Unable to Complete'; }
+    else { pillText='MISSED'; bg=C.amberBg; tx=C.amberTx; outcome='Not completed'; }
     const pw = doc.getTextWidth(pillText) + 6;
     pill(pillText, M+CW-pw, y, bg, tx);
     y += 4.8;
-    const metas = [];
-    if (record) {
+    // Actual operational activity (timestamps) — never scheduled windows.
+    if (kind === 'completed' && record) {
+      const times = [];
+      if (record.startTime) times.push(`Started ${record.startTime}`);
+      const end = record.completedAt || record.endTime;
+      if (end) times.push(`Completed ${end}`);
+      if (record.duration) times.push(`Duration ${record.duration}`);
+      if (times.length) detailLine(times.join('    ·    '));
       let roomsDone = null;
       if (record.roomResults) roomsDone = Object.keys(record.roomResults).length;
       else if (record.levelResults) roomsDone = Object.values(record.levelResults).reduce((a,l)=>a+Object.keys(l).length,0);
-      if (roomsDone != null && record.roomCount) metas.push(`${roomsDone}/${record.roomCount} areas completed`);
-      if (record.issues) metas.push(`⚠ ${record.issues} issue${record.issues>1?'s':''}`);
+      const extra = [];
+      if (roomsDone != null && record.roomCount) extra.push(`${roomsDone}/${record.roomCount} areas`);
+      if (record.issues) extra.push(`⚠ ${record.issues} issue${record.issues>1?'s':''}`);
+      extra.push(`Outcome: ${outcome}`);
+      detailLine(extra.join('    ·    '));
+    } else if (kind === 'unable' && entry.info) {
+      detailLine(`Outcome: ${outcome}    ·    Reason: ${entry.info.reason || 'Operational'}`);
+      if (entry.info.recordedBy) detailLine(`Recorded by: ${entry.info.recordedBy}${entry.info.recordedAt?`  (${entry.info.recordedAt})`:''}`);
+    } else {
+      detailLine(`Outcome: ${outcome}`);
     }
-    if (kind === 'unable' && entry.info) metas.push(entry.info.reason);
-    if (metas.length) {
-      setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
-      doc.text(metas.join('    ·    '), M, y); y += 4.5;
-    } else { y += 1; }
     y += 1.5;
   };
   const groups = [
@@ -5114,12 +5114,36 @@ async function buildShiftReportDoc(opts) {
       if (record.levelResults) {
         for (const [lid, rooms] of Object.entries(record.levelResults)) {
           const lvl = (PLANT_LEVELS.find(l=>l.id===lid)||{}).name || lid;
-          renderRoomTable(`${task.label} — ${lvl}`, Object.values(rooms).map(rd=>({ rd })));
+          renderRoomTable(`${_opLabel(task)} — ${lvl}`, Object.values(rooms).map(rd=>({ rd })));
         }
       } else {
-        renderRoomTable(task.label, Object.values(record.roomResults).map(rd=>({ rd })));
+        renderRoomTable(_opLabel(task), Object.values(record.roomResults).map(rd=>({ rd })));
       }
     }
+  }
+
+  // ── ACTIVITY TIMELINE — actual operational coverage (timestamps) ──
+  const timeline = [];
+  (records||[]).forEach(r => {
+    if (r.startTime) timeline.push({ m:_clockToMins(r.startTime), t:r.startTime, txt:`${r.taskLabel||'Task'} started` });
+    const end = r.completedAt || r.endTime;
+    if (end) timeline.push({ m:_clockToMins(end), t:end, txt:`${r.taskLabel||'Task'} completed${r.duration?` (${r.duration})`:''}` });
+  });
+  (audits||[]).forEach(a => { if (a.completedAt) timeline.push({ m:_clockToMins(a.completedAt), t:a.completedAt, txt:`${a.auditTypeName||'Inspection'} — ${a.asset||''} completed` }); });
+  issues.forEach(e => {
+    if (e.time) timeline.push({ m:_clockToMins(e.time), t:e.time, txt:`Issue raised — ${e.location||''}: ${(e.text||'').slice(0,46)}` });
+    if (issueResolved(e) && e.resolvedAt) { const d = new Date(e.resolvedAt); timeline.push({ m:d.getHours()*60+d.getMinutes(), t:d.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}), txt:`Issue resolved by ${e.resolvedBy||'—'}` }); }
+  });
+  if (timeline.length) {
+    timeline.sort((a,b) => a.m - b.m);
+    sectionHeader('Activity Timeline');
+    for (const ev of timeline) {
+      ensure(6);
+      setText(C.grey); doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.text(String(ev.t), M, y);
+      setText(C.navy); doc.setFont('helvetica','normal'); doc.text(String(ev.txt), M+22, y);
+      y += 5;
+    }
+    y += 2;
   }
 
   // ── INSPECTION SESSIONS (audits) ──
@@ -5722,7 +5746,7 @@ async function buildDailySummaryDoc({ officer }) {
     ['COMPLETED', `${totalCompleted}/${totalTasks}`, C.green],
     ['OPEN ISSUES', String(openIssues.length), openIssues.length ? C.amberTx : C.green],
     ['EXCEPTIONS', String(exceptions.length), exceptions.length ? C.amberTx : C.green],
-    ['MISSED', String(missedAll.length), missedAll.length ? C.critTx : C.green],
+    ['PENDING', String(missedAll.length), missedAll.length ? C.amberTx : C.green],
   ];
   const gap = 4, bw = (CW - gap*3)/4, bh = 22;
   cards.forEach((c, i) => {
@@ -5741,8 +5765,8 @@ async function buildDailySummaryDoc({ officer }) {
     setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text(label, x+5, y+8);
     setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(9);
     doc.text(`Completed: ${s.completed}/${s.total}`, x+5, y+15);
-    doc.text(`Exceptions: ${s.unable.length}`, x+5, y+21);
-    doc.text(`Missed: ${s.missed.length}`, x+5, y+27);
+    doc.text(`Unable: ${s.unable.length}`, x+5, y+21);
+    doc.text(`Pending: ${s.missed.length}`, x+5, y+27);
   };
   ensure(34);
   shiftBlock('Day Shift', day, M);
@@ -5770,18 +5794,19 @@ async function buildDailySummaryDoc({ officer }) {
     sectionHeader('Exceptions — Unable to Complete');
     for (const { task, info } of exceptions) {
       ensure(11);
-      setText(C.amberTx); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(task.label, M, y); y += 5;
+      setText(C.amberTx); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(_opLabel(task), M, y); y += 5;
       setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(8);
       doc.text(`${info.reason||'Operational'}${info.recordedAt?` · ${info.recordedAt}`:''}${info.recordedBy?` · ${info.recordedBy}`:''}`, M, y); y += 6;
     }
     y += 1;
   }
 
-  // Missed work (concise list)
+  // Pending work — belongs to the shift, not yet completed (never "missed"
+  // during an active/ongoing day).
   if (missedAll.length) {
-    sectionHeader('Missed Tasks');
+    sectionHeader('Pending Tasks');
     setText(C.navy); doc.setFont('helvetica','normal'); doc.setFontSize(9);
-    for (const t of missedAll) { ensure(6); doc.text(`•  ${t.label}${t.timeHint?` — ${t.timeHint}`:''}`, M, y); y += 5; }
+    for (const t of missedAll) { ensure(6); doc.text(`•  ${_opLabel(t)}`, M, y); y += 5; }
     y += 2;
   }
 
