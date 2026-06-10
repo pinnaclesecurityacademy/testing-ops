@@ -5654,24 +5654,160 @@ async function generateAuditSessionReport() {
 // ═══════════════════════════════════════
 // DAILY SUMMARY PDF
 // ═══════════════════════════════════════
+// Classify one shift's scheduled tasks for the daily roll-up (no rendering).
+function _classifyShiftForDaily(shift) {
+  const tasks = getShiftTasks(shift);
+  const ids = new Set(tasks.map(t => t.id));
+  const unableMap = (STATE.unableTasks && typeof STATE.unableTasks === 'object') ? STATE.unableTasks : {};
+  let completed = 0; const unable = [], missed = [];
+  for (const t of tasks) {
+    if (unableMap[t.id]) unable.push({ task: t, info: unableMap[t.id] });
+    else if (isTaskDone(t)) completed++;
+    else missed.push(t);
+  }
+  return { total: tasks.length, completed, unable, missed };
+}
+
+// Daily summary = management/client overview of the FULL operational day
+// (Day + Night). Deliberately concise: shift results, totals, critical issues,
+// exceptions, missed work and an evidence count — no per-room detail (that
+// lives in the shift reports).
+async function buildDailySummaryDoc({ officer }) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const W = 210, M = 16, CW = W - M*2, C = RPT_C;
+  let y = 0;
+  const setText = c => doc.setTextColor(c[0],c[1],c[2]);
+  const setFill = c => doc.setFillColor(c[0],c[1],c[2]);
+  const setDraw = c => doc.setDrawColor(c[0],c[1],c[2]);
+  const ensure = n => { if (y+n > 274) { doc.addPage(); y = 18; } };
+  const sectionHeader = t => {
+    ensure(16); y += 4;
+    setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text(t, M, y);
+    setDraw(C.green); doc.setLineWidth(0.5); doc.line(M, y+2, M+CW, y+2); y += 9;
+  };
+
+  const day = _classifyShiftForDaily('day');
+  const night = _classifyShiftForDaily('night');
+  const allIssues = STATE.escalations || [];
+  const openIssues = allIssues.filter(e => !issueResolved(e));
+  const criticalIssues = allIssues.filter(e => ['high','urgent'].includes(String(e.priority||'').toLowerCase()));
+  const exceptions = [...day.unable, ...night.unable];
+  const missedAll = [...day.missed, ...night.missed];
+  const totalCompleted = day.completed + night.completed;
+  const totalTasks = day.total + night.total;
+  let totalPhotos = 0, issuePhotos = 0;
+  STATE.auditRecords.forEach(ar => (ar.answers||[]).forEach(a => (a.photos||[]).forEach(() => { totalPhotos++; if (a.answer==='issue') issuePhotos++; })));
+  STATE.taskRecords.forEach(r => {
+    const rooms = r.roomResults ? Object.values(r.roomResults) : (r.levelResults ? Object.values(r.levelResults).flatMap(l=>Object.values(l)) : []);
+    rooms.forEach(rd => { const n = (rd.photos||[]).length + (rd.photos2||[]).length; totalPhotos += n; if (rd.hasIssue) issuePhotos += n; });
+  });
+  allIssues.forEach(e => { if (e.photo) { totalPhotos++; issuePhotos++; } });
+
+  // Cover
+  setFill(C.green); doc.rect(0,0,W,3,'F'); y = 20;
+  setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.text('Daily Operations Summary', M, y); y += 8;
+  setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.text(SITE.name, M, y); y += 5;
+  setDraw(C.border); doc.setLineWidth(0.4); doc.line(M, y, M+CW, y); y += 9;
+  const dt = new Date();
+  const y0 = y;
+  const kv = (rows, x) => { let ry = y0; for (const [k,v] of rows) { setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text(k.toUpperCase(), x, ry); setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.text(String(v), x, ry+4.5); ry += 10; } return ry; };
+  const le = kv([['Date', dt.toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'})], ['Officer', officer], ['Report Type','Full Operational Day']], M);
+  const re = kv([['Site', SITE.name], ['Generated', dt.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})], ['Sync Status','Synced']], M + CW/2);
+  y = Math.max(le, re) + 4;
+
+  // Total outcome cards
+  const compliance = totalTasks ? Math.round(((totalCompleted + exceptions.length)/totalTasks)*100) : 100;
+  const cards = [
+    ['COMPLETED', `${totalCompleted}/${totalTasks}`, C.green],
+    ['OPEN ISSUES', String(openIssues.length), openIssues.length ? C.amberTx : C.green],
+    ['EXCEPTIONS', String(exceptions.length), exceptions.length ? C.amberTx : C.green],
+    ['MISSED', String(missedAll.length), missedAll.length ? C.critTx : C.green],
+  ];
+  const gap = 4, bw = (CW - gap*3)/4, bh = 22;
+  cards.forEach((c, i) => {
+    const x = M + i*(bw+gap);
+    setFill(C.card); doc.roundedRect(x, y, bw, bh, 2, 2, 'F');
+    setText(c[2]); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text(c[1], x+bw/2, y+11, {align:'center'});
+    setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.text(c[0], x+bw/2, y+17.5, {align:'center'});
+  });
+  y += bh + 6;
+
+  // Shift results — side by side
+  sectionHeader('Shift Results');
+  const shiftBlock = (label, s, x) => {
+    const bwid = (CW-6)/2;
+    setFill(C.card); doc.roundedRect(x, y, bwid, 30, 2, 2, 'F');
+    setText(C.navy); doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text(label, x+5, y+8);
+    setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(`Completed: ${s.completed}/${s.total}`, x+5, y+15);
+    doc.text(`Exceptions: ${s.unable.length}`, x+5, y+21);
+    doc.text(`Missed: ${s.missed.length}`, x+5, y+27);
+  };
+  ensure(34);
+  shiftBlock('Day Shift', day, M);
+  shiftBlock('Night Shift', night, M + (CW-6)/2 + 6);
+  y += 36;
+
+  // Critical issues (high/urgent), open + resolved
+  if (criticalIssues.length) {
+    sectionHeader('Critical Issues');
+    for (const e of criticalIssues) {
+      ensure(12);
+      const resolved = issueResolved(e);
+      setText(resolved ? C.green : C.critTx); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+      doc.text(`[${(e.priority||'').toUpperCase()}]${resolved?' RESOLVED':''}`, M, y);
+      setText(C.navy); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      doc.text(doc.splitTextToSize(`${e.text||''} — ${e.location||''}`, CW-32)[0], M+32, y); y += 5;
+      setText(C.grey); doc.setFontSize(8);
+      doc.text(`Raised ${e.time||'—'}${resolved&&e.resolvedBy?` · Resolved by ${e.resolvedBy}`:''}`, M+32, y); y += 5.5;
+    }
+    y += 2;
+  }
+
+  // Exceptions — unable to complete (both shifts)
+  if (exceptions.length) {
+    sectionHeader('Exceptions — Unable to Complete');
+    for (const { task, info } of exceptions) {
+      ensure(11);
+      setText(C.amberTx); doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.text(task.label, M, y); y += 5;
+      setText(C.grey); doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      doc.text(`${info.reason||'Operational'}${info.recordedAt?` · ${info.recordedAt}`:''}${info.recordedBy?` · ${info.recordedBy}`:''}`, M, y); y += 6;
+    }
+    y += 1;
+  }
+
+  // Missed work (concise list)
+  if (missedAll.length) {
+    sectionHeader('Missed Tasks');
+    setText(C.navy); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    for (const t of missedAll) { ensure(6); doc.text(`•  ${t.label}${t.timeHint?` — ${t.timeHint}`:''}`, M, y); y += 5; }
+    y += 2;
+  }
+
+  // Evidence summary (counts only — detail lives in shift reports)
+  sectionHeader('Evidence Summary');
+  setText(C.navy); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+  doc.text(`${totalPhotos} photo(s) captured across the operational day.`, M, y); y += 6;
+  setText(issuePhotos ? C.amberTx : C.green);
+  doc.text(`${issuePhotos} issue photo(s) recorded.`, M, y); y += 6;
+  setText(C.grey); doc.setFontSize(8); doc.text('Full evidence register is available in each shift report.', M, y); y += 6;
+
+  addFooter(doc, W, M);
+  return { doc, metrics: { completed: totalCompleted, total: totalTasks, issues: openIssues.length, missed: missedAll.length, unable: exceptions.length, compliance } };
+}
+
 async function generateDailySummaryPDF() {
   const officerName = document.getElementById('summary-officer-name').value.trim();
   if (!officerName) { showToast('Please enter your name'); document.getElementById('summary-officer-name').focus(); return; }
   showToast('Generating daily summary...');
   setBtnLoading('daily-summary-btn', true, 'Generating…');
 
-  const shift = getShift();
-  const shiftTasks = getShiftTasks(shift);
-  const ids = new Set(shiftTasks.map(t => t.id));
-  const records = STATE.taskRecords.filter(r => ids.has(r.taskId));
-  const openIssues = STATE.escalations.filter(e => (e.status||'open') !== 'closed');
-  const shiftName = shiftDisplayName(shift);
-
-  const { doc, metrics } = await buildShiftReportDoc({ officer: officerName, shiftName, scheduledTasks: shiftTasks, records, audits: STATE.auditRecords, issues: STATE.escalations });
-  const filename = `daily_summary_${shift}_${dateSlug()}.pdf`;
+  const { doc, metrics } = await buildDailySummaryDoc({ officer: officerName });
+  const filename = `daily_summary_${dateSlug()}.pdf`;
   doc.save(filename);
-  try { syncPDFToSheets(officerName, 'Daily Inspection Report', filename, doc.output('datauristring')); } catch(e) {}
-  saveReportRecord({ shift: shiftName, shiftKey: 'daily', officer: officerName, doc, metrics });
+  try { syncPDFToSheets(officerName, 'Daily Operations Summary', filename, doc.output('datauristring')); } catch(e) {}
+  saveReportRecord({ shift: 'Daily Summary', shiftKey: 'daily', officer: officerName, doc, metrics });
   setBtnLoading('daily-summary-btn', false);
   showToast('Daily summary saved');
 }
