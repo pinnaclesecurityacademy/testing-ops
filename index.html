@@ -487,6 +487,12 @@ label.photo-capture-area:active, .photo-capture-area:active { border-color: var(
 .photo-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13px; }
 .photo-preview-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
 .photo-thumb { aspect-ratio: 1; border-radius: var(--radius-sm); object-fit: cover; width: 100%; border: 1px solid var(--border); }
+.evidence-thumb { width: 60px; height: 60px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; }
+.evidence-thumb-sm { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); cursor: pointer; }
+.photo-indicator { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--text-muted); }
+.photo-validation-msg { display: none; font-size: 12px; color: #EF4444; font-weight: 600; margin-top: 8px; }
+.op-quality { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 8px 14px; border-radius: var(--radius-sm); background: var(--bg-elevated); font-size: 13px; font-weight: 600; }
+.op-quality .op-dot { width: 10px; height: 10px; border-radius: 99px; flex-shrink: 0; }
 
 /* ── AUDIT QUESTION CARD ────────────────── */
 .audit-question-card {
@@ -1070,7 +1076,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
 </style>
 </head>
 <body>
-<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#F59E0B;color:#1a1400;font-size:13px;font-weight:600;text-align:center;padding:8px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.2);">Offline mode — changes will sync when connection returns</div>
+<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#F59E0B;color:#1a1400;font-size:13px;font-weight:600;text-align:center;padding:8px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.2);">Working offline — your inspection is saved to this device and will sync automatically when connection returns.</div>
 <div id="app">
 
 <!-- MAIN -->
@@ -1086,7 +1092,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     <span class="nav-status"><span class="status-dot green"></span> SITE ACTIVE</span>
     <span class="nav-shift-pill" id="shift-indicator">DAY SHIFT</span>
     <span class="nav-time"><span id="dash-date"></span> · <span id="nav-time">--:--</span></span>
-    <button id="sync-btn" onclick="manualSync()" style="background:var(--accent-green);border:none;border-radius:99px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;padding:5px 12px;">↑ SYNC</button>
+    <button id="sync-btn" onclick="manualSync()" style="background:var(--accent-green);border:none;border-radius:99px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:#fff;padding:5px 12px;">SYNC</button>
   </div>
 </nav>
 
@@ -1105,7 +1111,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         </div>
         <div class="kpi-card" onclick="navigateTo('dayshift')">
           <div class="kpi-value" id="stat-compliance" style="color:#1B4D3E">—</div>
-          <div class="kpi-sub">Compliance Score</div>
+          <div class="kpi-sub">Shift Progress</div>
           <div class="kpi-bar"><div class="kpi-bar-fill" id="compliance-progress" style="width:0%"></div></div>
         </div>
         <div class="kpi-card" onclick="navigateTo('dayshift')">
@@ -1114,12 +1120,20 @@ body.day-mode, body.night-mode { /* theme is always light */ }
         </div>
         <div class="kpi-card" onclick="navigateTo('dayshift')">
           <div class="kpi-value" id="stat-outstanding" style="color:#F59E0B">0</div>
-          <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="9" stroke="#F59E0B" stroke-width="1.6"/><path d="M12 7v5l3 3" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/></svg> Outstanding</div>
+          <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="9" stroke="#F59E0B" stroke-width="1.6"/><path d="M12 7v5l3 3" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round"/></svg> <span id="stat-outstanding-label">Outstanding</span></div>
+          <div class="kpi-sub" id="stat-outstanding-sub" style="font-size:10px;margin-top:2px"></div>
         </div>
         <div class="kpi-card" onclick="navigateTo('issues')">
           <div class="kpi-value" id="esc-count" style="color:#EF4444">0</div>
           <div class="kpi-sub"><svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#EF4444" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> Active Issues</div>
         </div>
+      </div>
+
+      <!-- Operational Quality — qualitative indicator -->
+      <div class="op-quality" id="op-quality">
+        <span class="op-dot" id="op-quality-dot" style="background:#22C55E"></span>
+        <span style="color:var(--text-muted);font-weight:600;letter-spacing:0.5px;font-size:11px">OPERATIONAL QUALITY</span>
+        <span id="op-quality-text" style="color:var(--text-secondary)">Good standing</span>
       </div>
 
       <!-- ROW 2 — Priority Attention + Shift Overview -->
@@ -1435,6 +1449,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
           <div id="pq-photo-preview" class="photo-preview-grid"></div>
         </label>
         <input type="file" id="pq-photo" accept="image/*" capture="environment" class="hidden" onchange="handlePatrolQPhoto(this)" multiple/>
+        <div class="photo-validation-msg" id="pq-photo-validation">Photo required — tap the camera to capture evidence before continuing</div>
       </div>
     </div>
     <div class="bottom-spacer"></div>
@@ -1568,6 +1583,7 @@ body.day-mode, body.night-mode { /* theme is always light */ }
           <div id="aq-photo-preview" class="photo-preview-grid"></div>
         </label>
         <input type="file" id="aq-photo" accept="image/*" capture="environment" class="hidden" onchange="handleAuditPhoto(this)" multiple/>
+        <div class="photo-validation-msg" id="aq-photo-validation">Photo required — tap the camera to capture evidence before continuing</div>
       </div>
     </div>
     <div class="bottom-spacer"></div>
@@ -1725,6 +1741,18 @@ body.day-mode, body.night-mode { /* theme is always light */ }
     </div>
     <div id="past-detail-meta" style="font-size:13px;color:var(--text-secondary);margin-bottom:14px"></div>
     <div id="past-detail-body" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+<!-- Photo Lightbox Modal (full-screen evidence viewer) -->
+<div id="photo-modal" class="modal-overlay hidden" onclick="closePhotoModal(event)" style="z-index:10000">
+  <div class="modal-sheet" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">Photo Evidence</div>
+      <button class="modal-close" onclick="closePhotoModal()">✕</button>
+    </div>
+    <img id="photo-modal-img" src="" alt="Evidence photo" style="width:100%;border-radius:var(--radius-sm);border:1px solid var(--border);display:block"/>
+    <div id="photo-modal-meta" style="font-size:12px;color:var(--text-secondary);margin-top:12px;line-height:1.6"></div>
   </div>
 </div>
 
@@ -1975,7 +2003,7 @@ function showSyncStatus(msg, ok = true) {
   if (btn) {
     btn.textContent = msg;
     btn.style.color = ok ? 'var(--green)' : 'var(--red)';
-    setTimeout(() => { btn.textContent = '↑ SYNC'; btn.style.background = ''; btn.style.color = ''; }, 2500);
+    setTimeout(() => { btn.textContent = 'SYNC'; btn.style.background = ''; btn.style.color = ''; }, 2500);
   }
 }
 
@@ -2922,13 +2950,27 @@ function openPastReportDetail(idx) {
       const pc = status === 'issue' ? ' priority-medium' : '';
       const extra = a.finding ? `Finding: ${a.finding}` : a.reason ? `Reason: ${a.reason}` : '';
       const comments = a.comments ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">${esc(a.comments)}</div>` : '';
+      const qText = a.question || a.text || '';
+      let photos = '';
+      if (a.photos && a.photos.length) {
+        photos = `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">` + a.photos.map(p => {
+          const pid = registerPhotoThumb(p, [
+            { label: 'Inspection', value: typeName },
+            { label: 'Location', value: asset },
+            { label: 'Question', value: qText },
+            { label: 'Captured', value: a.timestamp || '' },
+          ]);
+          return `<img src="${p}" class="evidence-thumb-sm" data-photo-id="${pid}" onclick="openPhotoFromThumb(this)" alt="Evidence"/>`;
+        }).join('') + `</div>`;
+      }
       return `<div class="escalation-item${pc}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div class="esc-title" style="font-size:13px">${esc(a.question || a.text || '')}</div>
+          <div class="esc-title" style="font-size:13px">${esc(qText)}</div>
           <span class="esc-priority ${status}">${label}</span>
         </div>
         ${extra ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${esc(extra)}</div>` : ''}
         ${comments}
+        ${photos}
       </div>`;
     }).join('');
   }
@@ -2938,6 +2980,35 @@ function openPastReportDetail(idx) {
 function closePastDetail(event) {
   if (event && event.target !== document.getElementById('past-detail-modal')) return;
   document.getElementById('past-detail-modal').classList.add('hidden');
+}
+
+// Full-screen photo evidence viewer. meta is an array of {label, value} rows.
+function openPhotoModal(src, meta) {
+  if (!src) return;
+  const img = document.getElementById('photo-modal-img');
+  const metaEl = document.getElementById('photo-modal-meta');
+  if (img) img.src = src;
+  if (metaEl) {
+    const rows = (meta || []).filter(r => r && r.value);
+    metaEl.innerHTML = rows.map(r => `<div><strong>${esc(r.label)}:</strong> ${esc(r.value)}</div>`).join('');
+  }
+  document.getElementById('photo-modal').classList.remove('hidden');
+}
+function closePhotoModal(event) {
+  if (event && event.target !== document.getElementById('photo-modal')) return;
+  document.getElementById('photo-modal').classList.add('hidden');
+}
+// Store metadata for a thumbnail and open the modal (avoids inlining base64 in onclick).
+const _photoMetaStore = {};
+function openPhotoFromThumb(el) {
+  const id = el.getAttribute('data-photo-id');
+  const entry = _photoMetaStore[id];
+  if (entry) openPhotoModal(entry.src, entry.meta);
+}
+function registerPhotoThumb(src, meta) {
+  const id = 'ph_' + (_photoMetaStore._n = (_photoMetaStore._n || 0) + 1);
+  _photoMetaStore[id] = { src, meta };
+  return id;
 }
 
 // ═══════════════════════════════════════
@@ -3021,20 +3092,56 @@ function refreshDashboard() {
   const expected = tasks.length + sessionExpected;
   const completed = taskDone + sessionCompleted;
   const missed = getMissedItems(shift);
-  const outstanding = Math.max(0, expected - completed - missed.length);
+
+  // Classify not-yet-completed tasks by their scheduled-time status.
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  let upcoming = 0, outstanding = 0;
+  for (const task of tasks) {
+    if (isTaskDone(task)) continue;
+    const endMins = _parseEndMinutes(task.timeHint || task.window);
+    if (endMins === null) { outstanding++; continue; }   // no scheduled time — outstanding
+    if (nowMins > endMins) continue;                      // window passed — counted as overdue (missed)
+    upcoming++;                                           // scheduled in the future — upcoming
+  }
+  const overdue = missed.length;
+  // Shift Progress — completed tasks / total scheduled tasks for today's shift
   const compliance = expected ? Math.round((completed / expected) * 100) : 0;
 
   const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   setVal('stat-expected', expected);
   setVal('stat-completed', completed);
-  setVal('stat-outstanding', outstanding);
-  setVal('stat-missed', missed.length);
+  setVal('stat-missed', overdue);
 
+  // Outstanding card — show Overdue (red) when time-based tasks are overdue, else Outstanding
+  const outEl = document.getElementById('stat-outstanding');
+  const outLabel = document.getElementById('stat-outstanding-label');
+  const outSub = document.getElementById('stat-outstanding-sub');
+  if (overdue > 0) {
+    if (outEl) { outEl.textContent = overdue; outEl.style.color = '#EF4444'; }
+    if (outLabel) outLabel.textContent = 'Overdue';
+  } else {
+    if (outEl) { outEl.textContent = outstanding; outEl.style.color = '#F59E0B'; }
+    if (outLabel) outLabel.textContent = 'Outstanding';
+  }
+  if (outSub) outSub.textContent = `${overdue} overdue · ${upcoming} upcoming`;
+
+  // Shift Progress KPI — ≥80% green, 50-79% amber, <50% red
   const compEl = document.getElementById('stat-compliance');
-  const compColor = compliance >= 90 ? '#1B4D3E' : compliance >= 70 ? '#F59E0B' : '#EF4444';
+  const compColor = compliance >= 80 ? '#1B4D3E' : compliance >= 50 ? '#F59E0B' : '#EF4444';
   if (compEl) { compEl.textContent = compliance + '%'; compEl.style.color = compColor; }
   const compBar = document.getElementById('compliance-progress');
   if (compBar) { compBar.style.width = compliance + '%'; compBar.style.background = compColor; }
+
+  // Operational Quality — qualitative indicator from open issues + missed tasks
+  const openIssueCount = STATE.escalations.filter(e => (e.status||'open') !== 'closed').length;
+  const qDot = document.getElementById('op-quality-dot');
+  const qText = document.getElementById('op-quality-text');
+  let qColor = '#22C55E', qLabel = 'Good standing';
+  if (openIssueCount >= 3 || overdue >= 2) { qColor = '#EF4444'; qLabel = 'Needs attention'; }
+  else if (openIssueCount >= 1 || overdue >= 1) { qColor = '#F59E0B'; qLabel = 'Minor items open'; }
+  if (qDot) qDot.style.background = qColor;
+  if (qText) qText.textContent = qLabel;
 
   // Missed section
   const section = document.getElementById('missed-section');
@@ -3130,7 +3237,8 @@ function refreshEscalations() {
   if (!STATE.escalations.length) { list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">No open issues</div></div>'; return; }
   list.innerHTML = open.slice(0,5).map(e => {
     const pc = e.priority === 'medium' ? ' priority-medium' : e.priority === 'low' ? ' priority-low' : '';
-    return `<div class="escalation-item${pc}"><div class="esc-title">${esc(e.text)}</div><div class="esc-meta">${esc(e.location)} · ${esc(e.task)} · ${esc(e.time)}</div><span class="esc-priority ${e.priority}">${e.priority.toUpperCase()}</span></div>`;
+    const camera = e.photo ? `<span class="photo-indicator" style="margin-left:8px"><svg viewBox="0 0 24 24" fill="none" width="12" height="12"><rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.6"/></svg>1 photo</span>` : '';
+    return `<div class="escalation-item${pc}"><div class="esc-title">${esc(e.text)}</div><div class="esc-meta">${esc(e.location)} · ${esc(e.task)} · ${esc(e.time)}${camera}</div><span class="esc-priority ${e.priority}">${e.priority.toUpperCase()}</span></div>`;
   }).join('');
 }
 
@@ -3146,15 +3254,31 @@ function refreshIssues() {
     const status = e.status || 'open';
     const pc = e.priority === 'medium' ? ' priority-medium' : e.priority === 'low' ? ' priority-low' : '';
     const statusLabel = status === 'open' ? 'Open' : status === 'being-rectified' ? 'Being Rectified' : 'Closed';
+    let thumb = '';
+    if (e.photo) {
+      const pid = registerPhotoThumb(e.photo, [
+        { label: 'Captured', value: e.time },
+        { label: 'Inspection', value: e.task },
+        { label: 'Location', value: e.location },
+      ]);
+      thumb = `<img src="${e.photo}" class="evidence-thumb" data-photo-id="${pid}" onclick="event.stopPropagation();openPhotoFromThumb(this)" alt="Evidence"/>`;
+    }
+    const category = e.category ? `<span class="esc-priority" style="background:var(--bg-elevated);color:var(--text-secondary)">${esc(e.category)}</span>` : '';
     return `<div class="escalation-item${pc}" onclick="showIssueStatusModal(${i})" style="cursor:pointer">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
-        <div class="esc-title">${esc(e.text)}</div>
-        <span class="issue-status-pill ${status}">${statusLabel}</span>
-      </div>
-      <div class="esc-meta">${esc(e.location)} · ${esc(e.task)}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
-        <span class="esc-priority ${e.priority}">${(e.priority||'').toUpperCase()}</span>
-        <span style="font-size:11px;color:var(--text-muted)">${esc(e.time)}</span>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px">
+            <div class="esc-title">${esc(e.text)}</div>
+            <span class="issue-status-pill ${status}">${statusLabel}</span>
+          </div>
+          <div class="esc-meta">${esc(e.location)} · ${esc(e.task)}</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
+            <span class="esc-priority ${e.priority}">${(e.priority||'').toUpperCase()}</span>
+            ${category}
+            <span style="font-size:11px;color:var(--text-muted)">${esc(e.time)}</span>
+          </div>
+        </div>
+        ${thumb}
       </div>
       ${e.statusNote ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;padding-top:6px;border-top:1px solid var(--border-color)">📝 ${esc(e.statusNote)}</div>` : ''}
     </div>`;
@@ -3649,6 +3773,7 @@ function renderPatrolQuestion() {
   STATE._patrolNaReason = '';
   // Photo evidence — reset and show/hide based on this question's photo flags
   STATE.patrolRoomPhotos = [];
+  hidePhotoValidation('pq-photo-validation');
   const pPrev = document.getElementById('pq-photo-preview'); if (pPrev) pPrev.innerHTML = '';
   const pGroup = document.getElementById('pq-photo-group');
   if (q.photoRequired || q.photoOptional) {
@@ -3674,7 +3799,7 @@ function recordPatrolAnswer(answer, extra) {
 
 function recordPatrolPass() {
   const q = STATE.patrolRoomDef.questions[STATE.patrolRoomQuestion];
-  if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showPhotoValidation('pq-photo-validation'); return; }
   recordPatrolAnswer('pass', { photos: [...STATE.patrolRoomPhotos] });
 }
 
@@ -3699,11 +3824,13 @@ function confirmPatrolNa() {
   const comments = document.getElementById('pq-na-comments').value.trim();
   if (reason === 'Other' && !comments) { showToast('Please describe the reason'); return; }
   const q = STATE.patrolRoomDef.questions[STATE.patrolRoomQuestion];
-  if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  if (q.photoRequired && STATE.patrolRoomPhotos.length === 0) { showPhotoValidation('pq-photo-validation'); return; }
   recordPatrolAnswer('na', { reason, comments, photos: [...STATE.patrolRoomPhotos] });
 }
 
-function handlePatrolQPhoto(input) { capturePhotos(input, 'pq-photo-preview', STATE.patrolRoomPhotos); }
+function showPhotoValidation(id) { const el = document.getElementById(id); if (el) el.style.display = 'block'; }
+function hidePhotoValidation(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+function handlePatrolQPhoto(input) { hidePhotoValidation('pq-photo-validation'); capturePhotos(input, 'pq-photo-preview', STATE.patrolRoomPhotos); }
 
 // ── Finding workflow (shared by inspection questions and audits) ──
 function openFindingModal(context) {
@@ -4233,7 +4360,7 @@ function lobbyFinish() {
 function handleRoomPhoto(input) { capturePhotos(input, 'room-photo-preview', STATE.taskPhotos); }
 function handleRoomPhoto2(input) { capturePhotos(input, 'room-photo2-preview', STATE.taskPhotos2); }
 function handlePlantPhoto(input) { capturePhotos(input, 'plant-photo-preview', STATE.plantRoomPhotos); }
-function handleAuditPhoto(input) { capturePhotos(input, 'aq-photo-preview', STATE.aqPhotos); }
+function handleAuditPhoto(input) { hidePhotoValidation('aq-photo-validation'); capturePhotos(input, 'aq-photo-preview', STATE.aqPhotos); }
 
 function capturePhotos(input, previewId, arr) {
   const files = Array.from(input.files);
@@ -4642,6 +4769,7 @@ function renderAuditQuestion() {
   STATE._auditNaReason = '';
   // Photo evidence — reset and show/hide based on this question's photo flags
   STATE.aqPhotos = [];
+  hidePhotoValidation('aq-photo-validation');
   const aPrev = document.getElementById('aq-photo-preview'); if (aPrev) aPrev.innerHTML = '';
   const aGroup = document.getElementById('aq-photo-group');
   if (photoRequired || photoOptional) {
@@ -4667,7 +4795,7 @@ function recordAuditAnswer(answer, extra) {
 
 function recordAuditPass() {
   const q = STATE.activeAudit.questions[STATE.currentQuestion];
-  if (q.photoRequired && STATE.aqPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  if (q.photoRequired && STATE.aqPhotos.length === 0) { showPhotoValidation('aq-photo-validation'); return; }
   recordAuditAnswer('pass', { photos: [...STATE.aqPhotos] });
 }
 
@@ -4692,7 +4820,7 @@ function confirmAuditNa() {
   const comments = document.getElementById('aq-na-comments').value.trim();
   if (reason === 'Other' && !comments) { showToast('Please describe the reason'); return; }
   const q = STATE.activeAudit.questions[STATE.currentQuestion];
-  if (q.photoRequired && STATE.aqPhotos.length === 0) { showToast('Photo required before proceeding'); return; }
+  if (q.photoRequired && STATE.aqPhotos.length === 0) { showPhotoValidation('aq-photo-validation'); return; }
   recordAuditAnswer('na', { reason, comments, photos: [...STATE.aqPhotos] });
 }
 
