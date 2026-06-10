@@ -4787,59 +4787,202 @@ async function generateEODPDF(shift = 'day') { // async needed for escalation ph
   doc.text(String(STATE.escalations.length), M+145, y+13.5);
   y += 24;
 
-  // Each task
-  for (const record of shiftRecords) {
-    if (y > 240) { doc.addPage(); y = 20; }
-    doc.setFillColor(22,22,32); doc.roundedRect(M,y,W-M*2,8,2,2,'F');
-    doc.setTextColor(124,92,252); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    doc.text(`${record.taskLabel.toUpperCase()}${record.timeHint ? ' — '+record.timeHint.toUpperCase() : ''}`, M+4, y+5.5);
-    doc.setTextColor(100,100,130); doc.setFont('helvetica','normal');
-    doc.text(`${record.completedAt || ''} · ${record.roomCount||0} rooms · ${record.issues||0} issues`, W-M-4, y+5.5, {align:'right'});
-    y += 11;
-    if (record.issues > 0) {
-      const rooms = record.roomResults || {};
-      Object.values(rooms).forEach(rd => {
-        if (!rd.hasIssue) return;
-        if (rd.answers && rd.answers.length) {
-          rd.answers.filter(a=>a.answer==='issue').forEach(a => {
-            if (y>265){doc.addPage();y=20;}
-            doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,9,2,2,'F');
-            doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-            doc.text(`⚠ ${rd.roomName}: ${a.finding||a.question}`, M+6, y+6); y+=12;
-          });
-        } else if (rd.checks) {
-          rd.checks.filter(c=>c.status==='reportable'&&c.reportText).forEach(c => {
-            if (y>265){doc.addPage();y=20;}
-            doc.setFillColor(40,15,15); doc.roundedRect(M+2,y,W-M*2-4,9,2,2,'F');
-            doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-            doc.text(`⚠ ${rd.roomName}: ${c.reportText}`, M+6, y+6); y+=12;
-          });
-        }
-      });
-    }
-    y += 3;
+  // ── Helpers for the operational report layout ──────────────────
+  const pageBreak = (limit) => { if (y > (limit || 262)) { doc.addPage(); y = 20; } };
+  const sectionHeader = (title, rgb) => {
+    pageBreak(255); y += 4;
+    doc.setTextColor(rgb[0], rgb[1], rgb[2]); doc.setFontSize(9.5); doc.setFont('helvetica','bold');
+    doc.text(title, M, y); y += 2;
+    doc.setDrawColor(rgb[0], rgb[1], rgb[2]); doc.setLineWidth(0.4); doc.line(M, y, W-M, y);
+    y += 6;
+  };
+
+  // ── Classify every scheduled task: completed / unable / missed ──
+  const recByTask = {}; shiftRecords.forEach(r => { recByTask[r.taskId] = r; });
+  // Forward-compatible exception map (keyed by task id). No capture UI exists
+  // yet, so this is normally empty — a justified incomplete is rendered
+  // distinctly from a silent miss when the data is present.
+  const unableMap = (STATE.unableTasks && typeof STATE.unableTasks === 'object') ? STATE.unableTasks : {};
+  const completedTasks = [], unableTasks = [], missedTasks = [];
+  for (const t of shiftTasks) {
+    if (unableMap[t.id]) unableTasks.push({ task: t, info: unableMap[t.id] });
+    else if (isTaskDone(t)) completedTasks.push({ task: t, record: recByTask[t.id] || null });
+    else missedTasks.push(t);
   }
 
-  // Escalations summary
+  // ── 1. SHIFT REQUIREMENTS — status of every scheduled task ──────
+  sectionHeader('SHIFT REQUIREMENTS', [124,92,252]);
+  const reqLine = (a, b) => {
+    doc.setTextColor(150,150,170); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text(a, M+6, y);
+    if (b) { doc.setTextColor(210,210,230); doc.text(b, M+44, y); }
+    y += 4.2;
+  };
+  for (const { task, record } of completedTasks) {
+    pageBreak(250);
+    doc.setFillColor(20,30,22); doc.roundedRect(M,y,W-M*2,7,1.5,1.5,'F');
+    doc.setTextColor(46,204,113); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text(`✓ COMPLETED   ${task.label.toUpperCase()}`, M+4, y+5); y += 10;
+    if (task.type === 'lobby') {
+      reqLine('Required:', task.window || task.timeHint || '—');
+      reqLine('Completed:', (record && (record.endTime || record.completedAt)) || '—');
+    } else {
+      if (task.timeHint) reqLine('Scheduled:', task.timeHint);
+      reqLine('Started:', (record && record.startTime) || '—');
+      reqLine('Completed:', (record && record.completedAt) || '—');
+      if (record && record.duration) reqLine('Duration:', record.duration);
+    }
+    y += 2;
+  }
+  for (const { task, info } of unableTasks) {
+    pageBreak(248);
+    doc.setFillColor(38,30,12); doc.roundedRect(M,y,W-M*2,7,1.5,1.5,'F');
+    doc.setTextColor(245,166,35); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text(`⚠ UNABLE TO COMPLETE   ${task.label.toUpperCase()}`, M+4, y+5); y += 10;
+    if (task.timeHint || task.window) reqLine('Required:', task.timeHint || task.window);
+    reqLine('Reason:', info.reason || 'Operational');
+    if (info.recordedAt) reqLine('Recorded:', info.recordedAt);
+    if (info.note) {
+      doc.setTextColor(150,150,170); doc.setFontSize(7); doc.text('Officer note:', M+6, y);
+      doc.setTextColor(210,210,230);
+      const noteLines = doc.splitTextToSize(info.note, W-M*2-50);
+      doc.text(noteLines, M+44, y); y += Math.max(4.2, noteLines.length*4);
+    }
+    y += 2;
+  }
+  for (const task of missedTasks) {
+    pageBreak(250);
+    doc.setFillColor(40,18,18); doc.roundedRect(M,y,W-M*2,7,1.5,1.5,'F');
+    doc.setTextColor(239,68,68); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text(`✕ MISSED   ${task.label.toUpperCase()}`, M+4, y+5); y += 10;
+    if (task.timeHint || task.window) reqLine('Required:', task.timeHint || task.window);
+    reqLine('Reason:', 'No reason entered');
+    y += 2;
+  }
+
+  // ── 4. INSPECTION DETAIL — times + rooms checked (PASS summarised) ─
+  const detailTasks = completedTasks.filter(c => c.record && (c.record.roomResults || c.record.levelResults));
+  if (detailTasks.length) {
+    sectionHeader('INSPECTION DETAIL', [124,92,252]);
+    for (const { task, record } of detailTasks) {
+      pageBreak(248);
+      // Flatten rooms (flexible roomResults or plant levelResults)
+      const roomEntries = record.roomResults
+        ? Object.values(record.roomResults).map(rd => ({ rd, level: '' }))
+        : Object.entries(record.levelResults).flatMap(([lid, rooms]) => {
+            const lvl = (PLANT_LEVELS.find(l => l.id === lid) || {}).name || lid;
+            return Object.values(rooms).map(rd => ({ rd, level: lvl }));
+          });
+      const checked = roomEntries.length;
+      doc.setTextColor(200,200,225); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+      doc.text(task.label + (task.timeHint ? ` — ${task.timeHint}` : ''), M, y); y += 5;
+      doc.setTextColor(140,140,165); doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text(`Started ${record.startTime||'—'}  ·  Completed ${record.completedAt||'—'}  ·  ${record.duration||'—'}  ·  ${checked}/${record.roomCount||checked} rooms checked`, M, y);
+      y += 5.5;
+      // PASS rooms summarised to one line each; issue rooms flagged.
+      for (const { rd, level } of roomEntries) {
+        pageBreak(265);
+        const name = (level ? level + ' ' : '') + (rd.roomName || 'Room');
+        const hasPhoto = (rd.photos && rd.photos.length) || (rd.photos2 && rd.photos2.length);
+        if (rd.hasIssue) {
+          doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
+          doc.text(`⚠ ${name} — issue logged (see Issues Raised)`, M+4, y);
+        } else {
+          doc.setTextColor(46,204,113); doc.setFontSize(7); doc.setFont('helvetica','normal');
+          doc.text(`✓ ${name} — all checks passed${hasPhoto ? ' · evidence captured' : ''}`, M+4, y);
+        }
+        y += 4.2;
+      }
+      y += 3;
+    }
+  }
+
+  // ── 6 (issues) ISSUES RAISED — full escalation detail with photos ─
   if (STATE.escalations.length > 0) {
-    if (y>220){doc.addPage();y=20;}
-    y += 4;
-    doc.setTextColor(239,68,68); doc.setFontSize(9); doc.setFont('helvetica','bold');
-    doc.text('ESCALATIONS LOG', M, y); y += 8;
+    sectionHeader('ISSUES RAISED', [239,68,68]);
     for (const e of STATE.escalations) {
-      if(y>250){doc.addPage();y=20;}
+      pageBreak(250);
       doc.setFillColor(40,15,15); doc.roundedRect(M,y,W-M*2,13,2,2,'F');
       doc.setTextColor(239,68,68); doc.setFontSize(7); doc.setFont('helvetica','bold');
-      doc.text(`[${e.priority.toUpperCase()}] ${e.location}`, M+4, y+5.5);
+      doc.text(`[${(e.priority||'').toUpperCase()}] ${e.location||''}`, M+4, y+5.5);
       doc.setTextColor(200,180,180); doc.setFont('helvetica','normal');
-      doc.text(e.text.slice(0,90), M+4, y+10.5);
+      doc.text((e.text||'').slice(0,90), M+4, y+10.5);
       y += 16;
       if (e.photo) {
-        if (y>230){doc.addPage();y=20;}
+        pageBreak(232);
         const added = await addEscalationPhotoToPDF(doc, e.photo, M, W, y);
         if (added) y += added+4;
       }
     }
+  }
+
+  // ── 5. EVIDENCE REGISTER — mandatory + issue photos as thumbnails ─
+  const evidence = [];
+  for (const ar of STATE.auditRecords) {
+    (ar.answers || []).forEach(a => (a.photos || []).forEach(p => evidence.push({
+      photo: p, location: ar.asset || ar.auditTypeName || 'Inspection',
+      question: a.question || 'Inspection evidence',
+      captured: a.timestamp || ar.completedAt || '', issue: a.answer === 'issue',
+    })));
+  }
+  for (const r of shiftRecords) {
+    const rooms = r.roomResults
+      ? Object.values(r.roomResults)
+      : (r.levelResults ? Object.values(r.levelResults).flatMap(l => Object.values(l)) : []);
+    rooms.forEach(rd => {
+      [...(rd.photos || []), ...(rd.photos2 || [])].forEach(p => evidence.push({
+        photo: p, location: `${r.taskLabel}${rd.roomName ? ' — ' + rd.roomName : ''}`,
+        question: 'Inspection evidence', captured: rd.timestamp || r.completedAt || '',
+        issue: !!rd.hasIssue,
+      }));
+    });
+  }
+  // Issue evidence first (highlighted), then mandatory inspection evidence.
+  evidence.sort((a, b) => (b.issue ? 1 : 0) - (a.issue ? 1 : 0));
+  if (evidence.length) {
+    sectionHeader('EVIDENCE REGISTER', [124,92,252]);
+    const CAP = 10;
+    for (const ev of evidence.slice(0, CAP)) {
+      pageBreak(232);
+      const boxH = 20;
+      if (ev.issue) { doc.setDrawColor(239,68,68); doc.setLineWidth(0.5); doc.roundedRect(M, y, W-M*2, boxH+2, 1.5, 1.5, 'S'); }
+      const drew = await addPhotoToPDF(doc, ev.photo, M+2, y+1, 26, boxH);
+      const tx = M+32;
+      doc.setFontSize(6.8); doc.setFont('helvetica','normal');
+      doc.setTextColor(150,150,170); doc.text('Location:', tx, y+4);
+      doc.setTextColor(215,215,235); doc.text(String(ev.location).slice(0,70), tx+16, y+4);
+      doc.setTextColor(150,150,170); doc.text('Question:', tx, y+9);
+      doc.setTextColor(215,215,235); doc.text(String(ev.question).slice(0,70), tx+16, y+9);
+      doc.setTextColor(150,150,170); doc.text('Captured:', tx, y+14);
+      doc.setTextColor(215,215,235); doc.text(String(ev.captured||'—'), tx+16, y+14);
+      doc.setTextColor(150,150,170); doc.text('Status:', tx, y+19);
+      if (ev.issue) { doc.setTextColor(239,68,68); doc.setFont('helvetica','bold'); doc.text('ISSUE EVIDENCE', tx+16, y+19); }
+      else { doc.setTextColor(46,204,113); doc.text('Inspection evidence', tx+16, y+19); }
+      y += boxH + 6;
+    }
+    if (evidence.length > CAP) {
+      doc.setTextColor(140,140,165); doc.setFontSize(7); doc.setFont('helvetica','italic');
+      doc.text(`+ ${evidence.length - CAP} further photo(s) — view in app`, M, y); y += 6;
+      doc.setFont('helvetica','normal');
+    }
+  }
+
+  // ── 6. SHIFT OUTCOME — manager summary ─────────────────────────
+  sectionHeader('SHIFT OUTCOME', [124,92,252]);
+  pageBreak(245);
+  const outcome = [
+    ['Completed', String(completedTasks.length), [46,204,113]],
+    ['Unable to Complete', String(unableTasks.length), [245,166,35]],
+    ['Missed without reason', String(missedTasks.length), [239,68,68]],
+    ['Issues Raised', String(STATE.escalations.length), STATE.escalations.length ? [239,68,68] : [46,204,113]],
+  ];
+  for (const [label, val, rgb] of outcome) {
+    doc.setFillColor(22,22,32); doc.roundedRect(M, y, W-M*2, 9, 2, 2, 'F');
+    doc.setTextColor(170,170,190); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(label, M+5, y+6);
+    doc.setTextColor(rgb[0], rgb[1], rgb[2]); doc.setFontSize(11); doc.setFont('helvetica','bold');
+    doc.text(val, W-M-6, y+6.5, { align: 'right' });
+    y += 12;
   }
 
   addFooter(doc, W, M);
