@@ -1,0 +1,170 @@
+Inspection Type,Level / Area,Room / Asset,Question Text,Answer Type,Photo Mandatory?,Photo Trigger Rule,Notes
+White Level Inspection (Day),White Level,White Level,Is the lobby area clean and presentable?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT: photoRequired:true. Same question/flag in Night White Level.
+White Level Inspection (Day),White Level,White Level,Are all lift port readers operational?,Pass / Issue / N/A,No,N/A (no photo field),
+White Level Inspection (Day),White Level,White Level,Are all DDA doors functioning correctly?,Pass / Issue / N/A,No,N/A (no photo field),
+White Level Inspection (Day),White Level,White Level,Are all lobby doors secured?,Pass / Issue / N/A,No,N/A (no photo field),
+White Level Inspection (Day),White Level,White Level,Are all red emergency stop buttons pulled out?,Pass / Issue / N/A,No,Optional (not enforced),
+White Level Inspection (Day),White Level,White Level,Is lighting sufficient throughout?,Pass / Issue / N/A,No,N/A (no photo field),
+White Level Inspection (Day),White Level,White Level,"Any damage, hazards, or vandalism observed?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion. DUPLICATE wording (also External & Precinct).
+White Level Inspection (Day),White Level,White Level,Any suspicious items observed in the area?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+White Level Inspection (Day),White Level,White Level,Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),negativeQuestion. DUPLICATE wording (many inspections).
+External Inspection (Day),Perimeter,"North / East / South / West Perimeter (4 rooms, identical sets)","Any damage, hazards, or vandalism observed?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion. DUPLICATE across all 4 perimeters.
+External Inspection (Day),Perimeter,"North / East / South / West Perimeter (4 rooms, identical sets)",Any suspicious persons or items observed?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion. DUPLICATE across all 4 perimeters.
+External Inspection (Day),Perimeter,"North / East / South / West Perimeter (4 rooms, identical sets)",If exclusion zones are present — photograph and confirm they are set up correctly.,Pass / Issue / N/A,No,Optional (not enforced),NO MANDATORY EVIDENCE anywhere in External Inspection.
+B1 Inspection,B1,Node Room 1,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),DUPLICATE wording (many rooms).
+B1 Inspection,B1,Node Room 1,"Any visible damage, faults, or warning lights present?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Node Room 1,"Any water ingress, leaks, or moisture present?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Node Room 1,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion. DUPLICATE wording (most-repeated question).
+B1 Inspection,B1,Node Room 2,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Node Room 2,"Any visible damage, faults, or warning lights present?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Node Room 2,"Any water ingress, leaks, or moisture present?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Node Room 2,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+B1 Inspection,B1,FCR,Is the FCR door secured?,Pass / Issue / N/A,No,N/A (no photo field),DUPLICATE wording (Lobby & External; C2 FCR).
+B1 Inspection,B1,FCR,Is the fire panel showing normal status — no faults or alarms?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true.
+B1 Inspection,B1,FCR,Any visible damage or tampering present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,FCR,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+B1 Inspection,B1,Fire Relay Pump Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Fire Relay Pump Room,Is the fire relay pump showing no faults or alarms?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Fire Relay Pump Room,Any water leaks or moisture present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Fire Relay Pump Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+B1 Inspection,B1,Heat Exchange Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Heat Exchange Room,Is the heat exchange equipment operating normally?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Heat Exchange Room,Any water leaks or moisture present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Heat Exchange Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+B1 Inspection,B1,T3 Retail Grease Arrester Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,T3 Retail Grease Arrester Room,Any visible leaks present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,T3 Retail Grease Arrester Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+B1 Inspection,B1,Retail Main Switch Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Retail Main Switch Room,Are all switchboards and panels showing no faults or alarms?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Retail Main Switch Room,Any visible damage or tampering present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Retail Main Switch Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+B1 Inspection,B1,Water Meter Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+B1 Inspection,B1,Water Meter Room,Any visible leaks present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+B1 Inspection,B1,Water Meter Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Generator Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),Shared _PLANT_ROOM_QUESTIONS.gen. L15=L27=L39 (full DUPLICATE).
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Generator Room,Is the generator showing any faults or alarms?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Generator Room,Is the generator warm?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Generator Room,Are the diesel tanks leaking?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Generator Room,Any unusual smells present?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Electrical Risers,Is the riser cupboard secured?,Pass / Issue / N/A,No,N/A (no photo field),Shared _PLANT_ROOM_QUESTIONS.risers.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Electrical Risers,Any visible damage or tampering present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Electrical Risers,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Substation,Is the substation secured?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. Single-question room.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Switch Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),Shared _PLANT_ROOM_QUESTIONS.sw.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Switch Room,Are all switchboards showing no faults or alarms?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Switch Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Lamp Board,Is the lamp board secured?,Pass / Issue / N/A,No,N/A (no photo field),Shared _PLANT_ROOM_QUESTIONS.lamp.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Lamp Board,Any faults or warning lights present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Lamp Board,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",External Balcony,Is the balcony access door secured?,Pass / Issue / N/A,No,N/A (no photo field),Shared _PLANT_ROOM_QUESTIONS.balcony. NO MANDATORY EVIDENCE in this room.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",External Balcony,Is the balcony area clear of obstructions?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",External Balcony,"Any damage, hazards, or safety concerns present?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion. NO MANDATORY EVIDENCE in External Balcony.
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Lift Motor Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),Inline per-level (identical across L15/27/39).
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Lift Motor Room,Any audible alarms present?,Pass / Issue / N/A,No,Optional (not enforced),
+Plant Room Inspection,"Levels 15, 27, 39 (identical room sets)",Lift Motor Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. (No negativeQuestion flag here.)
+Plant Room Inspection,Level 40,Kitchen Exhaust,Is the kitchen exhaust area clear and unobstructed?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,Level 40,Kitchen Exhaust,Any unusual smells or smoke present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,Level 40,Kitchen Exhaust,Any visible damage or hazards?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,Level 40,Goods Lift Motor Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,Level 40,Goods Lift Motor Room,Any audible alarms present?,Pass / Issue / N/A,No,N/A (no photo field),negativeQuestion.
+Plant Room Inspection,Level 40,Goods Lift Motor Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,Level 40,Gas Meter Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,Level 40,Gas Meter Room,Any gas smell or leaks present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,Level 40,Gas Meter Room,Any unusual sounds or hazards?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,Level 40,Solar Panels,Is the access area secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,Level 40,Solar Panels,Are solar panels visually intact — no visible damage?,Pass / Issue / N/A,No,Optional (not enforced),
+Plant Room Inspection,Level 40,Solar Panels,Any unusual hazards present?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,Level 40,External,Is the external area clear of obstructions?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in this room.
+Plant Room Inspection,Level 40,External,"Any damage, hazards, or safety concerns present?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,Level 40,External,Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),negativeQuestion. NO MANDATORY EVIDENCE in L40 External.
+Plant Room Inspection,Level 40,Boiler Room,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,Level 40,Boiler Room,Any audible alarms present?,Pass / Issue / N/A,No,N/A (no photo field),negativeQuestion.
+Plant Room Inspection,Level 40,Boiler Room,Any visible leaks present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,Level 40,Boiler Room,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Plant Room Inspection,Level 41 — Rooftop,Rooftop,Is the rooftop clear of unauthorised persons?,Pass / Issue / N/A,No,N/A (no photo field),
+Plant Room Inspection,Level 41 — Rooftop,Rooftop,"Any damage, hazards, or safety concerns present?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,Level 41 — Rooftop,Rooftop,Are there any loose items on the rooftop area?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Plant Room Inspection,Level 41 — Rooftop,Rooftop,Is the BMU in its correct position?,Pass / Issue / N/A,No,Optional (not enforced),
+Plant Room Inspection,Level 41 — Rooftop,Rooftop,Are the solar panels free from visible damage?,Pass / Issue / N/A,No,Optional (not enforced),
+Plant Room Inspection,Level 41 — Rooftop,Rooftop,Anything unusual to report?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. negativeQuestion.
+Precinct Inspection,Precinct (Run 1 & 2),"Exchange Place / Mercantile Walk / Shipwright Walk / Waterman's Quay / Scotch Row / Barangaroo Avenue / Sussex Street (7 areas, identical sets)","Any damage, hazards, or vandalism observed?",Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion. DUPLICATE across all 7 areas. Run 2 references Run 1.
+Precinct Inspection,Precinct (Run 1 & 2),"Exchange Place / Mercantile Walk / Shipwright Walk / Waterman's Quay / Scotch Row / Barangaroo Avenue / Sussex Street (7 areas, identical sets)",Any suspicious persons or items observed?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion. DUPLICATE across all 7 areas.
+Precinct Inspection,Precinct (Run 1 & 2),"Exchange Place / Mercantile Walk / Shipwright Walk / Waterman's Quay / Scotch Row / Barangaroo Avenue / Sussex Street (7 areas, identical sets)",Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),negativeQuestion. NO MANDATORY EVIDENCE anywhere in Precinct Inspection.
+Lobby Static (Day),Lobby,Lobby (timed static observation),(No checklist questions — timed observation only),Timed observation,No,N/A (no photo field),3 daily windows: 08:00-09:00 / 13:00-14:00 / 17:00-18:00. No configured questions.
+Lift Audit,All lift assets,"Commercial Podium / Carpark / Low Rise / Mid Rise / High Rise lifts (28 assets)",Is the intercom functioning?,Pass / Issue / N/A,No,N/A (no photo field),Asset picker then same 4 questions per lift.
+Lift Audit,All lift assets,(per selected lift asset),Visual inspection of all display screens including PDI — any issues?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Lift Audit,All lift assets,(per selected lift asset),Is the lighting operational?,Pass / Issue / N/A,No,Optional (not enforced),
+Lift Audit,All lift assets,(per selected lift asset),"Is the lift clean, free of marks and damage?",Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true.
+Bathroom Audit,All bathroom asset groups,(per selected level-range asset),Is the area clean and presentable?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE anywhere in Bathroom Audit.
+Bathroom Audit,All bathroom asset groups,(per selected level-range asset),"Are all fixtures, taps, and hand dryers undamaged?",Pass / Issue / N/A,No,N/A (no photo field),
+Bathroom Audit,All bathroom asset groups,(per selected level-range asset),Is there any visible damage or vandalism?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Bathroom Audit,All bathroom asset groups,(per selected level-range asset),Are any maintenance issues present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Bathroom Audit,All bathroom asset groups,(per selected level-range asset),Are any safety hazards present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+Bathroom Audit,All bathroom asset groups,(per selected level-range asset),Is lighting sufficient?,Pass / Issue / N/A,No,N/A (no photo field),
+Bathroom Audit,All bathroom asset groups,(per selected level-range asset),Are all doors functioning safely?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in Bathroom Audit.
+Goods Lift Lobby Audit,All level assets (B2–L39),(per selected level asset),Is the goods lift lobby clear of obstructions?,Pass / Issue / N/A,No,N/A (no photo field),
+Goods Lift Lobby Audit,All level assets (B2–L39),(per selected level asset),Are there any items blocking the riser doors?,Pass / Issue / N/A,No,N/A (no photo field),negativeQuestion.
+Goods Lift Lobby Audit,All level assets (B2–L39),(per selected level asset),Is the area clean and presentable?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true.
+Goods Lift Lobby Audit,All level assets (B2–L39),(per selected level asset),Are there any safety hazards present?,Pass / Issue / N/A,No,Optional (not enforced),negativeQuestion.
+CCTV / Access Card / Radio / Emergency Exit / Fire Door / Carpark Audit,N/A,N/A,(No questions configured — available:false / Coming soon),N/A,No,N/A (no photo field),Defined but disabled; no question sets in code.
+Night: White Level Inspection,White Level,White Level,Is the lobby area clean and presentable?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. Near-DUPLICATE of Day White Level (night version omits negativeQuestion flags). Dropped on Sat/Sun.
+Night: White Level Inspection,White Level,White Level,Are all lift port readers operational?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: White Level Inspection,White Level,White Level,Are all DDA doors functioning correctly?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: White Level Inspection,White Level,White Level,Are all lobby doors secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: White Level Inspection,White Level,White Level,Are all red emergency stop buttons pulled out?,Pass / Issue / N/A,No,Optional (not enforced),
+Night: White Level Inspection,White Level,White Level,Is lighting sufficient throughout?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: White Level Inspection,White Level,White Level,"Any damage, hazards, or vandalism observed?",Pass / Issue / N/A,No,Optional (not enforced),Night variant: no negativeQuestion flag.
+Night: White Level Inspection,White Level,White Level,Any suspicious items observed in the area?,Pass / Issue / N/A,No,Optional (not enforced),
+Night: White Level Inspection,White Level,White Level,Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Are all revolving doors stopped on schedule and in correct position?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE anywhere in Lobby & External.
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Are all DDA doors secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Are all lobby and external doors secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Are emergency lights functioning as per schedule?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Are external fire stairs doors secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Is the FCR door secured?,Pass / Issue / N/A,No,N/A (no photo field),DUPLICATE wording (B1 FCR; C2 FCR).
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Are all contractor entries secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,"Any damage, hazards, or vandalism observed?",Pass / Issue / N/A,No,Optional (not enforced),
+Night: Lobby & External Inspection,Lobby & External,Lobby & External,Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in Lobby & External.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East WIP Cupboard,Is the hose reel present and accessible?,Pass / Issue / N/A,No,N/A (no photo field),FBI_ROOMS template repeats across all 34 floors (3-14,16-26,28-38).
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East WIP Cupboard,Is the fire extinguisher present and accessible?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East WIP Cupboard,Is the WIP (Warden Intercom Point) in place and operational?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East WIP Cupboard,Is all emergency evacuation equipment present and in good condition?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East WIP Cupboard,Is the cupboard door secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East Fire Stairs,Is the fire stair door clear of obstructions?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East Fire Stairs,Is the fire stair door secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",East Fire Stairs,Anything unusual to report?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Goods Lift Lobby,Is the goods lift lobby clear of obstructions?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in this room.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Goods Lift Lobby,Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in Goods Lift Lobby room.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Electrical Riser,Is the riser door secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Electrical Riser,Any unusual smells present?,Pass / Issue / N/A,No,N/A (no photo field),Note: not flagged photoOptional here (differs from plant Generator version).
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Electrical Riser,Is the area clean and clear?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West Fire Stairs,Is the fire stair door clear of obstructions?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West Fire Stairs,Is the fire stair door secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West Fire Stairs,Anything unusual to report?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. DUPLICATE of East Fire Stairs set.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West WIP Cupboard,Is the hose reel present and accessible?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West WIP Cupboard,Is the fire extinguisher present and accessible?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West WIP Cupboard,Is the defibrillator present and ready to use?,Pass / Issue / N/A,No,N/A (no photo field),Differs from East WIP (defib vs WIP question).
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West WIP Cupboard,Is all emergency evacuation equipment present and in good condition?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",West WIP Cupboard,Is the cupboard door secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Tenancies,Are all tenancy doors secured?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in this room.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Tenancies,Are all common areas clear?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Tenancies,Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in Tenancies.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Toilets,Are the toilets clear of any obstructions?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in this room.
+Night: Full Building Inspection,"Levels 3-38 (34 floors, identical room set per floor)",Toilets,Are the toilets clean and presentable?,Pass / Issue / N/A,No,N/A (no photo field),NO MANDATORY EVIDENCE in Toilets.
+Night: C2 Accenture Inspection,C2,C2 Plant Room L1,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: C2 Accenture Inspection,C2,C2 Plant Room L1,"Any faults, alarms, or hazards present?",Pass / Issue / N/A,No,Optional (not enforced),
+Night: C2 Accenture Inspection,C2,C2 Plant Room L7,Is the room secured?,Pass / Issue / N/A,No,N/A (no photo field),DUPLICATE of C2 Plant Room L1 set.
+Night: C2 Accenture Inspection,C2,C2 Plant Room L7,"Any faults, alarms, or hazards present?",Pass / Issue / N/A,No,Optional (not enforced),
+Night: C2 Accenture Inspection,C2,C2 Roof Hatch,Is the roof hatch secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: C2 Accenture Inspection,C2,C2 Roof Hatch,Any damage or hazards present?,Pass / Issue / N/A,No,Optional (not enforced),
+Night: C2 Accenture Inspection,C2,C2 FCR,Is the FCR door secured?,Pass / Issue / N/A,No,N/A (no photo field),DUPLICATE wording (B1 FCR; Lobby & External).
+Night: C2 Accenture Inspection,C2,C2 FCR,Is the fire panel showing normal status?,Pass / Issue / N/A,Yes,Always (enforced on submit),HIGHLIGHT photoRequired:true. Only mandatory photo in C2 inspection.
+Night: C2 Accenture Inspection,C2,C2 FCR,"Any unusual sounds, smells, or hazards?",Pass / Issue / N/A,No,N/A (no photo field),Note: NOT photoRequired here (differs from B1 FCR equivalent).
+Night: C2 Accenture Inspection,C2,C2 Fire Stairs,Are all fire stairs doors secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: C2 Accenture Inspection,C2,C2 Fire Stairs,"Any damage, hazards, or obstructions present?",Pass / Issue / N/A,No,Optional (not enforced),
+Night: C2 Accenture Inspection,C2,C2 External,All external doors secured?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: C2 Accenture Inspection,C2,C2 External,"Any damage, hazards, or suspicious activity?",Pass / Issue / N/A,No,Optional (not enforced),
+Night: C2 Accenture Inspection,C2,C2 External,Anything unusual to report?,Pass / Issue / N/A,No,N/A (no photo field),
+Night: B1 / External / Precinct / 2nd & 3rd Plant Inspections,(reused room sets),See Day equivalents,(Same question sets as Day B1 / External / Precinct / Plant L15-L39),Pass / Issue / N/A,(see source),(see source),"REUSE: Night shift references B1_ROOMS, EXTERNAL_ROOMS, PRECINCT_ROOMS, PLANT_ROOMS_INTERNAL — identical questions to Day."
+Night: Goods Lift Lobby Inspection (Mon only),(inspection-link),Goods Lift Lobby,(Links to FBI Goods Lift Lobby room set),Pass / Issue / N/A,No,N/A (no photo field),Monday-only; links to goods-lift-lobby room (no mandatory evidence).
+Night: Lobby Static / Static Post,Lobby / Post,(timed),(No checklist questions — timed observation only),Timed observation,No,N/A (no photo field),Lobby Static 60 min; Static Post 75 min. No configured questions.

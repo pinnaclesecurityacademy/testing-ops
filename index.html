@@ -4533,16 +4533,47 @@ function capturePhotos(input, previewId, arr) {
 // ═══════════════════════════════════════
 // PDF — fix photo orientation using canvas
 // ═══════════════════════════════════════
+// Resolve a photo source to an inline base64 data URL. Photos captured on the
+// device are already base64; photos restored from Supabase Storage are remote
+// signed URLs (cross-origin). Drawing a cross-origin image to a canvas taints
+// it and makes toDataURL()/jsPDF throw, so we fetch remote URLs as a blob and
+// convert to base64 first. Returns null if the image cannot be retrieved.
+async function fetchImageAsBase64(url) {
+  try {
+    if (!url) return null;
+    if (url.startsWith('data:')) return url; // already base64
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch(e) {
+    console.warn('Could not fetch image for PDF:', e && e.message ? e.message : e);
+    return null;
+  }
+}
+
 function fixImageOrientation(base64) {
   return new Promise(resolve => {
     const img = new Image();
+    // Defensive: if a remote URL ever reaches here, request it CORS-enabled so
+    // the canvas is not tainted. (Normal path passes a same-origin data URL.)
+    if (typeof base64 === 'string' && base64.startsWith('https://')) img.crossOrigin = 'anonymous';
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/jpeg', 0.85));
+      try {
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      } catch(e) {
+        // Tainted canvas (cross-origin without CORS) — fall back to the source.
+        resolve(base64);
+      }
     };
     img.onerror = () => resolve(base64);
     img.src = base64;
@@ -4551,7 +4582,18 @@ function fixImageOrientation(base64) {
 
 async function addPhotoToPDF(doc, photo, x, y, maxW, maxH) {
   try {
-    const fixed = await fixImageOrientation(photo);
+    // Always resolve to base64 first so cross-origin Storage URLs never taint
+    // the orientation canvas or jsPDF's internal canvas.
+    const resolved = await fetchImageAsBase64(photo);
+    if (!resolved) {
+      // Image unavailable (CORS/network) — leave a text placeholder instead.
+      doc.setTextColor(120, 120, 140);
+      doc.setFontSize(7.5); doc.setFont('helvetica', 'italic');
+      doc.text('[Photo evidence - view in app]', x, y + 4);
+      doc.setFont('helvetica', 'normal');
+      return 8;
+    }
+    const fixed = await fixImageOrientation(resolved);
     const img = new Image();
     await new Promise(r => { img.onload = r; img.onerror = r; img.src = fixed; });
     const ratio = img.naturalWidth / img.naturalHeight;
